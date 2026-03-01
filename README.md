@@ -38,7 +38,7 @@ esphome:
 esp32:
   board: esp32dev
   framework:
-    type: esp-idf
+    type: esp-idf  # Only tested on this board
     sdkconfig_options:
       # These are the essential ones for HID/Keyboard stability
       CONFIG_BT_ENABLED: y
