@@ -36,9 +36,9 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  board: esp32dev
+  board: esp32dev   # Only tested on this board
   framework:
-    type: esp-idf  # Only tested on this board
+    type: esp-idf  
     sdkconfig_options:
       # These are the essential ones for HID/Keyboard stability
       CONFIG_BT_ENABLED: y
