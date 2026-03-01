@@ -69,36 +69,15 @@ static const uint8_t hid_report_map[] = {
 };
 
 // ── Advertising Data ─────────────────────────────────────────────────────────
-static uint8_t hid_service_uuid16[] = {0x12, 0x18};  // HID service 0x1812 (little-endian)
-
-static esp_ble_adv_data_t adv_data = {
-    .set_scan_rsp = false,
-    .include_name = false,
-    .include_txpower = false,
-    .min_interval = 0,
-    .max_interval = 0,
-    .appearance = 0x03C1,
-    .manufacturer_len = 0,
-    .p_manufacturer_data = nullptr,
-    .service_data_len = 0,
-    .p_service_data = nullptr,
-    .service_uuid_len = sizeof(hid_service_uuid16),
-    .p_service_uuid = hid_service_uuid16,
-    .flag = ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT,
+static uint8_t raw_adv_data[] = {
+    0x02, 0x01, 0x06,           // Flags: LE General Discoverable + BR/EDR not supported
+    0x03, 0x03, 0x12, 0x18,     // Complete List of 16-bit UUIDs: HID (0x1812)
+    0x03, 0x19, 0xC1, 0x03      // Appearance: HID Keyboard (0x03C1)
 };
 
-static esp_ble_adv_data_t scan_rsp_data = {
-    .set_scan_rsp = true,
-    .include_name = true,
-    .include_txpower = false,
-    .appearance = 0,
-    .manufacturer_len = 0,
-    .p_manufacturer_data = nullptr,
-    .service_data_len = 0,
-    .p_service_data = nullptr,
-    .service_uuid_len = 0,
-    .p_service_uuid = nullptr,
-    .flag = 0,
+static uint8_t raw_scan_rsp_data[] = {
+    0x13, 0x09,                 // Complete Local Name (18 chars)
+    'E','S','P','3','2',' ','B','L','E',' ','K','e','y','b','o','a','r','d'
 };
 
 static esp_ble_adv_params_t adv_params = {
@@ -118,8 +97,8 @@ static bool s_scan_rsp_data_set = false;
 static void do_start_advertising() {
     s_adv_data_set = false;
     s_scan_rsp_data_set = false;
-    esp_err_t adv_ret = esp_ble_gap_config_adv_data(&adv_data);
-    esp_err_t scan_ret = esp_ble_gap_config_adv_data(&scan_rsp_data);
+    esp_err_t adv_ret = esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
+    esp_err_t scan_ret = esp_ble_gap_config_scan_rsp_data_raw(raw_scan_rsp_data, sizeof(raw_scan_rsp_data));
 
     if (adv_ret != ESP_OK) {
         ESP_LOGE(TAG, "GAP: Failed to config adv data (%d)", adv_ret);
