@@ -332,13 +332,14 @@ void EspidfBleKeyboard::setup() {
     esp_bluedroid_init();
     esp_bluedroid_enable();
 
-    // Configure security for BLE HID pairing (Android prefers LE Secure Connections)
+    // Configure security for BLE HID pairing.
+    // When a static passkey is configured, force legacy MITM bonding so hosts use
+    // passkey-entry flow instead of SC numeric-comparison (which may generate a
+    // host-chosen code on Android).
     {
         esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
         if (this->has_passkey_) {
-    #if defined(ESP_LE_AUTH_REQ_SC_MITM_BOND)
-            auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND;
-    #elif defined(ESP_LE_AUTH_REQ_MITM_BOND)
+#if defined(ESP_LE_AUTH_REQ_MITM_BOND)
             auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
     #elif defined(ESP_LE_AUTH_REQ_MITM)
             auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
@@ -359,7 +360,10 @@ void EspidfBleKeyboard::setup() {
 
         if (this->has_passkey_) {
             ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) this->passkey_);
+            ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
             esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &this->passkey_, sizeof(uint32_t));
+        } else {
+            ESP_LOGI(TAG, "Pairing mode: Just Works / host-selected secure bonding");
         }
 
         esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));

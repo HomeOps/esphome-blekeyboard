@@ -176,7 +176,7 @@ binary_sensor:
 ### `espidf_ble_keyboard`
 
 * **id** (Required, ID): The ID used to link buttons or automations to this keyboard.
-* **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device will require this PIN during the initial pairing process.
+* **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -297,6 +297,8 @@ Android is stricter about BLE HID security than Windows. For best results:
 3. In Android Bluetooth settings, remove any previous **ESP32 BLE KB** (or older **ESP32 BLE Keyboard**) entry before re-pairing.
 4. Start pairing and enter the configured passkey when prompted.
 
+If Android shows a different host-generated code instead of your configured passkey, remove old bonds on both Android and the ESP32 side (reboot/reflash), then pair again.
+
 If pairing fails with "can't connect", remove the old bond on Android and pair again after rebooting the ESP32.
 
 ---
@@ -322,6 +324,7 @@ After the first successful bond, reconnect behavior is typically stable.
 * **Not appearing in search:** Ensure no other device is currently connected. The ESP32 stops advertising once a connection is established.
 * **PIN prompt not appearing:** Windows often caches old security profiles. Fully "Remove" the device from Windows Bluetooth settings and try again.
 * **Android says "can't connect":** Android often keeps stale BLE bonds. Remove the device from Bluetooth settings, reboot the ESP32, then pair again. If still failing, toggle phone Bluetooth off/on and retry.
+* **Android shows the wrong pairing code:** Ensure `passkey` is set in YAML and old bonds are removed before pairing. If Android still shows a host-generated code, remove all existing bonds and pair from a clean state.
 * **Typing speed:** The component includes a 20ms delay between keypresses to ensure the host OS registers them correctly. This can be adjusted in `espidf_ble_keyboard.cpp` if needed.
 * **Hibernate not working:** Hibernate uses the Windows Run dialog. Ensure the PC is not in a state where it is blocked (e.g., fullscreen app or UAC prompt). Also ensure hibernate is enabled: run `powercfg /hibernate on` in an admin command prompt.
 * **PC not waking from sleep:** Check that **USB Wake Support** (or similar) is enabled in your BIOS/UEFI Power Management settings.
