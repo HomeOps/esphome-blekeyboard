@@ -311,6 +311,11 @@ The current implementation has been validated on both Windows and Android.
 Tested on Windows 11 and Android 16.
 For first-time pairing, Android may require more than one attempt while it refreshes BLE cache and bond state.
 
+Recommended pairing modes:
+
+* **Fastest pairing (recommended default):** Omit `passkey` (Just Works). Windows and Android typically pair instantly.
+* **Higher security:** Set `passkey`. Windows typically pairs quickly; Android may require a second attempt before fallback completes.
+
 Recommended order:
 
 1. Turn off Bluetooth on other nearby hosts (especially Windows) to avoid auto-connect races.
