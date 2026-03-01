@@ -194,9 +194,9 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
                 if (s_instance && s_instance->has_passkey() && s_use_static_passkey && fail_reason == 0x51) {
                     ESP_LOGW(TAG, "GAP: Static passkey rejected by peer (0x51), falling back to Just Works mode");
                     apply_security_params(false);
+                    esp_ble_remove_bond_device(param->ble_security.auth_cmpl.bd_addr);
                 }
-                esp_ble_remove_bond_device(param->ble_security.auth_cmpl.bd_addr);
-                esp_ble_gap_start_advertising(&adv_params);
+                // Advertising restart is handled in DISCONNECT_EVT to avoid duplicate restarts.
             }
             break;
         default:

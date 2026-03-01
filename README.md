@@ -325,6 +325,7 @@ After the first successful bond, reconnect behavior is typically stable.
 
 * **Not appearing in search:** Ensure no other device is currently connected. The ESP32 stops advertising once a connection is established.
 * **PIN prompt not appearing:** Windows often caches old security profiles. Fully "Remove" the device from Windows Bluetooth settings and try again.
+* **Windows needs multiple pairing attempts:** Remove old Bluetooth entries first, then retry pairing after the first failed attempt. The component now avoids duplicate advertising restarts and keeps existing bonds unless the auth failure is a known `0x51` mismatch.
 * **Android says "can't connect":** Android often keeps stale BLE bonds. Remove the device from Bluetooth settings, reboot the ESP32, then pair again. If still failing, toggle phone Bluetooth off/on and retry.
 * **Android shows the wrong pairing code:** Ensure `passkey` is set in YAML and old bonds are removed before pairing. If Android still shows a host-generated code, remove all existing bonds and pair from a clean state. The component will automatically fall back to Just Works mode after repeated `0x51` auth failures.
 * **Typing speed:** The component includes a 20ms delay between keypresses to ensure the host OS registers them correctly. This can be adjusted in `espidf_ble_keyboard.cpp` if needed.
