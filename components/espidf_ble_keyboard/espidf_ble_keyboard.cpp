@@ -87,6 +87,48 @@ static esp_ble_adv_params_t adv_params = {
 
 static bool s_adv_data_set = false;
 static bool s_scan_rsp_data_set = false;
+static bool s_use_static_passkey = false;
+static bool s_require_mitm = false;
+
+static void apply_security_params(bool use_static_passkey) {
+    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
+    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;
+    uint8_t key_size = 16;
+    uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+    uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+
+    if (use_static_passkey && s_instance && s_instance->has_passkey()) {
+#if defined(ESP_LE_AUTH_REQ_MITM_BOND)
+    auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
+#elif defined(ESP_LE_AUTH_REQ_MITM)
+    auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
+#else
+    auth_req = ESP_LE_AUTH_BOND;
+#endif
+    iocap = ESP_IO_CAP_OUT;
+    uint32_t passkey = s_instance->passkey();
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &passkey, sizeof(passkey));
+    s_use_static_passkey = true;
+    s_require_mitm = true;
+    ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) passkey);
+    ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
+    } else {
+#if defined(ESP_LE_AUTH_REQ_SC_BOND)
+    auth_req = ESP_LE_AUTH_REQ_SC_BOND;
+#else
+    auth_req = ESP_LE_AUTH_BOND;
+#endif
+    s_use_static_passkey = false;
+    s_require_mitm = false;
+    ESP_LOGI(TAG, "Pairing mode: Just Works / host-selected secure bonding");
+    }
+
+    esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &iocap, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &key_size, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
+}
 
 static void do_start_advertising() {
     s_adv_data_set = false;
@@ -131,7 +173,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
             break;
         case ESP_GAP_BLE_PASSKEY_REQ_EVT:
-            if (s_instance && s_instance->has_passkey()) {
+            if (s_instance && s_instance->has_passkey() && s_use_static_passkey) {
                 esp_ble_passkey_reply(param->ble_security.ble_req.bd_addr, true, s_instance->passkey());
             } else {
                 esp_ble_passkey_reply(param->ble_security.ble_req.bd_addr, false, 0);
@@ -147,7 +189,12 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             if (param->ble_security.auth_cmpl.success) {
                 ESP_LOGI(TAG, "GAP: Pairing Successful");
             } else {
-                ESP_LOGE(TAG, "GAP: Pairing Failed (0x%x)", param->ble_security.auth_cmpl.fail_reason);
+                uint8_t fail_reason = param->ble_security.auth_cmpl.fail_reason;
+                ESP_LOGE(TAG, "GAP: Pairing Failed (0x%x)", fail_reason);
+                if (s_instance && s_instance->has_passkey() && s_use_static_passkey && fail_reason == 0x51) {
+                    ESP_LOGW(TAG, "GAP: Static passkey rejected by peer (0x51), falling back to Just Works mode");
+                    apply_security_params(false);
+                }
                 esp_ble_remove_bond_device(param->ble_security.auth_cmpl.bd_addr);
                 esp_ble_gap_start_advertising(&adv_params);
             }
@@ -293,10 +340,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             ESP_LOGI(TAG, "GATTS: Connected");
             if (s_instance) s_instance->set_connected(true, param->connect.conn_id);
             // Trigger encryption with security level matching configured pairing mode
-            esp_ble_sec_act_t sec_act = ESP_BLE_SEC_ENCRYPT_NO_MITM;
-            if (s_instance && s_instance->has_passkey()) {
-                sec_act = ESP_BLE_SEC_ENCRYPT_MITM;
-            }
+            esp_ble_sec_act_t sec_act = s_require_mitm ? ESP_BLE_SEC_ENCRYPT_MITM : ESP_BLE_SEC_ENCRYPT_NO_MITM;
             esp_ble_set_encryption(param->connect.remote_bda, sec_act);
             break;
         }
@@ -333,45 +377,7 @@ void EspidfBleKeyboard::setup() {
     esp_bluedroid_enable();
 
     // Configure security for BLE HID pairing.
-    // When a static passkey is configured, force legacy MITM bonding so hosts use
-    // passkey-entry flow instead of SC numeric-comparison (which may generate a
-    // host-chosen code on Android).
-    {
-        esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
-        if (this->has_passkey_) {
-#if defined(ESP_LE_AUTH_REQ_MITM_BOND)
-            auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
-    #elif defined(ESP_LE_AUTH_REQ_MITM)
-            auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
-    #else
-            auth_req = ESP_LE_AUTH_BOND;
-    #endif
-        } else {
-    #if defined(ESP_LE_AUTH_REQ_SC_BOND)
-            auth_req = ESP_LE_AUTH_REQ_SC_BOND;
-    #else
-            auth_req = ESP_LE_AUTH_BOND;
-    #endif
-        }
-        esp_ble_io_cap_t iocap = this->has_passkey_ ? ESP_IO_CAP_OUT : ESP_IO_CAP_NONE;
-        uint8_t key_size = 16;
-        uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-        uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-
-        if (this->has_passkey_) {
-            ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) this->passkey_);
-            ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
-            esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &this->passkey_, sizeof(uint32_t));
-        } else {
-            ESP_LOGI(TAG, "Pairing mode: Just Works / host-selected secure bonding");
-        }
-
-        esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
-        esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &iocap, sizeof(uint8_t));
-        esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &key_size, sizeof(uint8_t));
-        esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
-        esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
-    }
+    apply_security_params(this->has_passkey_);
 
     esp_ble_gap_register_callback(gap_event_handler);
     esp_ble_gatts_register_callback(gatts_event_handler);
