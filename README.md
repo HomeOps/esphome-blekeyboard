@@ -4,7 +4,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 
 ## Features
 
-* **Standard HID Keyboard:** Recognized as a native keyboard by Windows.
+* **Standard HID Keyboard:** Recognized as a native keyboard by Windows and Android.
 * **Secure Pairing:** Supports a configurable 6-digit static passkey (PIN) for secure bonding.
 * **Efficient Memory Usage:** Direct API implementation ensures stability even with complex ESPHome configurations.
 * **Key Combos:** Send any modifier + key combination using hex keycodes (e.g. Win+R, Ctrl+C).
@@ -13,7 +13,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 * **Media Keys:** Control volume, playback, mute and more via HID consumer control.
 * **Power Button:** Native HID power/sleep signals — no Run dialog, clean OS-level control.
 * **Consumer Control:** Send any HID consumer code directly from YAML using `consumer:0xXXXX` syntax.
-* **Custom Text Input:** Send any text typed in Home Assistant directly to the PC.
+* **Custom Text Input:** Send any text typed in Home Assistant directly to the paired host device.
 
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 
@@ -78,7 +78,7 @@ external_components:
 espidf_ble_keyboard:
   id: my_keyboard
   # Optional: Set a 6-digit pairing code.
-  # If omitted, the device will use "Just Works" (no PIN) pairing..
+  # If omitted, the device will use "Just Works" (no PIN) pairing.
   passkey: 123456
 
 button:
@@ -235,7 +235,7 @@ Both formats are equivalent — the dict format is converted to the string forma
 
 ## Custom Text Input
 
-You can send arbitrary text from Home Assistant to the PC without hardcoding it in the YAML. Add the following to your ESPHome config:
+You can send arbitrary text from Home Assistant to the paired host device without hardcoding it in the YAML. Add the following to your ESPHome config:
 
 ```yaml
 text:
@@ -281,9 +281,9 @@ automation:
 When you first flash the device or change the `passkey`:
 
 1. Open **Bluetooth & other devices** on Windows.
-2. If "ESP32 BLE Keyboard" is already listed, **Remove Device**.
+2. If "ESP32 BLE KB" (or an older "ESP32 BLE Keyboard") is already listed, **Remove Device**.
 3. Click **Add device** -> **Bluetooth**.
-4. Select **ESP32 BLE Keyboard**.
+4. Select **ESP32 BLE KB**.
 5. Windows will prompt you to enter the PIN. Type your configured `passkey` (e.g., `123456`) and click **Connect**.
 
 ---
@@ -294,10 +294,26 @@ Android is stricter about BLE HID security than Windows. For best results:
 
 1. Configure a 6-digit `passkey` in `espidf_ble_keyboard`.
 2. Flash firmware, then restart Bluetooth on the phone (or reboot phone once).
-3. In Android Bluetooth settings, remove any previous **ESP32 BLE Keyboard** entry before re-pairing.
+3. In Android Bluetooth settings, remove any previous **ESP32 BLE KB** (or older **ESP32 BLE Keyboard**) entry before re-pairing.
 4. Start pairing and enter the configured passkey when prompted.
 
 If pairing fails with "can't connect", remove the old bond on Android and pair again after rebooting the ESP32.
+
+---
+
+## Known Working Pairing Notes
+
+The current implementation has been validated on both Windows and Android.
+Tested on Windows 11 and Android 16.
+For first-time pairing, Android may require more than one attempt while it refreshes BLE cache and bond state.
+
+Recommended order:
+
+1. Turn off Bluetooth on other nearby hosts (especially Windows) to avoid auto-connect races.
+2. Remove old keyboard entries from the phone/PC.
+3. Retry pairing from the target host.
+
+After the first successful bond, reconnect behavior is typically stable.
 
 ---
 
