@@ -177,6 +177,10 @@ enum {
     IDX_CHAR_REPORT_MAP,   IDX_CHAR_REPORT_MAP_VAL,
     IDX_CHAR_HID_CTRL,     IDX_CHAR_HID_CTRL_VAL,
     IDX_CHAR_PROTO_MODE,   IDX_CHAR_PROTO_MODE_VAL,
+    // Boot keyboard reports
+    IDX_CHAR_BOOT_KB_IN,   IDX_CHAR_BOOT_KB_IN_VAL,
+    IDX_CHAR_BOOT_KB_IN_CCC,
+    IDX_CHAR_BOOT_KB_OUT,  IDX_CHAR_BOOT_KB_OUT_VAL,
     // Keyboard report (Report ID 1)
     IDX_CHAR_REPORT,       IDX_CHAR_REPORT_VAL,
     IDX_CHAR_REPORT_CCC,
@@ -198,12 +202,17 @@ static uint16_t hid_handle_table[HID_IDX_NB];
 static esp_gatt_if_t s_gatts_if = ESP_GATT_IF_NONE;
 static uint16_t s_hid_report_handle = 0;
 static uint16_t s_hid_output_report_handle = 0;
+static uint16_t s_boot_kb_input_handle = 0;
+static uint16_t s_boot_kb_output_handle = 0;
 static uint16_t s_consumer_report_handle = 0;
 static uint16_t s_system_report_handle = 0;
 
 static uint8_t  hid_info_val[4]       = {0x11, 0x01, 0x00, 0x03};
 static uint8_t  hid_ctrl_val          = 0;
 static uint8_t  proto_mode_val        = 0x01;
+static uint8_t  boot_kb_in_val[8]     = {0};
+static uint16_t boot_kb_in_ccc_val    = 0;
+static uint8_t  boot_kb_out_val[1]    = {0};
 static uint8_t  report_val[8]         = {0};
 static uint16_t report_ccc_val        = 0;
 static uint8_t  report_ref_val[2]     = {0x01, 0x01};
@@ -224,6 +233,8 @@ static const uint16_t UUID_HID_REPORT_MAP     = ESP_GATT_UUID_HID_REPORT_MAP;
 static const uint16_t UUID_HID_CONTROL_POINT  = ESP_GATT_UUID_HID_CONTROL_POINT;
 static const uint16_t UUID_HID_PROTO_MODE     = ESP_GATT_UUID_HID_PROTO_MODE;
 static const uint16_t UUID_HID_REPORT         = ESP_GATT_UUID_HID_REPORT;
+static const uint16_t UUID_HID_BOOT_KB_INPUT  = 0x2A22;
+static const uint16_t UUID_HID_BOOT_KB_OUTPUT = 0x2A32;
 static const uint16_t UUID_CHAR_CLIENT_CONFIG = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
 static const uint16_t UUID_RPT_REF_DESCR      = ESP_GATT_UUID_RPT_REF_DESCR;
 
@@ -243,6 +254,13 @@ static const esp_gatts_attr_db_t hid_attr_db[HID_IDX_NB] = {
     [IDX_CHAR_HID_CTRL_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_CONTROL_POINT, ESP_GATT_PERM_WRITE, 1, 1, &hid_ctrl_val}},
     [IDX_CHAR_PROTO_MODE] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, ESP_GATT_PERM_READ, 1, 1, (uint8_t *)&PROP_RW_NR}},
     [IDX_CHAR_PROTO_MODE_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_PROTO_MODE, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, 1, 1, &proto_mode_val}},
+    // Boot keyboard input report
+    [IDX_CHAR_BOOT_KB_IN] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, ESP_GATT_PERM_READ, 1, 1, (uint8_t *)&PROP_READ_NOTIFY}},
+    [IDX_CHAR_BOOT_KB_IN_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_BOOT_KB_INPUT, ESP_GATT_PERM_READ, sizeof(boot_kb_in_val), sizeof(boot_kb_in_val), boot_kb_in_val}},
+    [IDX_CHAR_BOOT_KB_IN_CCC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, sizeof(boot_kb_in_ccc_val), sizeof(boot_kb_in_ccc_val), (uint8_t *)&boot_kb_in_ccc_val}},
+    // Boot keyboard output report
+    [IDX_CHAR_BOOT_KB_OUT] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, ESP_GATT_PERM_READ, 1, 1, (uint8_t *)&PROP_READ_WRITE}},
+    [IDX_CHAR_BOOT_KB_OUT_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_BOOT_KB_OUTPUT, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, sizeof(boot_kb_out_val), sizeof(boot_kb_out_val), boot_kb_out_val}},
     [IDX_CHAR_REPORT] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, ESP_GATT_PERM_READ, 1, 1, (uint8_t *)&PROP_READ_NOTIFY}},
     [IDX_CHAR_REPORT_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_REPORT, ESP_GATT_PERM_READ, sizeof(report_val), sizeof(report_val), report_val}},
     [IDX_CHAR_REPORT_CCC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE, sizeof(report_ccc_val), sizeof(report_ccc_val), (uint8_t *)&report_ccc_val}},
@@ -274,6 +292,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
         case ESP_GATTS_CREAT_ATTR_TAB_EVT:
             ESP_LOGI(TAG, "GATTS: Attribute table created");
             memcpy(hid_handle_table, param->add_attr_tab.handles, sizeof(hid_handle_table));
+            s_boot_kb_input_handle = hid_handle_table[IDX_CHAR_BOOT_KB_IN_VAL];
+            s_boot_kb_output_handle = hid_handle_table[IDX_CHAR_BOOT_KB_OUT_VAL];
             s_hid_report_handle = hid_handle_table[IDX_CHAR_REPORT_VAL];
             s_hid_output_report_handle = hid_handle_table[IDX_CHAR_REPORT_OUT_VAL];
             s_consumer_report_handle = hid_handle_table[IDX_CHAR_CONSUMER_VAL];
@@ -302,7 +322,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             esp_ble_gap_start_advertising(&adv_params);
             break;
         case ESP_GATTS_WRITE_EVT:
-            if (param->write.handle == s_hid_output_report_handle && param->write.len > 0) {
+            if ((param->write.handle == s_hid_output_report_handle || param->write.handle == s_boot_kb_output_handle) &&
+                param->write.len > 0) {
                 ESP_LOGI(TAG, "GATTS: Keyboard LED report 0x%02X", param->write.value[0]);
             }
             break;
@@ -370,8 +391,16 @@ void EspidfBleKeyboard::setup() {
 
 void EspidfBleKeyboard::loop() {}
 
+static uint16_t get_keyboard_input_handle() {
+    if (proto_mode_val == 0x00 && s_boot_kb_input_handle != 0) {
+        return s_boot_kb_input_handle;
+    }
+    return s_hid_report_handle;
+}
+
 void EspidfBleKeyboard::send_string(const std::string &str) {
     if (!is_connected_) return;
+    const uint16_t keyboard_handle = get_keyboard_input_handle();
     uint8_t report[8] = {0};
     for (char c : str) {
         report[0] = 0; report[2] = 0;
@@ -394,33 +423,35 @@ void EspidfBleKeyboard::send_string(const std::string &str) {
         else if (c == ':')  { report[0] = 0x02; report[2] = 0x33; }
         else continue;
 
-        esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+        esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
         vTaskDelay(pdMS_TO_TICKS(20));
         memset(report, 0, 8);
-        esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+        esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
 
 void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
     if (!is_connected_) return;
+    const uint16_t keyboard_handle = get_keyboard_input_handle();
     uint8_t report[8] = {0};
     report[0] = modifiers;
     report[2] = keycode;
-    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
     vTaskDelay(pdMS_TO_TICKS(30));
     memset(report, 0, 8);
-    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
 }
 
 void EspidfBleKeyboard::send_ctrl_alt_del() {
     if (!is_connected_) return;
+    const uint16_t keyboard_handle = get_keyboard_input_handle();
     uint8_t report[8] = {0};
     report[0] = 0x05; report[2] = 0x4C;
-    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
     vTaskDelay(pdMS_TO_TICKS(50));
     memset(report, 0, 8);
-    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_hid_report_handle, 8, report, false);
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, keyboard_handle, 8, report, false);
 }
 
 void EspidfBleKeyboard::send_sleep() {
