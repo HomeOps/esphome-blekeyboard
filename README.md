@@ -36,7 +36,7 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  board: esp32dev
+  board: esp32dev   # Only tested on this board
   framework:
     type: esp-idf
     sdkconfig_options:
