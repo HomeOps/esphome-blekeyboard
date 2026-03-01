@@ -38,8 +38,10 @@ class EspidfBleKeyboard : public Component {
     passkey_ = passkey; 
     has_passkey_ = true; 
   }
+  void set_passkey_secure_connections(bool enabled) { passkey_secure_connections_ = enabled; }
   bool has_passkey() const { return has_passkey_; }
   uint32_t passkey() const { return passkey_; }
+  bool passkey_secure_connections() const { return passkey_secure_connections_; }
 
   void set_connected(bool connected, uint16_t conn_id) {
     is_connected_ = connected;
@@ -54,6 +56,7 @@ class EspidfBleKeyboard : public Component {
   
   uint32_t passkey_{0};
   bool has_passkey_{false};
+  bool passkey_secure_connections_{false};
 };
 
 class EspidfBleKeyboardButton : public button::Button, public Component {

@@ -90,6 +90,20 @@ static bool s_scan_rsp_data_set = false;
 static bool s_use_static_passkey = false;
 static bool s_require_mitm = false;
 
+static void request_host_friendly_conn_params(const esp_bd_addr_t bda) {
+    esp_ble_conn_update_params_t conn_params = {};
+    memcpy(conn_params.bda, bda, sizeof(esp_bd_addr_t));
+    conn_params.min_int = 0x10;
+    conn_params.max_int = 0x20;
+    conn_params.latency = 0;
+    conn_params.timeout = 400;
+
+    esp_err_t ret = esp_ble_gap_update_conn_params(&conn_params);
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "GAP: Conn param update request failed (%d)", ret);
+    }
+}
+
 static void apply_security_params(bool use_static_passkey) {
     esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
     esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;
@@ -98,29 +112,46 @@ static void apply_security_params(bool use_static_passkey) {
     uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
 
     if (use_static_passkey && s_instance && s_instance->has_passkey()) {
-#if defined(ESP_LE_AUTH_REQ_MITM_BOND)
-    auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
+        bool use_sc = s_instance->passkey_secure_connections();
+        if (use_sc) {
+#if defined(ESP_LE_AUTH_REQ_SC_MITM_BOND)
+            auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND;
+            ESP_LOGI(TAG, "Pairing mode: Static passkey (secure-connections MITM bond)");
+#elif defined(ESP_LE_AUTH_REQ_MITM_BOND)
+            auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
+            ESP_LOGW(TAG, "Pairing mode secure_connections requested, but SC MITM constant unavailable; using legacy MITM bond");
 #elif defined(ESP_LE_AUTH_REQ_MITM)
-    auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
+            auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
+            ESP_LOGW(TAG, "Pairing mode secure_connections requested, using MITM fallback");
 #else
-    auth_req = ESP_LE_AUTH_BOND;
+            auth_req = ESP_LE_AUTH_BOND;
+            ESP_LOGW(TAG, "Pairing mode secure_connections requested, but MITM unavailable; using bond-only mode");
 #endif
-    iocap = ESP_IO_CAP_OUT;
-    uint32_t passkey = s_instance->passkey();
-    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &passkey, sizeof(passkey));
-    s_use_static_passkey = true;
-    s_require_mitm = true;
-    ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) passkey);
-    ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
+        } else {
+#if defined(ESP_LE_AUTH_REQ_MITM_BOND)
+            auth_req = ESP_LE_AUTH_REQ_MITM_BOND;
+#elif defined(ESP_LE_AUTH_REQ_MITM)
+            auth_req = static_cast<esp_ble_auth_req_t>(ESP_LE_AUTH_BOND | ESP_LE_AUTH_REQ_MITM);
+#else
+            auth_req = ESP_LE_AUTH_BOND;
+#endif
+            ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
+        }
+        iocap = ESP_IO_CAP_OUT;
+        uint32_t passkey = s_instance->passkey();
+        esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &passkey, sizeof(passkey));
+        s_use_static_passkey = true;
+        s_require_mitm = true;
+        ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) passkey);
     } else {
 #if defined(ESP_LE_AUTH_REQ_SC_BOND)
-    auth_req = ESP_LE_AUTH_REQ_SC_BOND;
+        auth_req = ESP_LE_AUTH_REQ_SC_BOND;
 #else
-    auth_req = ESP_LE_AUTH_BOND;
+        auth_req = ESP_LE_AUTH_BOND;
 #endif
-    s_use_static_passkey = false;
-    s_require_mitm = false;
-    ESP_LOGI(TAG, "Pairing mode: Just Works / host-selected secure bonding");
+        s_use_static_passkey = false;
+        s_require_mitm = false;
+        ESP_LOGI(TAG, "Pairing mode: Just Works / host-selected secure bonding");
     }
 
     esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
@@ -198,6 +229,13 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
                 }
                 // Advertising restart is handled in DISCONNECT_EVT to avoid duplicate restarts.
             }
+            break;
+        case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT:
+            ESP_LOGD(TAG, "GAP: Conn params updated (status=%d int=%u latency=%u timeout=%u)",
+                     param->update_conn_params.status,
+                     param->update_conn_params.conn_int,
+                     param->update_conn_params.latency,
+                     param->update_conn_params.timeout);
             break;
         default:
             break;
@@ -339,6 +377,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
         case ESP_GATTS_CONNECT_EVT: {
             ESP_LOGI(TAG, "GATTS: Connected");
             if (s_instance) s_instance->set_connected(true, param->connect.conn_id);
+            request_host_friendly_conn_params(param->connect.remote_bda);
             // Trigger encryption with security level matching configured pairing mode
             esp_ble_sec_act_t sec_act = s_require_mitm ? ESP_BLE_SEC_ENCRYPT_MITM : ESP_BLE_SEC_ENCRYPT_NO_MITM;
             esp_ble_set_encryption(param->connect.remote_bda, sec_act);

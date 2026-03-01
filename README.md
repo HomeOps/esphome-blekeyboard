@@ -78,6 +78,9 @@ espidf_ble_keyboard:
   # Optional: Set a 6-digit pairing code.
   # If omitted, the device will use "Just Works" (no PIN) pairing.
   passkey: 123456
+  # Optional pairing mode when passkey is set:
+  # legacy (default, Android-friendly) or secure_connections (Apple-friendly)
+  passkey_mode: legacy
 
 button:
 
@@ -175,6 +178,7 @@ binary_sensor:
 
 * **id** (Required, ID): The ID used to link buttons or automations to this keyboard.
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
+* **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding (best Android compatibility). `secure_connections` prefers LE Secure Connections MITM bonding (recommended for iOS/macOS passkey pairing).
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -313,6 +317,7 @@ Recommended pairing modes:
 
 * **Fastest pairing (recommended default):** Omit `passkey` (Just Works). Windows and Android typically pair instantly.
 * **Higher security:** Set `passkey`. Windows typically pairs quickly; Android may require a second attempt before fallback completes.
+* **iOS/macOS with passkey:** Use `passkey_mode: secure_connections`.
 
 Recommended order:
 
@@ -331,6 +336,7 @@ After the first successful bond, reconnect behavior is typically stable.
 * **Windows needs multiple pairing attempts:** Remove old Bluetooth entries first, then retry pairing after the first failed attempt. The component now avoids duplicate advertising restarts and keeps existing bonds unless the auth failure is a known `0x51` mismatch.
 * **Android says "can't connect":** Android often keeps stale BLE bonds. Remove the device from Bluetooth settings, reboot the ESP32, then pair again. If still failing, toggle phone Bluetooth off/on and retry.
 * **Android shows the wrong pairing code:** Ensure `passkey` is set in YAML and old bonds are removed before pairing. If Android still shows a host-generated code, remove all existing bonds and pair from a clean state. The component will automatically fall back to Just Works mode after repeated `0x51` auth failures.
+* **iOS/macOS with passkey not pairing:** Set `passkey_mode: secure_connections`, remove old Bluetooth bonds on both devices, then pair again.
 * **Typing speed:** The component includes a 20ms delay between keypresses to ensure the host OS registers them correctly. This can be adjusted in `espidf_ble_keyboard.cpp` if needed.
 * **Hibernate not working:** Hibernate uses the Windows Run dialog. Ensure the PC is not in a state where it is blocked (e.g., fullscreen app or UAC prompt). Also ensure hibernate is enabled: run `powercfg /hibernate on` in an admin command prompt.
 * **PC not waking from sleep:** Check that **USB Wake Support** (or similar) is enabled in your BIOS/UEFI Power Management settings.
