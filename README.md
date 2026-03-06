@@ -196,8 +196,8 @@ binary_sensor:
 
 State behavior:
 
-* **ON** = at least one BLE bond (paired host) is stored.
-* **OFF** = no BLE bonds are stored.
+* **ON** = keyboard is currently connected to a host.
+* **OFF** = keyboard is not connected.
 
 #### Action Types
 
