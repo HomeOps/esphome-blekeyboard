@@ -200,8 +200,8 @@ binary_sensor:
 
 State behavior:
 
-* **ON** = at least one BLE bond (paired host) is stored.
-* **OFF** = no BLE bonds are stored.
+* **ON** = a `GAP: Pairing Successful` event occurred on the current connection.
+* **OFF** = keyboard is disconnected (including host-side unpair) or not yet paired in this session.
 
 #### Action Types
 

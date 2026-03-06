@@ -92,14 +92,6 @@ static bool s_scan_rsp_data_set = false;
 static bool s_use_static_passkey = false;
 static bool s_require_mitm = false;
 
-static void update_paired_state_from_bond_db() {
-    if (s_instance == nullptr) {
-        return;
-    }
-    int bonded = esp_ble_get_bond_device_num();
-    s_instance->set_paired(bonded > 0);
-}
-
 static void maybe_reset_bonds_after_security_config_change() {
     if (s_instance == nullptr) {
         return;
@@ -293,7 +285,9 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
         case ESP_GAP_BLE_AUTH_CMPL_EVT:
             if (param->ble_security.auth_cmpl.success) {
                 ESP_LOGI(TAG, "GAP: Pairing Successful");
-                update_paired_state_from_bond_db();
+                if (s_instance) {
+                    s_instance->queue_paired_state(true);
+                }
             } else {
                 uint8_t fail_reason = param->ble_security.auth_cmpl.fail_reason;
                 ESP_LOGE(TAG, "GAP: Pairing Failed (0x%x)", fail_reason);
@@ -310,7 +304,9 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             }
             break;
         case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT:
-            update_paired_state_from_bond_db();
+            if (s_instance) {
+                s_instance->queue_paired_state(esp_ble_get_bond_device_num() > 0);
+            }
             break;
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT:
             ESP_LOGD(TAG, "GAP: Conn params updated (status=%d int=%u latency=%u timeout=%u)",
@@ -477,7 +473,11 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
         case ESP_GATTS_DISCONNECT_EVT:
             ESP_LOGI(TAG, "GATTS: Disconnected");
             ESP_LOGD(TAG, "GATTS: Disconnect reason 0x%02X", param->disconnect.reason);
-            if (s_instance) s_instance->set_connected(false, 0);
+            if (s_instance) {
+                s_instance->set_connected(false, 0);
+                // Host-side unpair often appears only as disconnect.
+                s_instance->queue_paired_state(false);
+            }
             proto_mode_val = 0x01;
             report_ccc_val = 0;
             boot_kb_in_ccc_val = 0;
@@ -533,10 +533,15 @@ void EspidfBleKeyboard::setup() {
     esp_ble_gatts_app_register(GATTS_APP_ID);
 
     set_connected(false, 0);
-    update_paired_state_from_bond_db();
+    // Pairing sensor starts OFF and turns ON after successful pairing.
+    set_paired(false);
 }
 
-void EspidfBleKeyboard::loop() {}
+void EspidfBleKeyboard::loop() {
+    if (pending_paired_update_.exchange(false)) {
+        set_paired(pending_paired_state_.load());
+    }
+}
 
 static uint16_t get_keyboard_input_handle() {
     const bool report_notify_enabled = (report_ccc_val & 0x0001) != 0;
