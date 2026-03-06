@@ -3,6 +3,7 @@
 #include "esphome/components/button/button.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include <string>
+#include <atomic>
 
 #include "esp_bt.h"
 #include "esp_bt_main.h"
@@ -57,6 +58,12 @@ class EspidfBleKeyboard : public Component {
   }
   bool is_paired() const { return is_paired_; }
 
+  // Queue paired-state changes from BLE callback context for main loop publish.
+  void queue_paired_state(bool paired) {
+    pending_paired_state_.store(paired);
+    pending_paired_update_.store(true);
+  }
+
   void set_connected(bool connected, uint16_t conn_id) {
     is_connected_ = connected;
     conn_id_ = conn_id;
@@ -68,6 +75,8 @@ class EspidfBleKeyboard : public Component {
   bool is_connected_{false};
   uint16_t conn_id_{0};
   bool is_paired_{false};
+  std::atomic<bool> pending_paired_update_{false};
+  std::atomic<bool> pending_paired_state_{false};
   binary_sensor::BinarySensor *paired_binary_sensor_{nullptr};
   
   uint32_t passkey_{0};

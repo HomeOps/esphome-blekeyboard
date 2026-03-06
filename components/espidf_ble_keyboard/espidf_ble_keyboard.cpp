@@ -89,7 +89,6 @@ static bool s_adv_data_set = false;
 static bool s_scan_rsp_data_set = false;
 static bool s_use_static_passkey = false;
 static bool s_require_mitm = false;
-static int s_bond_count_baseline = 0;
 
 static void apply_security_params(bool use_static_passkey) {
     esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;
@@ -190,11 +189,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             if (param->ble_security.auth_cmpl.success) {
                 ESP_LOGI(TAG, "GAP: Pairing Successful");
                 if (s_instance) {
-                    const int bond_count = esp_ble_get_bond_device_num();
-                    if (bond_count > s_bond_count_baseline) {
-                        s_instance->set_paired(true);
-                    }
-                    s_bond_count_baseline = bond_count;
+                    s_instance->queue_paired_state(true);
                 }
             } else {
                 uint8_t fail_reason = param->ble_security.auth_cmpl.fail_reason;
@@ -209,10 +204,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             break;
         case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT:
             if (s_instance) {
-                s_bond_count_baseline = esp_ble_get_bond_device_num();
-                if (s_bond_count_baseline == 0) {
-                    s_instance->set_paired(false);
-                }
+                s_instance->queue_paired_state(esp_ble_get_bond_device_num() > 0);
             }
             break;
         default:
@@ -401,12 +393,15 @@ void EspidfBleKeyboard::setup() {
 
     // Initial runtime connection state.
     set_connected(false, 0);
-    // Pairing sensor is event-driven for new pair operations.
-    s_bond_count_baseline = esp_ble_get_bond_device_num();
+    // Pairing sensor starts OFF and turns ON after a successful pairing event.
     set_paired(false);
 }
 
-void EspidfBleKeyboard::loop() {}
+void EspidfBleKeyboard::loop() {
+    if (pending_paired_update_.exchange(false)) {
+        set_paired(pending_paired_state_.load());
+    }
+}
 
 static uint16_t get_keyboard_input_handle() {
     if (proto_mode_val == 0x00 && s_boot_kb_input_handle != 0) {
