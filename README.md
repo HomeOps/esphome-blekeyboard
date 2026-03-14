@@ -4,7 +4,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 
 ## Features
 
-* **Standard HID Keyboard:** Recognized as a native keyboard by Windows and Android, with iOS/macOS support via `passkey_mode: secure_connections`.
+* **Standard HID Keyboard:** Recognized as a native keyboard by Windows, Android, and iOS. Full HOGP-compliant BLE HID with Device Information and Battery services. Use `passkey_mode: legacy` for Windows/Android, `passkey_mode: secure_connections` for iOS.
 * **Secure Pairing:** Supports a configurable 6-digit static passkey (PIN) for secure bonding, with automatic Android compatibility fallback in `passkey_mode: legacy`.
 * **Efficient Memory Usage:** Direct API implementation ensures stability even with complex ESPHome configurations.
 * **Key Combos:** Send any modifier + key combination using hex keycodes (e.g. Win+R, Ctrl+C).
@@ -186,7 +186,7 @@ binary_sensor:
 
 * **id** (Required, ID): The ID used to link buttons or automations to this keyboard.
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
-* **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding (best Android compatibility). `secure_connections` prefers LE Secure Connections MITM bonding (recommended for iOS/macOS passkey pairing).
+* **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -325,32 +325,36 @@ If pairing fails with "can't connect", remove the old bond on Android and pair a
 
 ---
 
-## Pairing with iOS/macOS
+## Pairing with iOS
 
-For Apple hosts using passkey pairing:
+For iOS using passkey pairing:
 
 1. Set `passkey` and `passkey_mode: secure_connections` in `espidf_ble_keyboard`.
-2. Remove any previous **ESP32 BLE KB** bond from iOS/macOS Bluetooth settings.
-3. Reboot the ESP32 (or reflash), then pair again from iOS/macOS.
+2. Remove any previous **ESP32 BLE KB** bond from iOS Bluetooth settings.
+3. Reboot the ESP32 (or reflash), then pair again from iOS.
+4. Enter the configured passkey when prompted.
+
+After pairing, you should see all CCC subscriptions in the log (keyboard, consumer, system) confirming iOS has fully enumerated the HID service.
 
 Notes:
 
-* `passkey_mode: secure_connections` is the recommended mode for iOS/macOS passkey pairing.
-* The automatic `0x51` fallback to Just Works is intended for `passkey_mode: legacy` compatibility flows.
+* `passkey_mode: secure_connections` is the tested and recommended mode for iOS.
+* The component includes Device Information and Battery services required by iOS for HOGP (HID over GATT Profile) compliance.
+* macOS is expected to work the same way but has not been explicitly tested.
 
 ---
 
 ## Known Working Pairing Notes
 
-The current implementation has been validated on both Windows and Android.
-Tested on Windows 11 and Android 16.
+The current implementation has been validated on Windows, Android, and iOS.
+Tested on Windows 11, Android 16, and iOS.
 For first-time pairing, Android may require more than one attempt while it refreshes BLE cache and bond state.
 
 Recommended pairing modes:
 
 * **Fastest pairing (recommended default):** Omit `passkey` (Just Works). Windows and Android typically pair instantly.
-* **Higher security:** Set `passkey`. Windows typically pairs quickly; Android may require a second attempt before fallback completes.
-* **iOS/macOS with passkey:** Use `passkey_mode: secure_connections`.
+* **Windows/Android with passkey:** Set `passkey` with `passkey_mode: legacy` (default). Windows typically pairs quickly; Android may require a second attempt before fallback completes.
+* **iOS with passkey:** Set `passkey` with `passkey_mode: secure_connections`.
 
 Recommended order:
 
@@ -369,8 +373,8 @@ After the first successful bond, reconnect behavior is typically stable.
 * **Windows needs multiple pairing attempts:** Remove old Bluetooth entries first, then retry pairing after the first failed attempt. The component now avoids duplicate advertising restarts and keeps existing bonds unless the auth failure is a known `0x51` mismatch.
 * **Android says "can't connect":** Android often keeps stale BLE bonds. Remove the device from Bluetooth settings, reboot the ESP32, then pair again. If still failing, toggle phone Bluetooth off/on and retry.
 * **Android shows the wrong pairing code:** Ensure `passkey` is set in YAML and old bonds are removed before pairing. If Android still shows a host-generated code, remove all existing bonds and pair from a clean state. In `passkey_mode: legacy`, the component can automatically fall back to Just Works mode after repeated `0x51` auth failures.
-* **iOS/macOS with passkey not pairing:** Set `passkey_mode: secure_connections`, remove old Bluetooth bonds on both devices, then pair again.
-* **iOS/macOS pairs but no typing/control:** Remove the bond on both devices and pair again with the latest firmware. The component now selects the active subscribed keyboard input report (boot/report mode) per connection to avoid stale post-pair control state.
+* **iOS not pairing:** Set `passkey_mode: secure_connections`, remove old Bluetooth bonds on both devices, then pair again.
+* **iOS pairs but no typing/control:** Ensure you are using `passkey_mode: secure_connections`. Remove the bond on both the iOS device and the ESP32 (reboot/reflash), then pair again. After pairing, check the log for `Consumer CCC=0x0001` and `System CCC=0x0001` — if these are missing, iOS has not fully subscribed to the HID reports. Reflash and re-pair from a clean state.
 * **Typing speed:** The component includes a 20ms delay between keypresses to ensure the host OS registers them correctly. This can be adjusted in `espidf_ble_keyboard.cpp` if needed.
 * **Hibernate not working:** Hibernate uses the Windows Run dialog. Ensure the PC is not in a state where it is blocked (e.g., fullscreen app or UAC prompt). Also ensure hibernate is enabled: run `powercfg /hibernate on` in an admin command prompt.
 * **PC not waking from sleep:** Check that **USB Wake Support** (or similar) is enabled in your BIOS/UEFI Power Management settings.
