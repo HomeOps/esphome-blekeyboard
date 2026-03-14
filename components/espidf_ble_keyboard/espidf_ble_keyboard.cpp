@@ -304,7 +304,10 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             }
             break;
         case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT:
-            if (s_instance) {
+            // Only update paired state if we're actually connected.
+            // During 0x51 passkey fallback, bond removal happens while disconnected
+            // and should not briefly flash the paired sensor ON.
+            if (s_instance && s_instance->is_connected()) {
                 s_instance->queue_paired_state(esp_ble_get_bond_device_num() > 0);
             }
             break;
