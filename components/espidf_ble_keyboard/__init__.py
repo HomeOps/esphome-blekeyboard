@@ -6,6 +6,9 @@ DEPENDENCIES = ["esp32"]
 
 # Define the passkey configuration key
 CONF_PASSKEY = "passkey"
+CONF_PASSKEY_MODE = "passkey_mode"
+PASSKEY_MODE_LEGACY = "legacy"
+PASSKEY_MODE_SECURE_CONNECTIONS = "secure_connections"
 
 espidf_ble_keyboard_ns = cg.esphome_ns.namespace("espidf_ble_keyboard")
 EspidfBleKeyboard = espidf_ble_keyboard_ns.class_("EspidfBleKeyboard", cg.Component)
@@ -14,6 +17,11 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(EspidfBleKeyboard),
     # Allow a 6-digit integer for the passkey
     cv.Optional(CONF_PASSKEY): cv.int_range(min=0, max=999999),
+    cv.Optional(CONF_PASSKEY_MODE, default=PASSKEY_MODE_LEGACY): cv.one_of(
+        PASSKEY_MODE_LEGACY,
+        PASSKEY_MODE_SECURE_CONNECTIONS,
+        lower=True,
+    ),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
@@ -23,6 +31,10 @@ async def to_code(config):
     # If a passkey is provided in the YAML, set it in the C++ object
     if CONF_PASSKEY in config:
         cg.add(var.set_passkey(config[CONF_PASSKEY]))
+
+    cg.add(var.set_passkey_secure_connections(
+        config[CONF_PASSKEY_MODE] == PASSKEY_MODE_SECURE_CONNECTIONS
+    ))
 
     # Run after WiFi (priority -100)
     cg.add(var.set_setup_priority(-200))

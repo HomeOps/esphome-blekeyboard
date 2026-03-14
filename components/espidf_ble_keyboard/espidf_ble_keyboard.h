@@ -2,8 +2,8 @@
 #include "esphome/core/component.h"
 #include "esphome/components/button/button.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
-#include <string>
 #include <atomic>
+#include <string>
 
 #include "esp_bt.h"
 #include "esp_bt_main.h"
@@ -40,8 +40,10 @@ class EspidfBleKeyboard : public Component {
     passkey_ = passkey; 
     has_passkey_ = true; 
   }
+  void set_passkey_secure_connections(bool enabled) { passkey_secure_connections_ = enabled; }
   bool has_passkey() const { return has_passkey_; }
   uint32_t passkey() const { return passkey_; }
+  bool passkey_secure_connections() const { return passkey_secure_connections_; }
 
   void set_paired_binary_sensor(binary_sensor::BinarySensor *sensor) {
     paired_binary_sensor_ = sensor;
@@ -58,7 +60,7 @@ class EspidfBleKeyboard : public Component {
   }
   bool is_paired() const { return is_paired_; }
 
-  // Queue paired-state changes from BLE callback context for main loop publish.
+  // Queue state updates from BLE callback context for publish in loop().
   void queue_paired_state(bool paired) {
     pending_paired_state_.store(paired);
     pending_paired_update_.store(true);
@@ -81,6 +83,7 @@ class EspidfBleKeyboard : public Component {
   
   uint32_t passkey_{0};
   bool has_passkey_{false};
+  bool passkey_secure_connections_{false};
 };
 
 class EspidfBleKeyboardButton : public button::Button, public Component {
