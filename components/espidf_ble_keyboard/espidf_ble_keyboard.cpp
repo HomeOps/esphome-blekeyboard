@@ -320,37 +320,102 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
     }
 }
 
-// ── GATT Attribute Table ─────────────────────────────────────────────────────
+// ── GATT Attribute Tables (one per service — ESP-IDF requires separate tables) ─
+
+// Encrypted permission shorthands — iOS requires these on HID characteristics
+#define PERM_R          ESP_GATT_PERM_READ
+#define PERM_RW         (ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE)
+#define PERM_R_ENC      ESP_GATT_PERM_READ_ENCRYPTED
+#define PERM_W_ENC      ESP_GATT_PERM_WRITE_ENCRYPTED
+#define PERM_RW_ENC     (ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED)
+
+static const uint16_t UUID_PRI_SERVICE        = ESP_GATT_UUID_PRI_SERVICE;
+static const uint16_t UUID_CHAR_DECLARE       = ESP_GATT_UUID_CHAR_DECLARE;
+static const uint16_t UUID_CHAR_CLIENT_CONFIG = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
+static const uint16_t UUID_RPT_REF_DESCR      = ESP_GATT_UUID_RPT_REF_DESCR;
+static const uint16_t UUID_DIS_SVC            = 0x180A;
+static const uint16_t UUID_PNP_ID             = 0x2A50;
+static const uint16_t UUID_MFR_NAME           = 0x2A29;
+static const uint16_t UUID_BAS_SVC            = 0x180F;
+static const uint16_t UUID_BATTERY_LEVEL      = 0x2A19;
+static const uint16_t UUID_HID_SVC            = ESP_GATT_UUID_HID_SVC;
+static const uint16_t UUID_HID_INFORMATION    = ESP_GATT_UUID_HID_INFORMATION;
+static const uint16_t UUID_HID_REPORT_MAP     = ESP_GATT_UUID_HID_REPORT_MAP;
+static const uint16_t UUID_HID_CONTROL_POINT  = ESP_GATT_UUID_HID_CONTROL_POINT;
+static const uint16_t UUID_HID_PROTO_MODE     = ESP_GATT_UUID_HID_PROTO_MODE;
+static const uint16_t UUID_HID_REPORT         = ESP_GATT_UUID_HID_REPORT;
+static const uint16_t UUID_HID_BOOT_KB_INPUT  = 0x2A22;
+static const uint16_t UUID_HID_BOOT_KB_OUTPUT = 0x2A32;
+
+static const uint8_t PROP_READ        = ESP_GATT_CHAR_PROP_BIT_READ;
+static const uint8_t PROP_WRITE_NR    = ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
+static const uint8_t PROP_RW_NR       = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
+static const uint8_t PROP_READ_WRITE  = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
+static const uint8_t PROP_READ_NOTIFY = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
+
+// ── DIS (Device Information Service) ─────────────────────────────────────────
+static uint8_t  pnp_id_val[7]     = {0x01, 0xE5, 0x02, 0xB2, 0xA1, 0x00, 0x01};
+static const char mfr_name_val[]  = "Espressif";
+
+enum { DIS_IDX_SVC, DIS_IDX_PNP_CHAR, DIS_IDX_PNP_VAL, DIS_IDX_MFR_CHAR, DIS_IDX_MFR_VAL, DIS_IDX_NB };
+static uint16_t dis_handle_table[DIS_IDX_NB];
+static const esp_gatts_attr_db_t dis_attr_db[DIS_IDX_NB] = {
+    [DIS_IDX_SVC]      = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, 2, 2, (uint8_t *)&UUID_DIS_SVC}},
+    [DIS_IDX_PNP_CHAR] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ}},
+    [DIS_IDX_PNP_VAL]  = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PNP_ID, PERM_R, sizeof(pnp_id_val), sizeof(pnp_id_val), pnp_id_val}},
+    [DIS_IDX_MFR_CHAR] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ}},
+    [DIS_IDX_MFR_VAL]  = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_MFR_NAME, PERM_R, sizeof(mfr_name_val) - 1, sizeof(mfr_name_val) - 1, (uint8_t *)mfr_name_val}},
+};
+
+// ── BAS (Battery Service) ────────────────────────────────────────────────────
+static uint8_t  battery_level_val = 100;
+static uint16_t battery_ccc_val   = 0;
+
+enum { BAS_IDX_SVC, BAS_IDX_BAT_CHAR, BAS_IDX_BAT_VAL, BAS_IDX_BAT_CCC, BAS_IDX_NB };
+static uint16_t bas_handle_table[BAS_IDX_NB];
+static const esp_gatts_attr_db_t bas_attr_db[BAS_IDX_NB] = {
+    [BAS_IDX_SVC]      = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, 2, 2, (uint8_t *)&UUID_BAS_SVC}},
+    [BAS_IDX_BAT_CHAR] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ_NOTIFY}},
+    [BAS_IDX_BAT_VAL]  = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_BATTERY_LEVEL, PERM_R, 1, 1, &battery_level_val}},
+    [BAS_IDX_BAT_CCC]  = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, PERM_RW, 2, 2, (uint8_t *)&battery_ccc_val}},
+};
+
+// ── HID Service ──────────────────────────────────────────────────────────────
+static uint8_t  hid_info_val[4]       = {0x11, 0x01, 0x00, 0x03};
+static uint8_t  hid_ctrl_val          = 0;
+static uint8_t  proto_mode_val        = 0x01;
+static uint8_t  boot_kb_in_val[8]     = {0};
+static uint16_t boot_kb_in_ccc_val    = 0;
+static uint8_t  boot_kb_out_val[1]    = {0};
+static uint8_t  report_val[8]         = {0};
+static uint16_t report_ccc_val        = 0;
+static uint8_t  report_ref_val[2]     = {0x01, 0x01};
+static uint8_t  report_out_val[1]     = {0};
+static uint8_t  report_out_ref_val[2] = {0x01, 0x02};
+static uint8_t  consumer_val[2]       = {0};
+static uint16_t consumer_ccc_val      = 0;
+static uint8_t  consumer_ref_val[2]   = {0x02, 0x01};
+static uint8_t  system_val            = 0;
+static uint16_t system_ccc_val        = 0;
+static uint8_t  system_ref_val[2]     = {0x03, 0x01};
+
 enum {
-    // ── Device Information Service (0x180A) ──
-    IDX_DIS_SVC,
-    IDX_DIS_CHAR_PNP_ID,        IDX_DIS_CHAR_PNP_ID_VAL,
-    IDX_DIS_CHAR_MFR_NAME,      IDX_DIS_CHAR_MFR_NAME_VAL,
-    // ── Battery Service (0x180F) ──
-    IDX_BAS_SVC,
-    IDX_BAS_CHAR_BATTERY,       IDX_BAS_CHAR_BATTERY_VAL,
-    IDX_BAS_CHAR_BATTERY_CCC,
-    // ── HID Service (0x1812) ──
     IDX_SVC,
     IDX_CHAR_HID_INFO,     IDX_CHAR_HID_INFO_VAL,
     IDX_CHAR_REPORT_MAP,   IDX_CHAR_REPORT_MAP_VAL,
     IDX_CHAR_HID_CTRL,     IDX_CHAR_HID_CTRL_VAL,
     IDX_CHAR_PROTO_MODE,   IDX_CHAR_PROTO_MODE_VAL,
-    // Boot keyboard reports
     IDX_CHAR_BOOT_KB_IN,   IDX_CHAR_BOOT_KB_IN_VAL,
     IDX_CHAR_BOOT_KB_IN_CCC,
     IDX_CHAR_BOOT_KB_OUT,  IDX_CHAR_BOOT_KB_OUT_VAL,
-    // Keyboard report (Report ID 1)
     IDX_CHAR_REPORT,       IDX_CHAR_REPORT_VAL,
     IDX_CHAR_REPORT_CCC,
     IDX_CHAR_REPORT_REF,
     IDX_CHAR_REPORT_OUT,   IDX_CHAR_REPORT_OUT_VAL,
     IDX_CHAR_REPORT_OUT_REF,
-    // Consumer control report (Report ID 2)
     IDX_CHAR_CONSUMER,     IDX_CHAR_CONSUMER_VAL,
     IDX_CHAR_CONSUMER_CCC,
     IDX_CHAR_CONSUMER_REF,
-    // System control report (Report ID 3)
     IDX_CHAR_SYSTEM,       IDX_CHAR_SYSTEM_VAL,
     IDX_CHAR_SYSTEM_CCC,
     IDX_CHAR_SYSTEM_REF,
@@ -371,80 +436,7 @@ static uint16_t s_consumer_ccc_handle = 0;
 static uint16_t s_system_report_handle = 0;
 static uint16_t s_system_ccc_handle = 0;
 
-// ── DIS + BAS attribute values ───────────────────────────────────────────────
-// PnP ID: Bluetooth SIG (0x01), Vendor 0x02E5 (Espressif), Product 0xA1B2, Version 1.0
-static uint8_t  pnp_id_val[7]     = {0x01, 0xE5, 0x02, 0xB2, 0xA1, 0x00, 0x01};
-static const char mfr_name_val[]  = "Espressif";
-static uint8_t  battery_level_val = 100;  // Static 100% (USB-powered)
-static uint16_t battery_ccc_val   = 0;
-
-static uint8_t  hid_info_val[4]       = {0x11, 0x01, 0x00, 0x03};
-static uint8_t  hid_ctrl_val          = 0;
-static uint8_t  proto_mode_val        = 0x01;
-static uint8_t  boot_kb_in_val[8]     = {0};
-static uint16_t boot_kb_in_ccc_val    = 0;
-static uint8_t  boot_kb_out_val[1]    = {0};
-static uint8_t  report_val[8]         = {0};
-static uint16_t report_ccc_val        = 0;
-static uint8_t  report_ref_val[2]     = {0x01, 0x01};
-static uint8_t  report_out_val[1]     = {0};
-static uint8_t  report_out_ref_val[2] = {0x01, 0x02};
-static uint8_t  consumer_val[2]       = {0};
-static uint16_t consumer_ccc_val      = 0;
-static uint8_t  consumer_ref_val[2]   = {0x02, 0x01};
-static uint8_t  system_val            = 0;
-static uint16_t system_ccc_val        = 0;
-static uint8_t  system_ref_val[2]     = {0x03, 0x01};
-
-static const uint16_t UUID_PRI_SERVICE        = ESP_GATT_UUID_PRI_SERVICE;
-static const uint16_t UUID_CHAR_DECLARE       = ESP_GATT_UUID_CHAR_DECLARE;
-static const uint16_t UUID_CHAR_CLIENT_CONFIG = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
-static const uint16_t UUID_RPT_REF_DESCR      = ESP_GATT_UUID_RPT_REF_DESCR;
-// DIS
-static const uint16_t UUID_DIS_SVC            = 0x180A;
-static const uint16_t UUID_PNP_ID             = 0x2A50;
-static const uint16_t UUID_MFR_NAME           = 0x2A29;
-// BAS
-static const uint16_t UUID_BAS_SVC            = 0x180F;
-static const uint16_t UUID_BATTERY_LEVEL      = 0x2A19;
-// HID
-static const uint16_t UUID_HID_SVC            = ESP_GATT_UUID_HID_SVC;
-static const uint16_t UUID_HID_INFORMATION    = ESP_GATT_UUID_HID_INFORMATION;
-static const uint16_t UUID_HID_REPORT_MAP     = ESP_GATT_UUID_HID_REPORT_MAP;
-static const uint16_t UUID_HID_CONTROL_POINT  = ESP_GATT_UUID_HID_CONTROL_POINT;
-static const uint16_t UUID_HID_PROTO_MODE     = ESP_GATT_UUID_HID_PROTO_MODE;
-static const uint16_t UUID_HID_REPORT         = ESP_GATT_UUID_HID_REPORT;
-static const uint16_t UUID_HID_BOOT_KB_INPUT  = 0x2A22;
-static const uint16_t UUID_HID_BOOT_KB_OUTPUT = 0x2A32;
-
-static const uint8_t PROP_READ        = ESP_GATT_CHAR_PROP_BIT_READ;
-static const uint8_t PROP_WRITE_NR    = ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
-static const uint8_t PROP_RW_NR       = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
-static const uint8_t PROP_READ_WRITE  = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_WRITE_NR;
-static const uint8_t PROP_READ_NOTIFY = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
-
-// Encrypted permission shorthands — iOS requires these on HID characteristics
-#define PERM_R          ESP_GATT_PERM_READ
-#define PERM_RW         (ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE)
-#define PERM_R_ENC      ESP_GATT_PERM_READ_ENCRYPTED
-#define PERM_W_ENC      ESP_GATT_PERM_WRITE_ENCRYPTED
-#define PERM_RW_ENC     (ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED)
-
-static uint8_t s_services_started = 0;
-
 static const esp_gatts_attr_db_t hid_attr_db[HID_IDX_NB] = {
-    // ════ Device Information Service (0x180A) ════
-    [IDX_DIS_SVC]              = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, 2, 2, (uint8_t *)&UUID_DIS_SVC}},
-    [IDX_DIS_CHAR_PNP_ID]     = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ}},
-    [IDX_DIS_CHAR_PNP_ID_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PNP_ID, PERM_R, sizeof(pnp_id_val), sizeof(pnp_id_val), pnp_id_val}},
-    [IDX_DIS_CHAR_MFR_NAME]     = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ}},
-    [IDX_DIS_CHAR_MFR_NAME_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_MFR_NAME, PERM_R, sizeof(mfr_name_val) - 1, sizeof(mfr_name_val) - 1, (uint8_t *)mfr_name_val}},
-    // ════ Battery Service (0x180F) ════
-    [IDX_BAS_SVC]              = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, 2, 2, (uint8_t *)&UUID_BAS_SVC}},
-    [IDX_BAS_CHAR_BATTERY]     = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ_NOTIFY}},
-    [IDX_BAS_CHAR_BATTERY_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_BATTERY_LEVEL, PERM_R, 1, 1, &battery_level_val}},
-    [IDX_BAS_CHAR_BATTERY_CCC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, PERM_RW, 2, 2, (uint8_t *)&battery_ccc_val}},
-    // ════ HID Service (0x1812) — encrypted permissions for iOS ════
     [IDX_SVC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, sizeof(uint16_t), sizeof(uint16_t), (uint8_t *)&UUID_HID_SVC}},
     [IDX_CHAR_HID_INFO] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ}},
     [IDX_CHAR_HID_INFO_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_INFORMATION, PERM_R_ENC, sizeof(hid_info_val), sizeof(hid_info_val), hid_info_val}},
@@ -480,33 +472,54 @@ static const esp_gatts_attr_db_t hid_attr_db[HID_IDX_NB] = {
     [IDX_CHAR_SYSTEM_REF] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_RPT_REF_DESCR, PERM_R_ENC, sizeof(system_ref_val), sizeof(system_ref_val), system_ref_val}},
 };
 
+// Service instance IDs for create_attr_tab
+#define SVC_INST_DIS  0
+#define SVC_INST_BAS  1
+#define SVC_INST_HID  2
+
+static uint8_t s_services_started = 0;
+
 // ── GATTS Event Handler ──────────────────────────────────────────────────────
 static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     switch (event) {
         case ESP_GATTS_REG_EVT:
             s_gatts_if = gatts_if;
             esp_ble_gap_set_device_name("ESP32 BLE KB");
-            esp_ble_gatts_create_attr_tab(hid_attr_db, gatts_if, HID_IDX_NB, 0);
+            // Create each service as a separate attribute table
+            esp_ble_gatts_create_attr_tab(dis_attr_db, gatts_if, DIS_IDX_NB, SVC_INST_DIS);
+            esp_ble_gatts_create_attr_tab(bas_attr_db, gatts_if, BAS_IDX_NB, SVC_INST_BAS);
+            esp_ble_gatts_create_attr_tab(hid_attr_db, gatts_if, HID_IDX_NB, SVC_INST_HID);
             break;
-        case ESP_GATTS_CREAT_ATTR_TAB_EVT:
-            memcpy(hid_handle_table, param->add_attr_tab.handles, sizeof(hid_handle_table));
-            s_proto_mode_handle = hid_handle_table[IDX_CHAR_PROTO_MODE_VAL];
-            s_boot_kb_input_handle = hid_handle_table[IDX_CHAR_BOOT_KB_IN_VAL];
-            s_boot_kb_input_ccc_handle = hid_handle_table[IDX_CHAR_BOOT_KB_IN_CCC];
-            s_boot_kb_output_handle = hid_handle_table[IDX_CHAR_BOOT_KB_OUT_VAL];
-            s_hid_report_handle = hid_handle_table[IDX_CHAR_REPORT_VAL];
-            s_hid_report_ccc_handle = hid_handle_table[IDX_CHAR_REPORT_CCC];
-            s_hid_output_report_handle = hid_handle_table[IDX_CHAR_REPORT_OUT_VAL];
-            s_consumer_report_handle = hid_handle_table[IDX_CHAR_CONSUMER_VAL];
-            s_consumer_ccc_handle = hid_handle_table[IDX_CHAR_CONSUMER_CCC];
-            s_system_report_handle = hid_handle_table[IDX_CHAR_SYSTEM_VAL];
-            s_system_ccc_handle = hid_handle_table[IDX_CHAR_SYSTEM_CCC];
-            // Start all three services (DIS + BAS + HID)
-            s_services_started = 0;
-            esp_ble_gatts_start_service(hid_handle_table[IDX_DIS_SVC]);
-            esp_ble_gatts_start_service(hid_handle_table[IDX_BAS_SVC]);
-            esp_ble_gatts_start_service(hid_handle_table[IDX_SVC]);
+        case ESP_GATTS_CREAT_ATTR_TAB_EVT: {
+            if (param->add_attr_tab.status != ESP_GATT_OK) {
+                ESP_LOGE(TAG, "GATTS: Attr table create failed (svc=%u status=%d)",
+                         param->add_attr_tab.svc_inst_id, param->add_attr_tab.status);
+                break;
+            }
+            uint8_t svc_id = param->add_attr_tab.svc_inst_id;
+            if (svc_id == SVC_INST_DIS) {
+                memcpy(dis_handle_table, param->add_attr_tab.handles, sizeof(dis_handle_table));
+                esp_ble_gatts_start_service(dis_handle_table[DIS_IDX_SVC]);
+            } else if (svc_id == SVC_INST_BAS) {
+                memcpy(bas_handle_table, param->add_attr_tab.handles, sizeof(bas_handle_table));
+                esp_ble_gatts_start_service(bas_handle_table[BAS_IDX_SVC]);
+            } else if (svc_id == SVC_INST_HID) {
+                memcpy(hid_handle_table, param->add_attr_tab.handles, sizeof(hid_handle_table));
+                s_proto_mode_handle = hid_handle_table[IDX_CHAR_PROTO_MODE_VAL];
+                s_boot_kb_input_handle = hid_handle_table[IDX_CHAR_BOOT_KB_IN_VAL];
+                s_boot_kb_input_ccc_handle = hid_handle_table[IDX_CHAR_BOOT_KB_IN_CCC];
+                s_boot_kb_output_handle = hid_handle_table[IDX_CHAR_BOOT_KB_OUT_VAL];
+                s_hid_report_handle = hid_handle_table[IDX_CHAR_REPORT_VAL];
+                s_hid_report_ccc_handle = hid_handle_table[IDX_CHAR_REPORT_CCC];
+                s_hid_output_report_handle = hid_handle_table[IDX_CHAR_REPORT_OUT_VAL];
+                s_consumer_report_handle = hid_handle_table[IDX_CHAR_CONSUMER_VAL];
+                s_consumer_ccc_handle = hid_handle_table[IDX_CHAR_CONSUMER_CCC];
+                s_system_report_handle = hid_handle_table[IDX_CHAR_SYSTEM_VAL];
+                s_system_ccc_handle = hid_handle_table[IDX_CHAR_SYSTEM_CCC];
+                esp_ble_gatts_start_service(hid_handle_table[IDX_SVC]);
+            }
             break;
+        }
         case ESP_GATTS_START_EVT:
             s_services_started++;
             ESP_LOGD(TAG, "GATTS: Service started (%u/3)", s_services_started);
