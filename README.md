@@ -83,7 +83,7 @@ espidf_ble_keyboard:
   # If omitted, the device will use "Just Works" (no PIN) pairing.
   passkey: 123456
   # Optional pairing mode when passkey is set:
-  # legacy (default, Android-friendly) or secure_connections (Apple-friendly)
+  # legacy (default, Windows/Android-friendly) or secure_connections (Apple-friendly)
   passkey_mode: legacy
 
 button:
