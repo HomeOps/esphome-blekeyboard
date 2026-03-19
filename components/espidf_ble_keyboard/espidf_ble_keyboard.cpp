@@ -611,9 +611,22 @@ void EspidfBleKeyboard::setup() {
     esp_bluedroid_init();
     esp_bluedroid_enable();
 
+    // Force clear all stale bonds — ESP-IDF 5.5.3 is stricter about bond key loading.
+    // This prevents the handle=0 / 0x66 auth failure loop on first boot after reflash.
+    int dev_num = esp_ble_get_bond_device_num();
+    if (dev_num > 0) {
+        ESP_LOGW(TAG, "Clearing %d stale bond(s) from NVS", dev_num);
+        std::vector<esp_ble_bond_dev_t> dev_list(static_cast<size_t>(dev_num));
+        int query_num = dev_num;
+        if (esp_ble_get_bond_device_list(&query_num, dev_list.data()) == ESP_OK) {
+            for (int i = 0; i < query_num; i++) {
+                esp_ble_remove_bond_device(dev_list[static_cast<size_t>(i)].bd_addr);
+            }
+        }
+    }
+
     maybe_reset_bonds_after_security_config_change();
 
-    // Configure security for BLE HID pairing.
     apply_security_params(this->has_passkey_);
 
     esp_ble_gap_register_callback(gap_event_handler);
@@ -621,7 +634,6 @@ void EspidfBleKeyboard::setup() {
     esp_ble_gatts_app_register(GATTS_APP_ID);
 
     set_connected(false, 0);
-    // Pairing sensor starts OFF and turns ON after successful pairing.
     set_paired(false);
 }
 
