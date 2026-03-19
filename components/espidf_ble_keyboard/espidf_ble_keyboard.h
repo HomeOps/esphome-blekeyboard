@@ -35,9 +35,14 @@ class EspidfBleKeyboard : public Component {
   void send_volume_down();
   void send_mute();
 
-  void set_passkey(uint32_t passkey) {
-    passkey_ = passkey;
-    has_passkey_ = true;
+  // Setter for YAML-configured device name
+  void set_device_name(const std::string &name) { device_name_ = name; }
+  const std::string &device_name() const { return device_name_; }
+
+  // Setter and check for YAML-configured passkey
+  void set_passkey(uint32_t passkey) { 
+    passkey_ = passkey; 
+    has_passkey_ = true; 
   }
   void set_passkey_secure_connections(bool enabled) { passkey_secure_connections_ = enabled; }
   bool has_passkey() const { return has_passkey_; }
@@ -72,6 +77,7 @@ class EspidfBleKeyboard : public Component {
   uint16_t conn_id() const { return conn_id_; }
 
  protected:
+  std::string device_name_{"ESP32 BLE KB"};
   bool is_connected_{false};
   uint16_t conn_id_{0};
   bool is_paired_{false};
