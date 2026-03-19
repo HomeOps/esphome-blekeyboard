@@ -18,17 +18,13 @@ class EspidfBleKeyboard : public Component {
  public:
   void setup() override;
   void loop() override;
-
-  // Run after WiFi (-100) and web_server (-200 would conflict, use -200 explicitly)
   float get_setup_priority() const override { return -200.0f; }
-
   void send_string(const std::string &str);
   void send_ctrl_alt_del();
   void send_key_combo(uint8_t modifiers, uint8_t keycode);
   void send_sleep();
   void send_shutdown();
   void send_hibernate();
-  // Consumer control
   void send_consumer(uint16_t usage);
   void send_power();
   void send_media_play_pause();
@@ -39,10 +35,9 @@ class EspidfBleKeyboard : public Component {
   void send_volume_down();
   void send_mute();
 
-  // Setter and check for YAML-configured passkey
-  void set_passkey(uint32_t passkey) { 
-    passkey_ = passkey; 
-    has_passkey_ = true; 
+  void set_passkey(uint32_t passkey) {
+    passkey_ = passkey;
+    has_passkey_ = true;
   }
   void set_passkey_secure_connections(bool enabled) { passkey_secure_connections_ = enabled; }
   bool has_passkey() const { return has_passkey_; }
@@ -64,7 +59,6 @@ class EspidfBleKeyboard : public Component {
   }
   bool is_paired() const { return is_paired_; }
 
-  // Queue state updates from BLE callback context for publish in loop().
   void queue_paired_state(bool paired) {
     pending_paired_state_.store(paired);
     pending_paired_update_.store(true);
@@ -84,18 +78,16 @@ class EspidfBleKeyboard : public Component {
   std::atomic<bool> pending_paired_update_{false};
   std::atomic<bool> pending_paired_state_{false};
   binary_sensor::BinarySensor *paired_binary_sensor_{nullptr};
-  
   uint32_t passkey_{0};
   bool has_passkey_{false};
   bool passkey_secure_connections_{false};
 };
 
-class EspidfBleKeyboardButton : public button::Button, public Component {
+class EspidfBleKeyboardButton : public button::Button {
  public:
   void set_parent(EspidfBleKeyboard *parent) { parent_ = parent; }
   void press_action() override;
   void set_action(const std::string &action) { action_ = action; }
-  float get_setup_priority() const override { return -200.0f; }
  protected:
   EspidfBleKeyboard *parent_{nullptr};
   std::string action_;
@@ -103,15 +95,3 @@ class EspidfBleKeyboardButton : public button::Button, public Component {
 
 }  // namespace espidf_ble_keyboard
 }  // namespace esphome
-```
-
-The two changes are:
-
-1. `EspidfBleKeyboard` — added `float get_setup_priority() const override { return -200.0f; }` after `loop()`, preserving the exact same priority value (`-200`) that the old `set_setup_priority(-200)` call in `__init__.py` was setting.
-
-2. `EspidfBleKeyboardButton` — added the same override, since it also inherits from `Component` and ESPHome may generate a `set_setup_priority` call for it too via the button platform's `__init__.py`.
-
-Apply both this `.h` and the fixed `__init__.py` from my previous message, then do a clean build. After editing the cached files, also delete the build cache to make sure the old generated `main.cpp` is thrown away:
-```
-# In HA terminal / SSH
-rm -rf /config/.esphome/build/bluetooth-keyboard
