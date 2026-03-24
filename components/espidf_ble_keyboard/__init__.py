@@ -16,7 +16,7 @@ EspidfBleKeyboard = espidf_ble_keyboard_ns.class_("EspidfBleKeyboard", cg.Compon
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(EspidfBleKeyboard),
-    cv.Optional(CONF_DEVICE_NAME, default="ESP32 BLE KB"): cv.string,
+    cv.Optional(CONF_DEVICE_NAME, default="ESP32 BLE KB"): cv.All(cv.string, cv.Length(max=29)),
     cv.Optional(CONF_PASSKEY): cv.int_range(min=0, max=999999),
     cv.Optional(CONF_PASSKEY_MODE, default=PASSKEY_MODE_LEGACY): cv.one_of(
         PASSKEY_MODE_LEGACY,
