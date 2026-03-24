@@ -79,6 +79,8 @@ external_components:
 
 espidf_ble_keyboard:
   id: my_keyboard
+  # Optional: BLE device name shown during pairing (max 29 chars, default: "ESP32 BLE KB")
+  device_name: "ESP32 BLE KB"
   # Optional: Set a 6-digit pairing code.
   # If omitted, the device will use "Just Works" (no PIN) pairing.
   passkey: 123456
@@ -185,6 +187,7 @@ binary_sensor:
 ### `espidf_ble_keyboard`
 
 * **id** (Required, ID): The ID used to link buttons or automations to this keyboard.
+* **device_name** (Optional, string): The BLE device name advertised during pairing. Defaults to `ESP32 BLE KB`. Maximum 29 characters.
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
 * **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
 
@@ -301,9 +304,9 @@ automation:
 When you first flash the device or change the `passkey`:
 
 1. Open **Bluetooth & other devices** on Windows.
-2. If "ESP32 BLE KB" (or an older "ESP32 BLE Keyboard") is already listed, **Remove Device**.
+2. If your device name (default: "ESP32 BLE KB") is already listed, **Remove Device**.
 3. Click **Add device** -> **Bluetooth**.
-4. Select **ESP32 BLE KB**.
+4. Select your device name (default: "ESP32 BLE KB").
 5. Windows will prompt you to enter the PIN. Type your configured `passkey` (e.g., `123456`) and click **Connect**.
 
 ---
@@ -314,7 +317,7 @@ Android is stricter about BLE HID security than Windows. For best results:
 
 1. Configure a 6-digit `passkey` in `espidf_ble_keyboard`.
 2. Flash firmware, then restart Bluetooth on the phone (or reboot phone once).
-3. In Android Bluetooth settings, remove any previous **ESP32 BLE KB** (or older **ESP32 BLE Keyboard**) entry before re-pairing.
+3. In Android Bluetooth settings, remove any previous entry for your device name (default: **ESP32 BLE KB**) before re-pairing.
 4. Start pairing and enter the configured passkey when prompted.
 
 If Android shows a different host-generated code instead of your configured passkey, remove old bonds on both Android and the ESP32 side (reboot/reflash), then pair again.
@@ -330,7 +333,7 @@ If pairing fails with "can't connect", remove the old bond on Android and pair a
 For iOS using passkey pairing:
 
 1. Set `passkey` and `passkey_mode: secure_connections` in `espidf_ble_keyboard`.
-2. Remove any previous **ESP32 BLE KB** bond from iOS Bluetooth settings.
+2. Remove any previous bond for your device name (default: **ESP32 BLE KB**) from iOS Bluetooth settings.
 3. Reboot the ESP32 (or reflash), then pair again from iOS.
 4. Enter the configured passkey when prompted.
 
