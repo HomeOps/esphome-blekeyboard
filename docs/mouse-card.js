@@ -274,7 +274,7 @@ class BleMouseCard extends HTMLElement {
       if (this._config.tap_to_click && !moved) {
         const elapsed = Date.now() - startTime;
         if (elapsed < 250) {
-          this._callService('mouse_click', { buttons: 1 });
+          this._callService('mouse_click', { btn:1 });
         }
       }
     };
@@ -306,6 +306,19 @@ class BleMouseCard extends HTMLElement {
       e.preventDefault();
       if (e.touches.length === 0) onEnd();
     }, { passive: false });
+
+    // Mouse wheel / trackpad scroll on desktop
+    let wheelAccum = 0;
+    pad.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      wheelAccum += -e.deltaY * scrollSensitivity * 0.02;
+      const intScroll = Math.trunc(wheelAccum);
+      if (intScroll !== 0) {
+        const clamped = Math.max(-127, Math.min(127, intScroll));
+        this._callService('mouse_scroll', { amount: clamped });
+        wheelAccum -= intScroll;
+      }
+    }, { passive: false });
   }
 
   // ── Click buttons ────────────────────────────────────────────────
@@ -321,7 +334,7 @@ class BleMouseCard extends HTMLElement {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         el.classList.add('pressed');
-        this._callService('mouse_click', { buttons: button });
+        this._callService('mouse_click', { btn:button });
       });
       el.addEventListener('pointerup', () => el.classList.remove('pressed'));
       el.addEventListener('pointerleave', () => el.classList.remove('pressed'));
