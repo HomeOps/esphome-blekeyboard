@@ -325,7 +325,7 @@ class BleKeyboardCard extends HTMLElement {
 
   _sendString(text) {
     if (!this._hass) return;
-    this._hass.callService('esphome', `${this._config.device}_send_string`, { text });
+    this._hass.callService('esphome', `${this._config.device}_send_string`, { keys: text });
   }
 
   _sendKey(modifier, keycode) {

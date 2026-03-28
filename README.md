@@ -387,10 +387,10 @@ api:
   services:
     - service: send_string
       variables:
-        text: string
+        keys: string
       then:
         - lambda: |-
-            id(my_keyboard).send_string(text);
+            id(my_keyboard).send_string(keys);
     - service: send_key
       variables:
         modifier: int
