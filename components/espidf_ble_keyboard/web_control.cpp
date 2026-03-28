@@ -22,44 +22,48 @@ static const char PAGE_HTML[] PROGMEM = R"rawhtml(<!DOCTYPE html>
 <title>BLE Keyboard &amp; Mouse</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#1a1e28;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;max-width:680px;margin:0 auto;user-select:none;-webkit-user-select:none}
-h2{font-size:15px;font-weight:600;margin:12px 0 8px;color:#00d4aa;display:flex;align-items:center;gap:6px}
-h2 svg{width:18px;height:18px;fill:#00d4aa}
-.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:10px;background:#13161e;border:1px solid #252a38;border-radius:10px}
+:root{--bg:#1a1e28;--fg:#e2e8f0;--card:#13161e;--border:#252a38;--muted:#6b7a99;--accent:#00d4aa;--active:#03a9f4;--caps:#ff9800;--name:#8892a8}
+body.light{--bg:#f0f2f5;--fg:#1a1e28;--card:#ffffff;--border:#d0d5dd;--muted:#6b7a99;--accent:#00875a;--active:#0288d1;--caps:#e65100;--name:#555}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;max-width:680px;margin:0 auto;user-select:none;-webkit-user-select:none;transition:background .2s,color .2s}
+h2{font-size:15px;font-weight:600;margin:12px 0 8px;color:var(--accent);display:flex;align-items:center;gap:6px}
+h2 svg{width:18px;height:18px;fill:var(--accent)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px}
 .toolbar-left{display:flex;align-items:center;gap:8px}
-.status-dot{width:10px;height:10px;border-radius:50%;background:#6b7a99;transition:background .3s}
-.status-dot.connected{background:#00d4aa}
-.status-dot.paired{background:#03a9f4}
-.status-text{font-size:12px;color:#6b7a99}
-.status-text.on{color:#00d4aa}
-.dev-name{font-size:11px;color:#8892a8;margin-left:4px;font-weight:500}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);transition:background .3s}
+.status-dot.connected{background:var(--accent)}
+.status-dot.paired{background:var(--active)}
+.status-text{font-size:12px;color:var(--muted)}
+.status-text.on{color:var(--accent)}
+.dev-name{font-size:11px;color:var(--name);margin-left:4px;font-weight:500}
+.toolbar-right{display:flex;align-items:center;gap:6px}
 .zoom-controls{display:flex;align-items:center;gap:4px}
-.zoom-btn{width:30px;height:30px;border:1px solid #252a38;border-radius:6px;background:#1a1e28;color:#e2e8f0;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
-.zoom-btn:active{background:#03a9f4;color:#fff}
-.zoom-label{font-size:11px;color:#6b7a99;min-width:36px;text-align:center}
-.card{background:#13161e;border:1px solid #252a38;border-radius:10px;padding:10px;margin-bottom:12px}
+.zoom-btn,.theme-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.zoom-btn:active,.theme-btn:active{background:var(--active);color:#fff}
+.theme-btn{font-size:14px}
+.zoom-label{font-size:11px;color:var(--muted);min-width:36px;text-align:center}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
 .scalable{transform-origin:top center;transition:transform .15s}
 .row{display:flex;gap:3px;margin-bottom:3px}
 .row:last-child{margin-bottom:0}
-.k{flex:1;min-width:0;padding:9px 1px;border:1px solid #252a38;border-radius:5px;background:#1a1e28;color:#e2e8f0;font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .08s}
-.k:active,.k.p{background:#03a9f4;color:#fff;border-color:#03a9f4}
-.k.active{background:#03a9f4;color:#fff;border-color:#03a9f4}
-.k.caps{background:#ff9800;color:#fff;border-color:#ff9800}
+.k{flex:1;min-width:0;padding:9px 1px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--fg);font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .08s}
+.k:active,.k.p{background:var(--active);color:#fff;border-color:var(--active)}
+.k.active{background:var(--active);color:#fff;border-color:var(--active)}
+.k.caps{background:var(--caps);color:#fff;border-color:var(--caps)}
 .k.fk{font-size:10px;padding:6px 1px}
-.touchpad{width:100%;aspect-ratio:16/9;background:#1a1e28;border-radius:10px;border:2px solid #252a38;cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
-.touchpad.active{border-color:#03a9f4}
-.touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#6b7a99;font-size:12px;pointer-events:none;opacity:.5}
+.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
+.touchpad.active{border-color:var(--active)}
+.touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:12px;pointer-events:none;opacity:.5}
 .touchpad.active .touchpad-hint{opacity:0}
 .mbtn-row{display:grid;grid-template-columns:1fr .7fr 1fr;gap:6px;margin-top:8px}
-.mbtn{padding:12px 0;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
-.mbtn:active,.mbtn.p{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.mbtn{padding:12px 0;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
+.mbtn:active,.mbtn.p{background:var(--active);color:#fff;border-color:var(--active)}
 .scroll-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.sbtn{padding:8px 0;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:16px;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
-.sbtn:active{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.sbtn{padding:8px 0;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:16px;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
+.sbtn:active{background:var(--active);color:#fff;border-color:var(--active)}
 .prog-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.prog-btn{padding:8px 14px;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:12px;font-weight:500;cursor:pointer;touch-action:manipulation;transition:background .1s}
-.prog-btn:active,.prog-btn.p{background:#03a9f4;color:#fff;border-color:#03a9f4}
-.prog-empty{font-size:12px;color:#6b7a99;padding:4px 0}
+.prog-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:12px;font-weight:500;cursor:pointer;touch-action:manipulation;transition:background .1s}
+.prog-btn:active,.prog-btn.p{background:var(--active);color:#fff;border-color:var(--active)}
+.prog-empty{font-size:12px;color:var(--muted);padding:4px 0}
 </style></head><body>
 
 <div class="toolbar">
@@ -68,10 +72,13 @@ h2 svg{width:18px;height:18px;fill:#00d4aa}
 <span class="status-text" id="stxt">Disconnected</span>
 <span class="dev-name" id="dname"></span>
 </div>
+<div class="toolbar-right">
 <div class="zoom-controls">
 <button class="zoom-btn" id="zout">-</button>
 <span class="zoom-label" id="zlbl">100%</span>
 <button class="zoom-btn" id="zin">+</button>
+</div>
+<button class="theme-btn" id="thm" title="Toggle light/dark">&#9788;</button>
 </div>
 </div>
 
@@ -104,6 +111,15 @@ function api(endpoint,params){
   const url='/api/ble_keyboard/'+endpoint+'?'+new URLSearchParams(params);
   fetch(url,{method:'POST'}).catch(()=>{});
 }
+
+// ── Theme ──
+const thmBtn=document.getElementById('thm');
+if(localStorage.getItem('blekb_theme')==='light')document.body.classList.add('light');
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  localStorage.setItem('blekb_theme',document.body.classList.contains('light')?'light':'dark');
+}
+thmBtn.addEventListener('click',toggleTheme);
 
 // ── Zoom ──
 let zoom=100;
