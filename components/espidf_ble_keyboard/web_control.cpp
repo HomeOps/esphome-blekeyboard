@@ -243,84 +243,80 @@ buildKeyboard();
 </script></body></html>)rawhtml";
 
 
-// ── Constructor ────────────────────────────────────────────────────
+// ── Internal handler class ─────────────────────────────────────────
+// Inherits from the platform-specific AsyncWebHandler via web_server_base
 
-BleKeyboardWebControl::BleKeyboardWebControl(web_server_base::WebServerBase *base, EspidfBleKeyboard *keyboard)
-    : base_(base), keyboard_(keyboard) {}
+class BleKbWebHandler : public AsyncWebHandler {
+ public:
+  BleKbWebHandler(EspidfBleKeyboard *kb) : kb_(kb) {}
+
+  bool canHandle(AsyncWebServerRequest *request) const override {
+    std::string url = request->url();
+    return url == "/ble_keyboard" ||
+           url.rfind("/api/ble_keyboard/", 0) == 0;
+  }
+
+  void handleRequest(AsyncWebServerRequest *request) override {
+    std::string url = request->url();
+
+    // Serve the page
+    if (url == "/ble_keyboard") {
+      request->send(200, "text/html", PAGE_HTML);
+      return;
+    }
+
+    // API endpoints — POST only
+    if (request->method() != HTTP_POST) {
+      request->send(405, "text/plain", "POST only");
+      return;
+    }
+
+    std::string path = url.substr(strlen("/api/ble_keyboard/"));
+
+    if (path == "mouse_move") {
+      int x = request->hasArg("x") ? atoi(request->arg("x").c_str()) : 0;
+      int y = request->hasArg("y") ? atoi(request->arg("y").c_str()) : 0;
+      kb_->send_mouse_move((int8_t) x, (int8_t) y);
+      request->send(200);
+
+    } else if (path == "mouse_click") {
+      int btn = request->hasArg("btn") ? atoi(request->arg("btn").c_str()) : 1;
+      kb_->send_mouse_click((uint8_t) btn);
+      request->send(200);
+
+    } else if (path == "mouse_scroll") {
+      int amount = request->hasArg("amount") ? atoi(request->arg("amount").c_str()) : 0;
+      kb_->send_mouse_scroll((int8_t) amount);
+      request->send(200);
+
+    } else if (path == "string") {
+      if (request->hasArg("keys")) {
+        std::string keys = request->arg("keys").c_str();
+        kb_->send_string(keys);
+      }
+      request->send(200);
+
+    } else if (path == "key") {
+      int modifier = request->hasArg("modifier") ? atoi(request->arg("modifier").c_str()) : 0;
+      int keycode = request->hasArg("keycode") ? atoi(request->arg("keycode").c_str()) : 0;
+      kb_->send_key_combo((uint8_t) modifier, (uint8_t) keycode);
+      request->send(200);
+
+    } else {
+      request->send(404, "text/plain", "Unknown endpoint");
+    }
+  }
+
+ protected:
+  EspidfBleKeyboard *kb_;
+};
+
+// ── Setup ──────────────────────────────────────────────────────────
 
 void BleKeyboardWebControl::setup() {
-  this->base_->add_handler(this);
+  auto *handler = new BleKbWebHandler(this->keyboard_);
+  this->base_->add_handler(handler);
   ESP_LOGI(TAG, "Web control registered at /ble_keyboard");
-}
-
-// ── Request routing ────────────────────────────────────────────────
-
-bool BleKeyboardWebControl::canHandle(AsyncWebServerRequest *request) {
-  if (request->url() == "/ble_keyboard")
-    return true;
-  if (request->url().startsWith("/api/ble_keyboard/"))
-    return true;
-  return false;
-}
-
-void BleKeyboardWebControl::handleRequest(AsyncWebServerRequest *request) {
-  if (request->url() == "/ble_keyboard") {
-    this->handle_page_(request);
-  } else if (request->url().startsWith("/api/ble_keyboard/")) {
-    this->handle_api_(request);
-  } else {
-    request->send(404);
-  }
-}
-
-// ── Serve the page ─────────────────────────────────────────────────
-
-void BleKeyboardWebControl::handle_page_(AsyncWebServerRequest *request) {
-  request->send_P(200, "text/html", PAGE_HTML);
-}
-
-// ── REST API endpoints ─────────────────────────────────────────────
-
-void BleKeyboardWebControl::handle_api_(AsyncWebServerRequest *request) {
-  if (request->method() != HTTP_POST) {
-    request->send(405, "text/plain", "POST only");
-    return;
-  }
-
-  String path = request->url().substring(strlen("/api/ble_keyboard/"));
-
-  if (path == "mouse_move") {
-    int x = request->hasArg("x") ? atoi(request->arg("x").c_str()) : 0;
-    int y = request->hasArg("y") ? atoi(request->arg("y").c_str()) : 0;
-    this->keyboard_->send_mouse_move((int8_t) x, (int8_t) y);
-    request->send(200);
-
-  } else if (path == "mouse_click") {
-    int btn = request->hasArg("btn") ? atoi(request->arg("btn").c_str()) : 1;
-    this->keyboard_->send_mouse_click((uint8_t) btn);
-    request->send(200);
-
-  } else if (path == "mouse_scroll") {
-    int amount = request->hasArg("amount") ? atoi(request->arg("amount").c_str()) : 0;
-    this->keyboard_->send_mouse_scroll((int8_t) amount);
-    request->send(200);
-
-  } else if (path == "string") {
-    if (request->hasArg("keys")) {
-      std::string keys = request->arg("keys").c_str();
-      this->keyboard_->send_string(keys);
-    }
-    request->send(200);
-
-  } else if (path == "key") {
-    int modifier = request->hasArg("modifier") ? atoi(request->arg("modifier").c_str()) : 0;
-    int keycode = request->hasArg("keycode") ? atoi(request->arg("keycode").c_str()) : 0;
-    this->keyboard_->send_key_combo((uint8_t) modifier, (uint8_t) keycode);
-    request->send(200);
-
-  } else {
-    request->send(404, "text/plain", "Unknown endpoint");
-  }
 }
 
 }  // namespace espidf_ble_keyboard
