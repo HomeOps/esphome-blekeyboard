@@ -89,6 +89,12 @@ class EspidfBleKeyboard : public Component {
   bool passkey_secure_connections_{false};
   std::string device_name_{"ESP32 BLE KB"};
   uint32_t key_delay_ms_{80};
+
+  // Non-blocking string typing state machine (driven from loop())
+  std::string type_queue_;
+  size_t type_index_{0};
+  bool type_key_up_pending_{false};
+  uint32_t type_next_ms_{0};
 };
 
 class EspidfBleKeyboardButton : public button::Button, public Component {

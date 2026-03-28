@@ -720,6 +720,47 @@ void EspidfBleKeyboard::loop() {
     if (pending_paired_update_.exchange(false)) {
         set_paired(pending_paired_state_.load());
     }
+
+    // Non-blocking string typing: one keystroke step per loop() call, paced by timer.
+    if (type_queue_.empty() || !is_connected_) return;
+
+    uint32_t now = millis();
+    if (now < type_next_ms_) return;
+
+    uint8_t report[8] = {0};
+    uint32_t half_delay = key_delay_ms_ / 2;
+
+    if (type_key_up_pending_) {
+        // Send key-up (all zeros), then advance to next character.
+        send_keyboard_input_report(conn_id_, report, 8);
+        type_key_up_pending_ = false;
+        type_index_++;
+        if (type_index_ >= type_queue_.size()) {
+            type_queue_.clear();
+            type_index_ = 0;
+        }
+        type_next_ms_ = now + half_delay;
+    } else {
+        // Send key-down for the current character.
+        char c = type_queue_[type_index_];
+        if (c >= 0 && c <= 127) {
+            const auto &mapping = HID_ASCII_MAP[static_cast<uint8_t>(c)];
+            if (mapping.keycode != 0x00) {
+                report[0] = mapping.modifier;
+                report[2] = mapping.keycode;
+                send_keyboard_input_report(conn_id_, report, 8);
+                type_key_up_pending_ = true;
+                type_next_ms_ = now + half_delay;
+                return;
+            }
+        }
+        // Unsupported or unmapped character — skip it.
+        type_index_++;
+        if (type_index_ >= type_queue_.size()) {
+            type_queue_.clear();
+            type_index_ = 0;
+        }
+    }
 }
 
 static uint16_t get_keyboard_input_handle() {
@@ -795,20 +836,8 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
 }
 
 void EspidfBleKeyboard::send_string(const std::string &str) {
-    if (!is_connected_) return;
-    uint8_t report[8] = {0};
-    for (char c : str) {
-        if (c < 0 || c > 127) continue;
-        const auto &mapping = HID_ASCII_MAP[static_cast<uint8_t>(c)];
-        if (mapping.keycode == 0x00) continue;
-        report[0] = mapping.modifier;
-        report[2] = mapping.keycode;
-        send_keyboard_input_report(conn_id_, report, 8);
-        vTaskDelay(pdMS_TO_TICKS(key_delay_ms_ / 2));
-        memset(report, 0, 8);
-        send_keyboard_input_report(conn_id_, report, 8);
-        vTaskDelay(pdMS_TO_TICKS(key_delay_ms_ / 2));
-    }
+    // Non-blocking: append to queue; loop() drains it one keystroke at a time.
+    type_queue_ += str;
 }
 
 void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
@@ -877,11 +906,11 @@ void EspidfBleKeyboard::send_mute()              { send_consumer(0x00E2); }
 
 void EspidfBleKeyboard::send_hibernate() {
     if (!is_connected_) return;
+    // Win+R is a single blocking key combo (no watchdog risk).
     send_key_combo(0x08, 0x15);
     vTaskDelay(pdMS_TO_TICKS(600));
-    send_string("shutdown /h");
-    vTaskDelay(pdMS_TO_TICKS(200));
-    send_key_combo(0x00, 0x28);
+    // Queue the command text + Enter through the non-blocking state machine.
+    send_string("shutdown /h\n");
 }
 
 void EspidfBleKeyboardButton::press_action() {
