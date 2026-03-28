@@ -43,22 +43,10 @@ h2 svg{width:18px;height:18px;fill:#00d4aa}
 .sbtn{padding:8px 0;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:16px;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
 .sbtn:active{background:#03a9f4;color:#fff;border-color:#03a9f4}
 .status{font-size:11px;color:#6b7a99;text-align:center;margin-top:8px}
-.tabs{display:flex;gap:6px;margin-bottom:12px}
-.tab{flex:1;padding:10px;border:1px solid #252a38;border-radius:8px;background:#13161e;color:#6b7a99;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
-.tab.active{background:#03a9f4;color:#fff;border-color:#03a9f4}
-.panel{display:none}.panel.show{display:block}
 </style></head><body>
 
-<div class="tabs">
-<div class="tab active" onclick="showTab('kb')">Keyboard</div>
-<div class="tab" onclick="showTab('ms')">Mouse</div>
-</div>
-
-<div id="kb-panel" class="panel show">
 <div class="card" id="keyboard"></div>
-</div>
 
-<div id="ms-panel" class="panel">
 <div class="card">
 <h2><svg viewBox="0 0 24 24"><path d="M12 2C8.14 2 5 5.14 5 9v6c0 3.86 3.14 7 7 7s7-3.14 7-7V9c0-3.86-3.14-7-7-7zm0 2c2.76 0 5 2.24 5 5v2h-4V5h-2v6H7V9c0-2.76 2.24-5 5-5z"/></svg>Mouse</h2>
 <div class="touchpad" id="touchpad"><span class="touchpad-hint">Drag to move</span></div>
@@ -72,7 +60,6 @@ h2 svg{width:18px;height:18px;fill:#00d4aa}
 <button class="sbtn" id="sd">&#9660; Down</button>
 </div>
 </div>
-</div>
 
 <div class="status" id="status">Ready</div>
 
@@ -81,13 +68,6 @@ h2 svg{width:18px;height:18px;fill:#00d4aa}
 function api(endpoint,params){
   const url='/api/ble_keyboard/'+endpoint+'?'+new URLSearchParams(params);
   fetch(url,{method:'POST'}).catch(()=>{});
-}
-
-// ── Tabs ──
-function showTab(t){
-  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',i===(t==='kb'?0:1))});
-  document.getElementById('kb-panel').classList.toggle('show',t==='kb');
-  document.getElementById('ms-panel').classList.toggle('show',t==='ms');
 }
 
 // ── Keyboard ──
