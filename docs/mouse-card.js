@@ -16,10 +16,20 @@
  *   type: custom:ble-mouse-card
  *   device: bluetooth_keyboard    # your ESPHome device name
  *   # Optional overrides:
- *   # sensitivity: 1.5            # movement multiplier (default 1.5)
- *   # scroll_sensitivity: 2       # scroll multiplier (default 2)
- *   # tap_to_click: true          # tap touchpad = left click (default true)
- *   # two_finger_scroll: true     # two-finger drag = scroll (default true)
+ *   # name: Mouse Control          # card title (default "Mouse Control")
+ *   # sensitivity: 1.5             # movement multiplier (default 1.5)
+ *   # scroll_sensitivity: 2        # scroll multiplier (default 2)
+ *   # tap_to_click: true           # tap touchpad = left click (default true)
+ *   # two_finger_scroll: true      # two-finger drag = scroll (default true)
+ *
+ * Full example with overrides:
+ *   type: custom:ble-mouse-card
+ *   device: bluetooth_keyboard
+ *   name: Living Room Mouse
+ *   sensitivity: 2.0
+ *   scroll_sensitivity: 3
+ *   tap_to_click: false
+ *   two_finger_scroll: false
  */
 
 class BleMouseCard extends HTMLElement {
@@ -36,6 +46,7 @@ class BleMouseCard extends HTMLElement {
     }
     this._config = {
       device: config.device,
+      name: config.name || 'Mouse Control',
       sensitivity: config.sensitivity || 1.5,
       scroll_sensitivity: config.scroll_sensitivity || 2,
       tap_to_click: config.tap_to_click !== false,
@@ -155,7 +166,7 @@ class BleMouseCard extends HTMLElement {
       <div class="card">
         <div class="header">
           <svg viewBox="0 0 24 24"><path d="M11 1.5v8.5l4 4.5h3.5l-2-2.5L20 8.5 14 5.5V1.5l-3 0zm-1 0L7 1.5v4L3.5 8.5 7 12l-2 2.5H8.5l4-4.5V1.5z" opacity="0"/><path d="M12 2C8.14 2 5 5.14 5 9v6c0 3.86 3.14 7 7 7s7-3.14 7-7V9c0-3.86-3.14-7-7-7zm0 2c2.76 0 5 2.24 5 5v2h-4V5h-2v6H7V9c0-2.76 2.24-5 5-5z"/></svg>
-          Mouse Control
+          ${this._config.name}
         </div>
         <div class="touchpad" id="touchpad">
           <span class="touchpad-hint">Drag to move cursor</span>

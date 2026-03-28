@@ -345,10 +345,23 @@ type: custom:ble-mouse-card
 device: bluetooth_keyboard    # your ESPHome device name (underscored)
 ```
 
+Example with all optional overrides:
+
+```yaml
+type: custom:ble-mouse-card
+device: bluetooth_keyboard
+name: Living Room Mouse       # card title (default: "Mouse Control")
+sensitivity: 2.0              # faster cursor (default: 1.5)
+scroll_sensitivity: 3         # faster scroll (default: 2)
+tap_to_click: false           # disable tap-to-click (default: true)
+two_finger_scroll: false      # disable two-finger scroll (default: true)
+```
+
 Optional configuration:
 
 | Option | Default | Description |
 |---|---|---|
+| `name` | `Mouse Control` | Card title displayed in the header. |
 | `sensitivity` | `1.5` | Cursor movement multiplier. |
 | `scroll_sensitivity` | `2` | Scroll speed multiplier. |
 | `tap_to_click` | `true` | Tap the touchpad for a left click. |
