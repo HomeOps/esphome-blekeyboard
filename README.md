@@ -502,6 +502,88 @@ Features:
 
 ---
 
+## Media Remote Card for Home Assistant
+
+A custom Lovelace card that provides a modern media remote control with power, navigation D-pad, volume, media playback, and app launch buttons.
+
+### 1. Add ESPHome services
+
+Add the following services to your ESPHome device YAML (alongside any existing keyboard/mouse services):
+
+```yaml
+api:
+  encryption:
+    key: ${api_encryption_key}
+  services:
+    - service: send_string
+      variables:
+        keys: string
+      then:
+        - lambda: |-
+            id(my_keyboard).send_string(keys);
+    - service: send_key
+      variables:
+        modifier: int
+        keycode: int
+      then:
+        - lambda: |-
+            id(my_keyboard).send_key_combo(modifier, keycode);
+    - service: send_consumer
+      variables:
+        code: int
+      then:
+        - lambda: |-
+            id(my_keyboard).send_consumer(code);
+```
+
+### 2. Install the card
+
+1. Copy `docs/remote-card.js` to your Home Assistant `config/www/` folder.
+2. In Home Assistant: **Settings -> Dashboards -> Resources -> Add Resource**
+   - URL: `/local/remote-card.js`
+   - Type: **JavaScript Module**
+
+### 3. Add to a dashboard
+
+```yaml
+type: custom:ble-remote-card
+device: bluetooth_keyboard    # your ESPHome device name (underscored)
+```
+
+Example with all optional overrides:
+
+```yaml
+type: custom:ble-remote-card
+device: bluetooth_keyboard
+name: Living Room Remote      # card title (auto-detected from HA if omitted)
+show_numpad: true             # show number pad (default: false)
+show_apps: true               # show app launch row (default: true)
+show_color: true              # show color buttons (default: false)
+```
+
+Optional configuration:
+
+| Option | Default | Description |
+|---|---|---|
+| `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
+| `show_numpad` | `false` | Show a number pad (0–9) for channel entry or PIN input. |
+| `show_apps` | `true` | Show app launch buttons (Explorer, Browser, Email, Calc, Search). |
+| `show_color` | `false` | Show red/green/yellow/blue color buttons (mapped to F1–F4). |
+
+Features:
+- **Power button** — HID power signal for clean OS-level power control.
+- **D-pad navigation** — arrow keys + Enter, ideal for media apps and menus.
+- **Back & Home** — Escape and Windows key for quick navigation.
+- **Volume** — up, down, and mute with hold-to-repeat.
+- **Channel** — Page Up/Down with hold-to-repeat for channel surfing.
+- **Media playback** — play/pause, stop, previous, next, rewind, fast forward.
+- **App launchers** — quick launch Explorer, Browser, Email, Calculator, Search.
+- **Number pad** — optional 0–9 keypad for channel/PIN entry.
+- **Color buttons** — optional red/green/yellow/blue (F1–F4).
+- **Auto device name** — card title is auto-detected from Home Assistant's device registry.
+
+---
+
 ## Custom Text Input
 
 You can send arbitrary text from Home Assistant to the paired host device without hardcoding it in the YAML. Add the following to your ESPHome config:
