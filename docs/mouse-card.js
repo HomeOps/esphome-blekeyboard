@@ -209,6 +209,7 @@ class BleMouseCard extends HTMLElement {
     let tracking = false;
     let lastX = 0;
     let lastY = 0;
+    let lastTime = 0;
     let startTime = 0;
     let moved = false;
 
@@ -216,14 +217,16 @@ class BleMouseCard extends HTMLElement {
     let accumX = 0;
     let accumY = 0;
 
-    const sensitivity = this._config.sensitivity;
+    const baseSens = this._config.sensitivity;
+    const accelFactor = 0.15;
+    const maxSens = baseSens * 3;
     const scrollSensitivity = this._config.scroll_sensitivity;
 
     const onStart = (x, y) => {
       tracking = true;
       lastX = x;
       lastY = y;
-      startTime = Date.now();
+      lastTime = startTime = Date.now();
       moved = false;
       accumX = 0;
       accumY = 0;
@@ -233,11 +236,16 @@ class BleMouseCard extends HTMLElement {
     const onMove = (x, y) => {
       if (!tracking) return;
 
-      const rawDx = (x - lastX) * sensitivity;
-      const rawDy = (y - lastY) * sensitivity;
+      const now = Date.now();
+      const dt = Math.max(now - lastTime, 1);
+      const rawDx = x - lastX;
+      const rawDy = y - lastY;
+      const dist = Math.sqrt(rawDx * rawDx + rawDy * rawDy);
+      const speed = dist / dt;
+      const sens = Math.min(baseSens + speed * accelFactor, maxSens);
 
-      accumX += rawDx;
-      accumY += rawDy;
+      accumX += rawDx * sens;
+      accumY += rawDy * sens;
 
       const dx = Math.trunc(accumX);
       const dy = Math.trunc(accumY);
@@ -253,6 +261,7 @@ class BleMouseCard extends HTMLElement {
 
       lastX = x;
       lastY = y;
+      lastTime = now;
     };
 
     const onEnd = () => {

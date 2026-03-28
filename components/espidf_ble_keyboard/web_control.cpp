@@ -250,21 +250,26 @@ buildKeyboard();
 // ── Mouse ──
 (function(){
   const pad=document.getElementById('touchpad');
-  let tracking=false,lastX=0,lastY=0,startTime=0,moved=false;
+  let tracking=false,lastX=0,lastY=0,lastTime=0,startTime=0,moved=false;
   let accumX=0,accumY=0;
-  const sens=1.5,scrollSens=2;
+  const baseSens=1.0,accelFactor=0.15,maxSens=4.0,scrollSens=2;
 
-  function onStart(x,y){tracking=true;lastX=x;lastY=y;startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
+  function onStart(x,y){tracking=true;lastX=x;lastY=y;lastTime=startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
   function onMove(x,y){
     if(!tracking)return;
-    accumX+=(x-lastX)*sens;accumY+=(y-lastY)*sens;
+    const now=Date.now(),dt=Math.max(now-lastTime,1);
+    const rawDx=x-lastX,rawDy=y-lastY;
+    const dist=Math.sqrt(rawDx*rawDx+rawDy*rawDy);
+    const speed=dist/dt;
+    const sens=Math.min(baseSens+speed*accelFactor,maxSens);
+    accumX+=rawDx*sens;accumY+=rawDy*sens;
     const dx=Math.trunc(accumX),dy=Math.trunc(accumY);
     if(dx!==0||dy!==0){
       const cx=Math.max(-127,Math.min(127,dx)),cy=Math.max(-127,Math.min(127,dy));
       api('mouse_move',{x:cx,y:cy});
       accumX-=dx;accumY-=dy;moved=true;
     }
-    lastX=x;lastY=y;
+    lastX=x;lastY=y;lastTime=now;
   }
   function onEnd(){
     if(!tracking)return;tracking=false;pad.classList.remove('active');
