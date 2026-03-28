@@ -212,6 +212,8 @@ class BleMouseCard extends HTMLElement {
     let lastTime = 0;
     let startTime = 0;
     let moved = false;
+    let startSX = 0;
+    let startSY = 0;
 
     // Accumulator for sub-pixel movements
     let accumX = 0;
@@ -220,12 +222,13 @@ class BleMouseCard extends HTMLElement {
     const baseSens = this._config.sensitivity;
     const accelFactor = 0.15;
     const maxSens = baseSens * 3;
+    const tapDeadZone = 5;
     const scrollSensitivity = this._config.scroll_sensitivity;
 
     const onStart = (x, y) => {
       tracking = true;
-      lastX = x;
-      lastY = y;
+      lastX = startSX = x;
+      lastY = startSY = y;
       lastTime = startTime = Date.now();
       moved = false;
       accumX = 0;
@@ -235,6 +238,12 @@ class BleMouseCard extends HTMLElement {
 
     const onMove = (x, y) => {
       if (!tracking) return;
+
+      // Ignore tiny jitter so taps still register
+      if (!moved) {
+        const td = Math.abs(x - startSX) + Math.abs(y - startSY);
+        if (td < tapDeadZone) return;
+      }
 
       const now = Date.now();
       const dt = Math.max(now - lastTime, 1);

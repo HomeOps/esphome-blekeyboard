@@ -266,13 +266,14 @@ buildKeyboard();
 // ── Mouse ──
 (function(){
   const pad=document.getElementById('touchpad');
-  let tracking=false,lastX=0,lastY=0,lastTime=0,startTime=0,moved=false;
+  let tracking=false,lastX=0,lastY=0,lastTime=0,startTime=0,moved=false,startSX=0,startSY=0;
   let accumX=0,accumY=0;
-  const baseSens=1.0,accelFactor=0.15,maxSens=4.0,scrollSens=2;
+  const baseSens=1.0,accelFactor=0.15,maxSens=4.0,scrollSens=2,tapDeadZone=5;
 
-  function onStart(x,y){tracking=true;lastX=x;lastY=y;lastTime=startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
+  function onStart(x,y){tracking=true;lastX=startSX=x;lastY=startSY=y;lastTime=startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
   function onMove(x,y){
     if(!tracking)return;
+    if(!moved){const td=Math.abs(x-startSX)+Math.abs(y-startSY);if(td<tapDeadZone)return}
     const now=Date.now(),dt=Math.max(now-lastTime,1);
     const rawDx=x-lastX,rawDy=y-lastY;
     const dist=Math.sqrt(rawDx*rawDx+rawDy*rawDy);
