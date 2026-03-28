@@ -354,7 +354,6 @@ name: Living Room Mouse       # card title (default: "Mouse Control")
 sensitivity: 2.0              # faster cursor (default: 1.5)
 scroll_sensitivity: 3         # faster scroll (default: 2)
 tap_to_click: false           # disable tap-to-click (default: true)
-two_finger_scroll: false      # disable two-finger scroll (default: true)
 ```
 
 Optional configuration:
@@ -365,10 +364,9 @@ Optional configuration:
 | `sensitivity` | `1.5` | Cursor movement multiplier. |
 | `scroll_sensitivity` | `2` | Scroll speed multiplier. |
 | `tap_to_click` | `true` | Tap the touchpad for a left click. |
-| `two_finger_scroll` | `true` | Two-finger drag on touchpad to scroll. |
 
 Features:
-- **Touchpad** — drag to move cursor, tap for left click, two-finger drag for scroll.
+- **Touchpad** — drag to move cursor, tap for left click, mouse wheel/trackpad scroll.
 - **Buttons** — Left, Middle, Right click.
 - **Scroll** — Scroll Up / Scroll Down buttons (hold to repeat).
 

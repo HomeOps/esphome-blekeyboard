@@ -20,7 +20,6 @@
  *   # sensitivity: 1.5             # movement multiplier (default 1.5)
  *   # scroll_sensitivity: 2        # scroll multiplier (default 2)
  *   # tap_to_click: true           # tap touchpad = left click (default true)
- *   # two_finger_scroll: true      # two-finger drag = scroll (default true)
  *
  * Full example with overrides:
  *   type: custom:ble-mouse-card
@@ -29,7 +28,6 @@
  *   sensitivity: 2.0
  *   scroll_sensitivity: 3
  *   tap_to_click: false
- *   two_finger_scroll: false
  */
 
 class BleMouseCard extends HTMLElement {
@@ -50,7 +48,6 @@ class BleMouseCard extends HTMLElement {
       sensitivity: config.sensitivity || 1.5,
       scroll_sensitivity: config.scroll_sensitivity || 2,
       tap_to_click: config.tap_to_click !== false,
-      two_finger_scroll: config.two_finger_scroll !== false,
     };
   }
 
@@ -202,8 +199,6 @@ class BleMouseCard extends HTMLElement {
     let lastY = 0;
     let startTime = 0;
     let moved = false;
-    let fingers = 0;
-    let lastScrollY = 0;
 
     // Accumulator for sub-pixel movements
     let accumX = 0;
@@ -212,14 +207,12 @@ class BleMouseCard extends HTMLElement {
     const sensitivity = this._config.sensitivity;
     const scrollSensitivity = this._config.scroll_sensitivity;
 
-    const onStart = (x, y, touchCount) => {
+    const onStart = (x, y) => {
       tracking = true;
       lastX = x;
       lastY = y;
       startTime = Date.now();
       moved = false;
-      fingers = touchCount || 1;
-      lastScrollY = y;
       accumX = 0;
       accumY = 0;
       pad.classList.add('active');
@@ -227,21 +220,6 @@ class BleMouseCard extends HTMLElement {
 
     const onMove = (x, y) => {
       if (!tracking) return;
-
-      if (this._config.two_finger_scroll && fingers >= 2) {
-        // Two-finger scroll
-        const scrollDelta = (lastScrollY - y) * scrollSensitivity;
-        accumY += scrollDelta;
-        const intScroll = Math.trunc(accumY);
-        if (intScroll !== 0) {
-          const clamped = Math.max(-127, Math.min(127, intScroll));
-          this._callService('mouse_scroll', { amount: clamped });
-          accumY -= intScroll;
-        }
-        lastScrollY = y;
-        moved = true;
-        return;
-      }
 
       const rawDx = (x - lastX) * sensitivity;
       const rawDy = (y - lastY) * sensitivity;
@@ -282,7 +260,7 @@ class BleMouseCard extends HTMLElement {
     // Mouse events
     pad.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      onStart(e.clientX, e.clientY, 1);
+      onStart(e.clientX, e.clientY);
     });
     window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
     window.addEventListener('mouseup', () => onEnd());
@@ -291,14 +269,12 @@ class BleMouseCard extends HTMLElement {
     pad.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const t = e.touches[0];
-      onStart(t.clientX, t.clientY, e.touches.length);
+      onStart(t.clientX, t.clientY);
     }, { passive: false });
 
     pad.addEventListener('touchmove', (e) => {
       e.preventDefault();
       const t = e.touches[0];
-      // Update finger count live for two-finger scroll detection
-      if (e.touches.length > fingers) fingers = e.touches.length;
       onMove(t.clientX, t.clientY);
     }, { passive: false });
 
