@@ -210,6 +210,7 @@ class BleMouseCard extends HTMLElement {
     let lastX = 0;
     let lastY = 0;
     let lastTime = 0;
+    let startTime = 0;
     let moved = false;
     let startSX = 0;
     let startSY = 0;
