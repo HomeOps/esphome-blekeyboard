@@ -354,8 +354,8 @@ Example with all optional overrides:
 ```yaml
 type: custom:ble-mouse-card
 device: bluetooth_keyboard
-name: Living Room Mouse       # card title (default: "Mouse Control")
-sensitivity: 2.0              # faster cursor (default: 1.5)
+name: Living Room Mouse       # card title (auto-detected from HA if omitted)
+sensitivity: 2.0              # base cursor speed (default: 1.5), acceleration scales up to 3x
 scroll_sensitivity: 3         # faster scroll (default: 2)
 tap_to_click: false           # disable tap-to-click (default: true)
 ```
@@ -364,15 +364,17 @@ Optional configuration:
 
 | Option | Default | Description |
 |---|---|---|
-| `name` | `Mouse Control` | Card title displayed in the header. |
-| `sensitivity` | `1.5` | Cursor movement multiplier. |
+| `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
+| `sensitivity` | `1.5` | Base cursor speed. Mouse acceleration scales up to 3x for fast swipes. |
 | `scroll_sensitivity` | `2` | Scroll speed multiplier. |
-| `tap_to_click` | `true` | Tap the touchpad for a left click. |
+| `tap_to_click` | `true` | Tap the touchpad for a left click (5px dead zone prevents accidental clicks). |
 
 Features:
-- **Touchpad** — drag to move cursor, tap for left click, mouse wheel/trackpad scroll.
+- **Touchpad** — 16:9 aspect ratio, drag to move cursor, tap for left click, mouse wheel/trackpad scroll.
+- **Mouse acceleration** — slow movements are precise, fast swipes cover more ground.
 - **Buttons** — Left, Middle, Right click.
 - **Scroll** — Scroll Up / Scroll Down buttons (hold to repeat).
+- **Auto device name** — card title is auto-detected from Home Assistant's device registry.
 
 ---
 
@@ -398,11 +400,14 @@ espidf_ble_keyboard:
 ### Features
 
 - **Full QWERTY keyboard** — letters, numbers, symbols, F-keys, modifiers, arrows
-- **Mouse touchpad** — drag to move cursor, tap for left click
+- **Mouse touchpad** — 16:9 aspect ratio, drag to move cursor, tap for left click (5px dead zone prevents accidental clicks)
+- **Mouse acceleration** — slow movements are precise, fast swipes cover more ground (up to 4x)
 - **Mouse buttons** — Left, Middle, Right click
 - **Scroll controls** — buttons + mouse wheel on the touchpad
 - **Zoom controls** — resize keyboard and mouse with +/- buttons (50%–150%)
+- **Light/dark theme** — toggle between dark and light mode, preference saved in browser
 - **BLE connection status** — live indicator shows Connected, Paired, or Disconnected (polls every 3s)
+- **Device name display** — shows the configured `device_name` in the toolbar and browser tab title
 - **Programmed buttons** — any buttons defined in YAML appear as clickable buttons on the web page
 - **Zero dependencies** — no HA, no custom cards, no JS files to install
 - **Works from any phone** — just open the URL in a mobile browser
@@ -473,7 +478,7 @@ Example with all optional overrides:
 ```yaml
 type: custom:ble-keyboard-card
 device: bluetooth_keyboard
-name: Living Room Keyboard    # card title (default: "BLE Keyboard")
+name: Living Room Keyboard    # card title (auto-detected from HA if omitted)
 show_fkeys: false             # hide F1-F12 row (default: true)
 ```
 
@@ -481,7 +486,7 @@ Optional configuration:
 
 | Option | Default | Description |
 |---|---|---|
-| `name` | `BLE Keyboard` | Card title displayed in the header. |
+| `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
 | `show_fkeys` | `true` | Show the F1–F12 function key row. |
 
 Features:
@@ -491,6 +496,7 @@ Features:
 - **Function keys** — F1–F12 (can be hidden with `show_fkeys: false`).
 - **Arrow keys** — Up, Down, Left, Right + Delete.
 - **Shift labels** — key labels update to show shifted characters when Shift is active.
+- **Auto device name** — card title is auto-detected from Home Assistant's device registry.
 
 > **Note:** Caps Lock state is tracked locally in the card. If Caps Lock is toggled from another keyboard, the card indicator may be out of sync.
 
