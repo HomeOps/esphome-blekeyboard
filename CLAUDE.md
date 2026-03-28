@@ -15,6 +15,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 * **Consumer Control:** Send any HID consumer code directly from YAML using `consumer:0xXXXX` syntax.
 * **Mouse Control:** Left, right, and middle click, cursor movement, and scroll wheel via HID mouse reports.
 * **Custom Text Input:** Send any text typed in Home Assistant directly to the paired host device.
+* **Web Control:** Built-in web page with keyboard and mouse UI — access from any browser, no HA required. Enable with `web_control: true`.
 
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 

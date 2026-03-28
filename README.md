@@ -90,6 +90,9 @@ espidf_ble_keyboard:
   # Optional pairing mode when passkey is set:
   # legacy (default, Windows/Android-friendly) or secure_connections (Apple-friendly)
   passkey_mode: legacy
+  # Optional: enable built-in web control page at http://<device-ip>/ble_keyboard
+  # Requires web_server component. No HA cards or services needed.
+  web_control: true
 
 button:
 
@@ -209,6 +212,7 @@ binary_sensor:
 * **key_delay_ms** (Optional, int): Total delay per character when typing strings, in milliseconds. Split evenly between key-down and key-up. Defaults to `80`. Increase if characters are being dropped on slow BLE connections.
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
 * **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
+* **web_control** (Optional, bool): Enable a built-in web control page with keyboard and mouse UI at `http://<device-ip>/ble_keyboard`. Requires the `web_server` component. Defaults to `false`.
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -369,6 +373,51 @@ Features:
 - **Touchpad** — drag to move cursor, tap for left click, mouse wheel/trackpad scroll.
 - **Buttons** — Left, Middle, Right click.
 - **Scroll** — Scroll Up / Scroll Down buttons (hold to repeat).
+
+---
+
+## Web Control (Standalone — No Home Assistant)
+
+A built-in web page with full keyboard and mouse control, served directly from the ESP32. Access it from any browser on the same network — no Home Assistant required.
+
+### Setup
+
+1. Add `web_server` and enable `web_control` in your YAML:
+
+```yaml
+web_server:
+  port: 80
+
+espidf_ble_keyboard:
+  id: my_keyboard
+  web_control: true
+```
+
+2. Flash and open `http://<device-ip>/ble_keyboard` in any browser or phone.
+
+### Features
+
+- **Full QWERTY keyboard** — letters, numbers, symbols, F-keys, modifiers, arrows
+- **Mouse touchpad** — drag to move cursor, tap for left click
+- **Mouse buttons** — Left, Middle, Right click
+- **Scroll controls** — buttons + mouse wheel on the touchpad
+- **Tab switching** — toggle between Keyboard and Mouse views
+- **Zero dependencies** — no HA, no custom cards, no JS files to install
+- **Works from any phone** — just open the URL in a mobile browser
+
+### REST API
+
+The web control page uses these local HTTP endpoints (useful for custom integrations):
+
+| Endpoint | Method | Parameters | Description |
+|---|---|---|---|
+| `/api/ble_keyboard/string` | POST | `keys` (string) | Type text |
+| `/api/ble_keyboard/key` | POST | `modifier` (int), `keycode` (int) | Send key combo |
+| `/api/ble_keyboard/mouse_move` | POST | `x` (int), `y` (int) | Move cursor |
+| `/api/ble_keyboard/mouse_click` | POST | `btn` (int) | Click button |
+| `/api/ble_keyboard/mouse_scroll` | POST | `amount` (int) | Scroll wheel |
+
+Example: `curl -X POST "http://<device-ip>/api/ble_keyboard/string?keys=Hello"`
 
 ---
 

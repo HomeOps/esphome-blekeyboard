@@ -12,6 +12,11 @@
 #include "esp_gatts_api.h"
 #include "nvs_flash.h"
 
+#ifdef USE_BLE_KEYBOARD_WEB_CONTROL
+#include "esphome/components/web_server_base/web_server_base.h"
+#include "web_control.h"
+#endif
+
 namespace esphome {
 namespace espidf_ble_keyboard {
 
@@ -54,6 +59,12 @@ class EspidfBleKeyboard : public Component {
   void set_key_delay_ms(uint32_t ms) { key_delay_ms_ = ms; }
   uint32_t key_delay_ms() const { return key_delay_ms_; }
 
+  void set_web_control(bool enabled) { web_control_enabled_ = enabled; }
+
+#ifdef USE_BLE_KEYBOARD_WEB_CONTROL
+  void set_web_server_base(web_server_base::WebServerBase *base) { web_server_base_ = base; }
+#endif
+
   void set_paired_binary_sensor(binary_sensor::BinarySensor *sensor) {
     paired_binary_sensor_ = sensor;
     if (paired_binary_sensor_ != nullptr) {
@@ -93,6 +104,13 @@ class EspidfBleKeyboard : public Component {
   bool passkey_secure_connections_{false};
   std::string device_name_{"ESP32 BLE KB"};
   uint32_t key_delay_ms_{80};
+
+  bool web_control_enabled_{false};
+
+#ifdef USE_BLE_KEYBOARD_WEB_CONTROL
+  web_server_base::WebServerBase *web_server_base_{nullptr};
+  BleKeyboardWebControl *web_control_{nullptr};
+#endif
 
   // Non-blocking string typing state machine (driven from loop())
   SemaphoreHandle_t type_mutex_{nullptr};

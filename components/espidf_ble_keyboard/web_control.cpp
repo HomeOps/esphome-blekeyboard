@@ -1,0 +1,329 @@
+#ifdef USE_BLE_KEYBOARD_WEB_CONTROL
+
+#include "web_control.h"
+#include "espidf_ble_keyboard.h"
+#include "esphome/core/log.h"
+#include <cstdlib>
+#include <cstring>
+
+namespace esphome {
+namespace espidf_ble_keyboard {
+
+static const char *const TAG = "ble_kb_web";
+
+// ── Embedded HTML/JS page ──────────────────────────────────────────
+// Minified single-page app with keyboard + mouse control
+static const char PAGE_HTML[] PROGMEM = R"rawhtml(<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>BLE Keyboard &amp; Mouse</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1e28;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;max-width:680px;margin:0 auto;user-select:none;-webkit-user-select:none}
+h2{font-size:15px;font-weight:600;margin:12px 0 8px;color:#00d4aa;display:flex;align-items:center;gap:6px}
+h2 svg{width:18px;height:18px;fill:#00d4aa}
+.card{background:#13161e;border:1px solid #252a38;border-radius:10px;padding:10px;margin-bottom:12px}
+.row{display:flex;gap:3px;margin-bottom:3px}
+.row:last-child{margin-bottom:0}
+.k{flex:1;min-width:0;padding:9px 1px;border:1px solid #252a38;border-radius:5px;background:#1a1e28;color:#e2e8f0;font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .08s}
+.k:active,.k.p{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.k.active{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.k.caps{background:#ff9800;color:#fff;border-color:#ff9800}
+.k.fk{font-size:10px;padding:6px 1px}
+.touchpad{width:100%;height:170px;background:#1a1e28;border-radius:10px;border:2px solid #252a38;cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
+.touchpad.active{border-color:#03a9f4}
+.touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#6b7a99;font-size:12px;pointer-events:none;opacity:.5}
+.touchpad.active .touchpad-hint{opacity:0}
+.mbtn-row{display:grid;grid-template-columns:1fr .7fr 1fr;gap:6px;margin-top:8px}
+.mbtn{padding:12px 0;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
+.mbtn:active,.mbtn.p{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.scroll-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.sbtn{padding:8px 0;border:1px solid #252a38;border-radius:8px;background:#1a1e28;color:#e2e8f0;font-size:16px;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .1s}
+.sbtn:active{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.status{font-size:11px;color:#6b7a99;text-align:center;margin-top:8px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{flex:1;padding:10px;border:1px solid #252a38;border-radius:8px;background:#13161e;color:#6b7a99;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s}
+.tab.active{background:#03a9f4;color:#fff;border-color:#03a9f4}
+.panel{display:none}.panel.show{display:block}
+</style></head><body>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('kb')">Keyboard</div>
+<div class="tab" onclick="showTab('ms')">Mouse</div>
+</div>
+
+<div id="kb-panel" class="panel show">
+<div class="card" id="keyboard"></div>
+</div>
+
+<div id="ms-panel" class="panel">
+<div class="card">
+<h2><svg viewBox="0 0 24 24"><path d="M12 2C8.14 2 5 5.14 5 9v6c0 3.86 3.14 7 7 7s7-3.14 7-7V9c0-3.86-3.14-7-7-7zm0 2c2.76 0 5 2.24 5 5v2h-4V5h-2v6H7V9c0-2.76 2.24-5 5-5z"/></svg>Mouse</h2>
+<div class="touchpad" id="touchpad"><span class="touchpad-hint">Drag to move</span></div>
+<div class="mbtn-row">
+<button class="mbtn" id="ml">Left</button>
+<button class="mbtn" id="mm">Middle</button>
+<button class="mbtn" id="mr">Right</button>
+</div>
+<div class="scroll-row">
+<button class="sbtn" id="su">&#9650; Up</button>
+<button class="sbtn" id="sd">&#9660; Down</button>
+</div>
+</div>
+</div>
+
+<div class="status" id="status">Ready</div>
+
+<script>
+// API helper
+function api(endpoint,params){
+  const url='/api/ble_keyboard/'+endpoint+'?'+new URLSearchParams(params);
+  fetch(url,{method:'POST'}).catch(()=>{});
+}
+
+// ── Tabs ──
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',i===(t==='kb'?0:1))});
+  document.getElementById('kb-panel').classList.toggle('show',t==='kb');
+  document.getElementById('ms-panel').classList.toggle('show',t==='ms');
+}
+
+// ── Keyboard ──
+const CK={a:0x04,b:0x05,c:0x06,d:0x07,e:0x08,f:0x09,g:0x0A,h:0x0B,i:0x0C,j:0x0D,k:0x0E,l:0x0F,m:0x10,n:0x11,o:0x12,p:0x13,q:0x14,r:0x15,s:0x16,t:0x17,u:0x18,v:0x19,w:0x1A,x:0x1B,y:0x1C,z:0x1D,'1':0x1E,'2':0x1F,'3':0x20,'4':0x21,'5':0x22,'6':0x23,'7':0x24,'8':0x25,'9':0x26,'0':0x27,'`':0x35,'-':0x2D,'=':0x2E,'[':0x2F,']':0x30,'\\':0x31,';':0x33,"'":0x34,',':0x36,'.':0x37,'/':0x38,' ':0x2C};
+const ROWS=[
+[{l:'Esc',t:'s',kc:0x29,f:1.2},{l:'F1',t:'s',kc:0x3A},{l:'F2',t:'s',kc:0x3B},{l:'F3',t:'s',kc:0x3C},{l:'F4',t:'s',kc:0x3D},{l:'F5',t:'s',kc:0x3E},{l:'F6',t:'s',kc:0x3F},{l:'F7',t:'s',kc:0x40},{l:'F8',t:'s',kc:0x41},{l:'F9',t:'s',kc:0x42},{l:'F10',t:'s',kc:0x43},{l:'F11',t:'s',kc:0x44},{l:'F12',t:'s',kc:0x45}],
+[{l:'`',sl:'~',t:'c',c:'`',sc:'~'},{l:'1',sl:'!',t:'c',c:'1',sc:'!'},{l:'2',sl:'@',t:'c',c:'2',sc:'@'},{l:'3',sl:'#',t:'c',c:'3',sc:'#'},{l:'4',sl:'$',t:'c',c:'4',sc:'$'},{l:'5',sl:'%',t:'c',c:'5',sc:'%'},{l:'6',sl:'^',t:'c',c:'6',sc:'^'},{l:'7',sl:'&',t:'c',c:'7',sc:'&'},{l:'8',sl:'*',t:'c',c:'8',sc:'*'},{l:'9',sl:'(',t:'c',c:'9',sc:'('},{l:'0',sl:')',t:'c',c:'0',sc:')'},{l:'-',sl:'_',t:'c',c:'-',sc:'_'},{l:'=',sl:'+',t:'c',c:'=',sc:'+'},{l:'Bksp',t:'s',kc:0x2A,f:1.5}],
+[{l:'Tab',t:'s',kc:0x2B,f:1.3},{l:'q',sl:'Q',t:'c',c:'q',sc:'Q'},{l:'w',sl:'W',t:'c',c:'w',sc:'W'},{l:'e',sl:'E',t:'c',c:'e',sc:'E'},{l:'r',sl:'R',t:'c',c:'r',sc:'R'},{l:'t',sl:'T',t:'c',c:'t',sc:'T'},{l:'y',sl:'Y',t:'c',c:'y',sc:'Y'},{l:'u',sl:'U',t:'c',c:'u',sc:'U'},{l:'i',sl:'I',t:'c',c:'i',sc:'I'},{l:'o',sl:'O',t:'c',c:'o',sc:'O'},{l:'p',sl:'P',t:'c',c:'p',sc:'P'},{l:'[',sl:'{',t:'c',c:'[',sc:'{'},{l:']',sl:'}',t:'c',c:']',sc:'}'},{l:'\\',sl:'|',t:'c',c:'\\',sc:'|'}],
+[{l:'Caps',t:'caps',kc:0x39,f:1.5},{l:'a',sl:'A',t:'c',c:'a',sc:'A'},{l:'s',sl:'S',t:'c',c:'s',sc:'S'},{l:'d',sl:'D',t:'c',c:'d',sc:'D'},{l:'f',sl:'F',t:'c',c:'f',sc:'F'},{l:'g',sl:'G',t:'c',c:'g',sc:'G'},{l:'h',sl:'H',t:'c',c:'h',sc:'H'},{l:'j',sl:'J',t:'c',c:'j',sc:'J'},{l:'k',sl:'K',t:'c',c:'k',sc:'K'},{l:'l',sl:'L',t:'c',c:'l',sc:'L'},{l:';',sl:':',t:'c',c:';',sc:':'},{l:"'",sl:'"',t:'c',c:"'",sc:'"'},{l:'Enter',t:'s',kc:0x28,f:1.8}],
+[{l:'Shift',t:'m',mod:'shift',bit:0x02,f:2},{l:'z',sl:'Z',t:'c',c:'z',sc:'Z'},{l:'x',sl:'X',t:'c',c:'x',sc:'X'},{l:'c',sl:'C',t:'c',c:'c',sc:'C'},{l:'v',sl:'V',t:'c',c:'v',sc:'V'},{l:'b',sl:'B',t:'c',c:'b',sc:'B'},{l:'n',sl:'N',t:'c',c:'n',sc:'N'},{l:'m',sl:'M',t:'c',c:'m',sc:'M'},{l:',',sl:'<',t:'c',c:',',sc:'<'},{l:'.',sl:'>',t:'c',c:'.',sc:'>'},{l:'/',sl:'?',t:'c',c:'/',sc:'?'},{l:'Shift',t:'m',mod:'shift',bit:0x02,f:2}],
+[{l:'Ctrl',t:'m',mod:'ctrl',bit:0x01,f:1.2},{l:'Win',t:'m',mod:'win',bit:0x08,f:1.2},{l:'Alt',t:'m',mod:'alt',bit:0x04,f:1.2},{l:'',t:'c',c:' ',sc:' ',f:6},{l:'Alt',t:'m',mod:'alt',bit:0x04,f:1.2},{l:'Del',t:'s',kc:0x4C,f:1.2},{l:'\u2190',t:'s',kc:0x50},{l:'\u2191',t:'s',kc:0x52},{l:'\u2193',t:'s',kc:0x51},{l:'\u2192',t:'s',kc:0x4F}]
+];
+
+let shift=false,capsLock=false,ctrl=false,alt=false,win=false;
+const modBtns={shift:[],ctrl:[],alt:[],win:[]};
+const charKeys=[];
+let capsBtn=null;
+
+function buildKeyboard(){
+  const kb=document.getElementById('keyboard');
+  ROWS.forEach((row,ri)=>{
+    const rd=document.createElement('div');
+    rd.className='row';
+    row.forEach((k,ki)=>{
+      const b=document.createElement('button');
+      b.className='k';
+      if(ri===0)b.classList.add('fk');
+      if(k.f)b.style.flex=k.f;
+      b.textContent=k.c===' '?'Space':k.l;
+      b.dataset.r=ri;b.dataset.k=ki;
+      if(k.t==='c'&&k.sl)charKeys.push({btn:b,def:k});
+      if(k.t==='m'&&modBtns[k.mod])modBtns[k.mod].push(b);
+      if(k.t==='caps')capsBtn=b;
+      rd.appendChild(b);
+    });
+    kb.appendChild(rd);
+  });
+  kb.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('.k');if(!b)return;
+    e.preventDefault();
+    b.classList.add('p');setTimeout(()=>b.classList.remove('p'),120);
+    const k=ROWS[+b.dataset.r][+b.dataset.k];
+    onKey(k);
+  });
+}
+
+function toggleMod(mod){
+  if(mod==='shift'){shift=!shift}else if(mod==='ctrl'){ctrl=!ctrl}else if(mod==='alt'){alt=!alt}else if(mod==='win'){win=!win}
+  const active=mod==='shift'?shift:mod==='ctrl'?ctrl:mod==='alt'?alt:win;
+  modBtns[mod].forEach(b=>b.classList.toggle('active',active));
+  if(mod==='shift')updateLabels();
+}
+
+function updateLabels(){
+  const sh=shift!==capsLock;
+  charKeys.forEach(({btn,def})=>{
+    const isLetter=def.c>='a'&&def.c<='z';
+    btn.textContent=isLetter?(sh?def.sl:def.l):(shift?def.sl:def.l);
+  });
+}
+
+function onKey(k){
+  if(k.t==='m'){toggleMod(k.mod);return}
+  if(k.t==='caps'){
+    capsLock=!capsLock;
+    if(capsBtn)capsBtn.classList.toggle('caps',capsLock);
+    api('key',{modifier:0,keycode:0x39});
+    updateLabels();return;
+  }
+  let mb=0;
+  if(ctrl)mb|=0x01;if(alt)mb|=0x04;if(win)mb|=0x08;
+  if(k.t==='c'){
+    if(mb!==0){
+      if(shift)mb|=0x02;
+      const code=CK[k.c];
+      if(code!==undefined)api('key',{modifier:mb,keycode:code});
+    }else{
+      const isL=k.c>='a'&&k.c<='z';
+      const sh=isL?(shift!==capsLock):shift;
+      const ch=sh?k.sc:k.c;
+      api('string',{keys:ch});
+    }
+  }else if(k.t==='s'){
+    if(shift)mb|=0x02;
+    api('key',{modifier:mb,keycode:k.kc});
+  }
+  if(shift)toggleMod('shift');
+  if(ctrl)toggleMod('ctrl');
+  if(alt)toggleMod('alt');
+  if(win)toggleMod('win');
+}
+
+buildKeyboard();
+
+// ── Mouse ──
+(function(){
+  const pad=document.getElementById('touchpad');
+  let tracking=false,lastX=0,lastY=0,startTime=0,moved=false;
+  let accumX=0,accumY=0;
+  const sens=1.5,scrollSens=2;
+
+  function onStart(x,y){tracking=true;lastX=x;lastY=y;startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
+  function onMove(x,y){
+    if(!tracking)return;
+    accumX+=(x-lastX)*sens;accumY+=(y-lastY)*sens;
+    const dx=Math.trunc(accumX),dy=Math.trunc(accumY);
+    if(dx!==0||dy!==0){
+      const cx=Math.max(-127,Math.min(127,dx)),cy=Math.max(-127,Math.min(127,dy));
+      api('mouse_move',{x:cx,y:cy});
+      accumX-=dx;accumY-=dy;moved=true;
+    }
+    lastX=x;lastY=y;
+  }
+  function onEnd(){
+    if(!tracking)return;tracking=false;pad.classList.remove('active');
+    if(!moved&&Date.now()-startTime<250)api('mouse_click',{btn:1});
+  }
+
+  pad.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX,e.clientY)});
+  window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
+  window.addEventListener('mouseup',()=>onEnd());
+  pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onStart(t.clientX,t.clientY)},{passive:false});
+  pad.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];onMove(t.clientX,t.clientY)},{passive:false});
+  pad.addEventListener('touchend',e=>{e.preventDefault();if(e.touches.length===0)onEnd()},{passive:false});
+
+  let wheelAccum=0;
+  pad.addEventListener('wheel',e=>{
+    e.preventDefault();
+    wheelAccum+=-e.deltaY*scrollSens*0.02;
+    const s=Math.trunc(wheelAccum);
+    if(s!==0){api('mouse_scroll',{amount:Math.max(-127,Math.min(127,s))});wheelAccum-=s}
+  },{passive:false});
+
+  // Mouse buttons
+  const btnMap={ml:1,mm:4,mr:2};
+  for(const[id,btn]of Object.entries(btnMap)){
+    const el=document.getElementById(id);
+    el.addEventListener('pointerdown',e=>{e.preventDefault();el.classList.add('p');api('mouse_click',{btn:btn})});
+    el.addEventListener('pointerup',()=>el.classList.remove('p'));
+    el.addEventListener('pointerleave',()=>el.classList.remove('p'));
+  }
+
+  // Scroll buttons
+  let si=null;
+  function startScroll(a){api('mouse_scroll',{amount:a});si=setInterval(()=>api('mouse_scroll',{amount:a}),150)}
+  function stopScroll(){if(si){clearInterval(si);si=null}}
+  for(const[id,a]of[['su',3],['sd',-3]]){
+    const el=document.getElementById(id);
+    el.addEventListener('pointerdown',e=>{e.preventDefault();startScroll(a)});
+    el.addEventListener('pointerup',stopScroll);
+    el.addEventListener('pointerleave',stopScroll);
+  }
+})();
+</script></body></html>)rawhtml";
+
+
+// ── Constructor ────────────────────────────────────────────────────
+
+BleKeyboardWebControl::BleKeyboardWebControl(web_server_base::WebServerBase *base, EspidfBleKeyboard *keyboard)
+    : base_(base), keyboard_(keyboard) {}
+
+void BleKeyboardWebControl::setup() {
+  this->base_->add_handler(this);
+  ESP_LOGI(TAG, "Web control registered at /ble_keyboard");
+}
+
+// ── Request routing ────────────────────────────────────────────────
+
+bool BleKeyboardWebControl::canHandle(AsyncWebServerRequest *request) {
+  if (request->url() == "/ble_keyboard")
+    return true;
+  if (request->url().startsWith("/api/ble_keyboard/"))
+    return true;
+  return false;
+}
+
+void BleKeyboardWebControl::handleRequest(AsyncWebServerRequest *request) {
+  if (request->url() == "/ble_keyboard") {
+    this->handle_page_(request);
+  } else if (request->url().startsWith("/api/ble_keyboard/")) {
+    this->handle_api_(request);
+  } else {
+    request->send(404);
+  }
+}
+
+// ── Serve the page ─────────────────────────────────────────────────
+
+void BleKeyboardWebControl::handle_page_(AsyncWebServerRequest *request) {
+  request->send_P(200, "text/html", PAGE_HTML);
+}
+
+// ── REST API endpoints ─────────────────────────────────────────────
+
+void BleKeyboardWebControl::handle_api_(AsyncWebServerRequest *request) {
+  if (request->method() != HTTP_POST) {
+    request->send(405, "text/plain", "POST only");
+    return;
+  }
+
+  String path = request->url().substring(strlen("/api/ble_keyboard/"));
+
+  if (path == "mouse_move") {
+    int x = request->hasArg("x") ? atoi(request->arg("x").c_str()) : 0;
+    int y = request->hasArg("y") ? atoi(request->arg("y").c_str()) : 0;
+    this->keyboard_->send_mouse_move((int8_t) x, (int8_t) y);
+    request->send(200);
+
+  } else if (path == "mouse_click") {
+    int btn = request->hasArg("btn") ? atoi(request->arg("btn").c_str()) : 1;
+    this->keyboard_->send_mouse_click((uint8_t) btn);
+    request->send(200);
+
+  } else if (path == "mouse_scroll") {
+    int amount = request->hasArg("amount") ? atoi(request->arg("amount").c_str()) : 0;
+    this->keyboard_->send_mouse_scroll((int8_t) amount);
+    request->send(200);
+
+  } else if (path == "string") {
+    if (request->hasArg("keys")) {
+      std::string keys = request->arg("keys").c_str();
+      this->keyboard_->send_string(keys);
+    }
+    request->send(200);
+
+  } else if (path == "key") {
+    int modifier = request->hasArg("modifier") ? atoi(request->arg("modifier").c_str()) : 0;
+    int keycode = request->hasArg("keycode") ? atoi(request->arg("keycode").c_str()) : 0;
+    this->keyboard_->send_key_combo((uint8_t) modifier, (uint8_t) keycode);
+    request->send(200);
+
+  } else {
+    request->send(404, "text/plain", "Unknown endpoint");
+  }
+}
+
+}  // namespace espidf_ble_keyboard
+}  // namespace esphome
+
+#endif  // USE_BLE_KEYBOARD_WEB_CONTROL

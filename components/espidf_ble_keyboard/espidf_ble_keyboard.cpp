@@ -770,6 +770,13 @@ void EspidfBleKeyboard::setup() {
 
     set_connected(false, 0);
     set_paired(false);
+
+#ifdef USE_BLE_KEYBOARD_WEB_CONTROL
+    if (web_control_enabled_ && web_server_base_ != nullptr) {
+      web_control_ = new BleKeyboardWebControl(web_server_base_, this);
+      web_control_->setup();
+    }
+#endif
 }
 
 void EspidfBleKeyboard::loop() {
