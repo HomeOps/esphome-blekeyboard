@@ -726,17 +726,27 @@ void EspidfBleKeyboard::loop() {
     }
 
     // Non-blocking string typing: one keystroke step per loop() call, paced by timer.
-    if (type_queue_.empty() || !is_connected_) return;
+    if (!is_connected_ || type_mutex_ == nullptr) return;
 
     uint32_t now = millis();
     if (now < type_next_ms_) return;
 
+    // Snapshot queue state under mutex (non-blocking try-lock).
+    if (xSemaphoreTake(type_mutex_, 0) != pdTRUE) return;
+    bool queue_empty = type_queue_.empty();
+    bool key_up = type_key_up_pending_;
+    char c = (!queue_empty && !key_up) ? type_queue_[type_index_] : 0;
+    xSemaphoreGive(type_mutex_);
+
+    if (queue_empty) return;
+
     uint8_t report[8] = {0};
     uint32_t half_delay = key_delay_ms_ / 2;
 
-    if (type_key_up_pending_) {
-        // Send key-up (all zeros), then advance to next character.
-        send_keyboard_input_report(conn_id_, report, 8);
+    if (key_up) {
+        // Send key-up (all zeros). Retry next loop() if BLE stack queue is full.
+        if (send_keyboard_input_report(conn_id_, report, 8) != ESP_OK) return;
+        xSemaphoreTake(type_mutex_, portMAX_DELAY);
         type_key_up_pending_ = false;
         type_index_++;
         if (type_index_ >= type_queue_.size()) {
@@ -744,26 +754,31 @@ void EspidfBleKeyboard::loop() {
             type_index_ = 0;
         }
         type_next_ms_ = now + half_delay;
+        xSemaphoreGive(type_mutex_);
     } else {
         // Send key-down for the current character.
-        char c = type_queue_[type_index_];
         if (c >= 0 && c <= 127) {
             const auto &mapping = HID_ASCII_MAP[static_cast<uint8_t>(c)];
             if (mapping.keycode != 0x00) {
                 report[0] = mapping.modifier;
                 report[2] = mapping.keycode;
-                send_keyboard_input_report(conn_id_, report, 8);
+                // Retry next loop() if BLE stack queue is full.
+                if (send_keyboard_input_report(conn_id_, report, 8) != ESP_OK) return;
+                xSemaphoreTake(type_mutex_, portMAX_DELAY);
                 type_key_up_pending_ = true;
                 type_next_ms_ = now + half_delay;
+                xSemaphoreGive(type_mutex_);
                 return;
             }
         }
         // Unsupported or unmapped character — skip it.
+        xSemaphoreTake(type_mutex_, portMAX_DELAY);
         type_index_++;
         if (type_index_ >= type_queue_.size()) {
             type_queue_.clear();
             type_index_ = 0;
         }
+        xSemaphoreGive(type_mutex_);
     }
 }
 
@@ -841,7 +856,10 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
 
 void EspidfBleKeyboard::send_string(const std::string &str) {
     // Non-blocking: append to queue; loop() drains it one keystroke at a time.
+    if (type_mutex_ == nullptr) return;
+    xSemaphoreTake(type_mutex_, portMAX_DELAY);
     type_queue_ += str;
+    xSemaphoreGive(type_mutex_);
 }
 
 void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
