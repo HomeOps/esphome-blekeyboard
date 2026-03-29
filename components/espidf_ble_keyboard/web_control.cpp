@@ -446,7 +446,7 @@ class BleKbWebHandler : public AsyncWebHandler {
     retustatic std::stringrn std::string(ref.begin(), ref.end());
   }
 
-  bool canHandle(AsyncWebServerRequest *request) override {
+  bool canHandle(AsyncWebServerRequest *request) const override {
     std::string url = get_url(request);
     return url == "/ble_keyboard" ||
            url.rfind("/api/ble_keyboard/", 0) == 0;
