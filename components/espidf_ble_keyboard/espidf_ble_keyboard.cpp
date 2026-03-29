@@ -728,6 +728,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             break;
         case ESP_GATTS_CONNECT_EVT: {
             ESP_LOGI(TAG, "GATTS: Connected");
+            bool reject_known = false;
             if (s_instance) {
                 s_instance->set_connected(true, param->connect.conn_id);
                 // If active slot is empty (pairing mode) and this host is already
@@ -738,12 +739,15 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
                         auto &hs = s_instance->get_host_slot(i);
                         if (hs.occupied && memcmp(hs.addr, param->connect.remote_bda, sizeof(esp_bd_addr_t)) == 0) {
                             ESP_LOGW(TAG, "GATTS: Known host (slot %u) connected while pairing slot %u — disconnecting", i, active);
-                            esp_ble_gatts_close(gatts_if, param->connect.conn_id);
+                            reject_known = true;
+                            // Use GAP-level disconnect to avoid SMP bond removal
+                            esp_ble_gap_disconnect(param->connect.remote_bda);
                             break;
                         }
                     }
                 }
             }
+            if (reject_known) break;  // Skip encryption — don't trigger SMP on a rejected connection
             proto_mode_val = 0x01;
             report_ccc_val = 0;
             boot_kb_in_ccc_val = 0;
