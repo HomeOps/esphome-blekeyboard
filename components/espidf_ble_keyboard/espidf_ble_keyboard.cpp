@@ -728,7 +728,22 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             break;
         case ESP_GATTS_CONNECT_EVT: {
             ESP_LOGI(TAG, "GATTS: Connected");
-            if (s_instance) s_instance->set_connected(true, param->connect.conn_id);
+            if (s_instance) {
+                s_instance->set_connected(true, param->connect.conn_id);
+                // If active slot is empty (pairing mode) and this host is already
+                // known in another slot, reject it so a new host can pair instead.
+                uint8_t active = s_instance->active_host_slot();
+                if (!s_instance->get_host_slot(active).occupied) {
+                    for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
+                        auto &hs = s_instance->get_host_slot(i);
+                        if (hs.occupied && memcmp(hs.addr, param->connect.remote_bda, sizeof(esp_bd_addr_t)) == 0) {
+                            ESP_LOGW(TAG, "GATTS: Known host (slot %u) connected while pairing slot %u — disconnecting", i, active);
+                            esp_ble_gatts_close(gatts_if, param->connect.conn_id);
+                            break;
+                        }
+                    }
+                }
+            }
             proto_mode_val = 0x01;
             report_ccc_val = 0;
             boot_kb_in_ccc_val = 0;
