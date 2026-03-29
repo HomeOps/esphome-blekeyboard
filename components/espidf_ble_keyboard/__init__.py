@@ -89,9 +89,12 @@ async def to_code(config):
         from esphome.components.web_server_base import CONF_WEB_SERVER_BASE_ID
         base = await cg.get_variable(config[CONF_WEB_SERVER_BASE_ID])
         BleKeyboardWebControl = espidf_ble_keyboard_ns.class_("BleKeyboardWebControl", cg.Component)
-        web_control = cg.Pvariable(cg.ID("ble_keyboard_web_control", True, BleKeyboardWebControl),
-                               cg.RawExpression(f"new esphome::espidf_ble_keyboard::BleKeyboardWebControl({base}, {var})"))
-        cg.add(cg.App.register_component(web_control))
+        web_control_var = cg.new_Pvariable(
+            cg.ID("ble_keyboard_web_control", True, BleKeyboardWebControl),
+            base,
+            var
+        )
+        await cg.register_component(web_control_var, config)
 
     # set_setup_priority() removed in ESPHome 2026.x
     # Priority is now set via get_setup_priority() override in the C++ header
