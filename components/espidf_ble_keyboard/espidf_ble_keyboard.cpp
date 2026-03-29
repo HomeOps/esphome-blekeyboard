@@ -887,7 +887,7 @@ void EspidfBleKeyboard::switch_host(uint8_t slot) {
 
     if (is_connected_) {
         // Disconnect current host; DISCONNECT_EVT will trigger advertising
-        esp_ble_gatts_close(conn_id_);
+        esp_ble_gatts_close(s_gatts_if, conn_id_);
     } else {
         // Not connected — stop current advertising and restart
         esp_ble_gap_stop_advertising();
@@ -912,7 +912,7 @@ void EspidfBleKeyboard::forget_host(uint8_t slot) {
 
     // If this was the active slot and we're connected, disconnect
     if (slot == active_slot_ && is_connected_) {
-        esp_ble_gatts_close(conn_id_);
+        esp_ble_gatts_close(s_gatts_if, conn_id_);
     }
 }
 
