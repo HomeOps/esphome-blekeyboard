@@ -523,7 +523,7 @@ espidf_ble_keyboard:
 ### Web Control Link in Home Assistant
 
 Add this sensor to your YAML to get a clickable link in HA that opens the web control page:
-
+ 
 ```yaml
 text_sensor:
   - platform: wifi_info
