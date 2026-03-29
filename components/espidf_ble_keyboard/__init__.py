@@ -43,7 +43,7 @@ CONFIG_SCHEMA = cv.All(
             lower=True,
         ),
         cv.Optional(CONF_WEB_CONTROL, default=False): cv.boolean,
-        cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=4),
+        cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
     }).extend(cv.COMPONENT_SCHEMA),
     _web_control_schema,
 )

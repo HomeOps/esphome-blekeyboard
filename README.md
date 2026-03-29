@@ -93,7 +93,7 @@ espidf_ble_keyboard:
   # Optional: enable built-in web control page at http://<device-ip>/ble_keyboard
   # Requires web_server component. No HA cards or services needed.
   web_control: true
-  # Optional: number of host slots for multi-host switching (1–4, default: 4)
+  # Optional: number of host slots for multi-host switching (1–10, default: 4)
   host_slots: 4
 
 button:
@@ -229,7 +229,7 @@ binary_sensor:
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
 * **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
 * **web_control** (Optional, bool): Enable a built-in web control page with keyboard and mouse UI at `http://<device-ip>/ble_keyboard`. Requires the `web_server` component. Defaults to `false`.
-* **host_slots** (Optional, int): Number of host slots for multi-host switching (1–4). Each slot can store a bonded host. Switch between hosts using buttons, HA services, or the web control page. Defaults to `4`.
+* **host_slots** (Optional, int): Number of host slots for multi-host switching (1–10). Each slot can store a bonded host. Switch between hosts using buttons, HA services, or the web control page. Defaults to `4`.
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -272,8 +272,8 @@ State behavior:
 | `"mouse_click:0x01"` | Mouse click with button mask. `0x01` = left, `0x02` = right, `0x04` = middle. Combine for simultaneous buttons. |
 | `"mouse_move:<x>:<y>"` | Move mouse cursor. Values -127 to 127 (relative, pixels). |
 | `"mouse_scroll:<wheel>"` | Scroll mouse wheel. Positive = up, negative = down (-127 to 127). |
-| `"switch_host:N"` | Switch to host N (1–4). Reconnects to stored host or advertises for new pairing. |
-| `"forget_host:N"` | Remove BLE bond for host N (1–4) and clear the slot. |
+| `"switch_host:N"` | Switch to host N (1–10). Reconnects to stored host or advertises for new pairing. |
+| `"forget_host:N"` | Remove BLE bond for host N (1–10) and clear the slot. |
 
 ---
 
@@ -349,7 +349,7 @@ Switching takes 1–3 seconds depending on the host OS.
 ```yaml
 espidf_ble_keyboard:
   id: my_keyboard
-  host_slots: 4          # 1–4, default: 4
+  host_slots: 4          # 1–10, default: 4
 
 button:
   - platform: espidf_ble_keyboard
@@ -419,8 +419,8 @@ When `web_control: true` is enabled and `host_slots` > 1, a host bar appears bel
 
 | Action | Description |
 |---|---|
-| `"switch_host:N"` | Switch to host N (1–4). If the slot has a stored host, uses directed advertising to reconnect. If empty, starts normal advertising for new pairing. |
-| `"forget_host:N"` | Remove the bond for host N (1–4). Clears the stored address and removes the BLE bond from the ESP32. If the forgotten host is currently connected, it is disconnected. |
+| `"switch_host:N"` | Switch to host N (1–10). If the slot has a stored host, uses directed advertising to reconnect. If empty, starts normal advertising for new pairing. |
+| `"forget_host:N"` | Remove the bond for host N (1–10). Clears the stored address and removes the BLE bond from the ESP32. If the forgotten host is currently connected, it is disconnected. |
 
 ---
 
@@ -550,7 +550,7 @@ The web control page uses these local HTTP endpoints (useful for custom integrat
 | `/api/ble_keyboard/buttons` | GET | — | Returns JSON array of programmed buttons |
 | `/api/ble_keyboard/press` | POST | `action` (string) | Trigger a programmed button action |
 | `/api/ble_keyboard/hosts` | GET | — | Returns `{"active":N,"slots":[{"slot":N,"occupied":bool,"addr":"XX:XX:..."},...]}`  |
-| `/api/ble_keyboard/switch_host` | POST | `slot` (int) | Switch to host 1–4 |
+| `/api/ble_keyboard/switch_host` | POST | `slot` (int) | Switch to host 1–10 |
 
 Example: `curl -X POST "http://<device-ip>/api/ble_keyboard/string?keys=Hello"`
 

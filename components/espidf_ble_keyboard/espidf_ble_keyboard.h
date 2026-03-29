@@ -22,7 +22,7 @@ namespace esphome {
 namespace espidf_ble_keyboard {
 
 // Maximum number of host slots for multi-host switching
-static const uint8_t MAX_HOST_SLOTS = 4;
+static const uint8_t MAX_HOST_SLOTS = 10;
 
 class EspidfBleKeyboard : public Component {
  public:
