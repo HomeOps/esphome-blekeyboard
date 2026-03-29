@@ -452,7 +452,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
                     s_instance->queue_paired_state(true);
                     // Check if this host is already in a known slot
                     bool already_known = false;
-                    for (uint8_t i = 0; i < EspidfBleKeyboard::MAX_HOST_SLOTS; i++) {
+                    for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
                         auto &hs = s_instance->get_host_slot(i);
                         if (hs.occupied && memcmp(hs.addr, param->ble_security.auth_cmpl.bd_addr, sizeof(esp_bd_addr_t)) == 0) {
                             already_known = true;
