@@ -218,6 +218,10 @@ static bool s_directed_adv_pending = false;
 static esp_bd_addr_t s_directed_addr = {};
 static esp_ble_addr_type_t s_directed_addr_type = BLE_ADDR_TYPE_PUBLIC;
 
+// When rejecting a known host during pairing mode, suppress advertising
+// until this timestamp to let the old host stop trying to reconnect.
+static uint32_t s_adv_suppress_until_ms = 0;
+
 static void maybe_reset_bonds_after_security_config_change() {
     if (s_instance == nullptr) {
         return;
@@ -740,6 +744,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
                         if (hs.occupied && memcmp(hs.addr, param->connect.remote_bda, sizeof(esp_bd_addr_t)) == 0) {
                             ESP_LOGW(TAG, "GATTS: Known host (slot %u) connected while pairing slot %u — disconnecting", i, active);
                             reject_known = true;
+                            // Suppress advertising for 6s so old host stops retrying
+                            s_adv_suppress_until_ms = millis() + 6000;
                             // Use GAP-level disconnect to avoid SMP bond removal
                             esp_ble_gap_disconnect(param->connect.remote_bda);
                             break;
@@ -776,7 +782,13 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             system_ccc_val = 0;
             mouse_ccc_val = 0;
             battery_ccc_val = 0;
-            do_start_advertising();
+            // Don't restart advertising while suppressed (pairing mode rejecting known hosts)
+            if (s_adv_suppress_until_ms == 0 || millis() >= s_adv_suppress_until_ms) {
+                s_adv_suppress_until_ms = 0;
+                do_start_advertising();
+            } else {
+                ESP_LOGD(TAG, "GATTS: Advertising suppressed — waiting for old host to stop");
+            }
             break;
         case ESP_GATTS_WRITE_EVT:
             if (param->write.handle == s_proto_mode_handle && param->write.len > 0) {
@@ -994,6 +1006,13 @@ void EspidfBleKeyboard::setup() {
 void EspidfBleKeyboard::loop() {
     if (pending_paired_update_.exchange(false)) {
         set_paired(pending_paired_state_.load());
+    }
+
+    // Resume advertising after suppress period (pairing mode rejected known host)
+    if (s_adv_suppress_until_ms != 0 && millis() >= s_adv_suppress_until_ms && !is_connected_) {
+        s_adv_suppress_until_ms = 0;
+        ESP_LOGI(TAG, "Resuming advertising after suppress period");
+        do_start_advertising();
     }
 
     // Non-blocking string typing: one keystroke step per loop() call, paced by timer.
