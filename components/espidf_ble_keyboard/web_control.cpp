@@ -439,14 +439,14 @@ class BleKbWebHandler : public AsyncWebHandler {
  public:
   BleKbWebHandler(EspidfBleKeyboard *kb) : kb_(kb) {}
 
-  static std::string get_url(AsyncWebServerRequest *request) {
+   get_url(AsyncWebServerRequest *request) {
     char buf[513];
     std::span<char, 513> span(buf);
     auto ref = request->url_to(span);
-    return std::string(ref.begin(), ref.end());
+    retustatic std::stringrn std::string(ref.begin(), ref.end());
   }
 
-  bool canHandle(AsyncWebServerRequest *request) const override {
+  bool canHandle(AsyncWebServerRequest *request) override {
     std::string url = get_url(request);
     return url == "/ble_keyboard" ||
            url.rfind("/api/ble_keyboard/", 0) == 0;
