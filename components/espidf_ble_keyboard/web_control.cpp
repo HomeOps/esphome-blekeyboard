@@ -130,7 +130,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 <button class="media-btn" data-action="combo:0x00:0x50" data-repeat="1"><svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>Left</button>
 <button class="media-btn" data-action="combo:0x00:0x28"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>Enter</button>
 <button class="media-btn" data-action="combo:0x00:0x4F" data-repeat="1"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>Right</button>
-<button class="media-btn" data-action="combo:0x00:0x29"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</button>
+<button class="media-btn" data-action="consumer:0x0224"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back</button>
 <button class="media-btn" data-action="combo:0x00:0x51" data-repeat="1"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>Down</button>
 <button class="media-btn" data-action="volume_up" data-repeat="1"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>Vol +</button>
 <button class="media-btn" data-action="consumer:0x0223"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home</button>
