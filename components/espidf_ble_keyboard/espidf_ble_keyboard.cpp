@@ -305,8 +305,16 @@ static void apply_security_params(bool use_static_passkey) {
     uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
     uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
 
-    if (use_static_passkey && s_instance && s_instance->has_passkey()) {
-        bool use_sc = s_instance->passkey_secure_connections();
+    // Resolve effective passkey: per-slot overrides global
+    bool effective_has_passkey = false;
+    uint32_t effective_passkey = 0;
+    bool effective_sc = false;
+    if (s_instance) {
+        s_instance->get_active_slot_passkey(effective_has_passkey, effective_passkey, effective_sc);
+    }
+
+    if (use_static_passkey && effective_has_passkey) {
+        bool use_sc = effective_sc;
         if (use_sc) {
 #if defined(ESP_LE_AUTH_REQ_SC_MITM_BOND)
             auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND;
@@ -332,11 +340,12 @@ static void apply_security_params(bool use_static_passkey) {
             ESP_LOGI(TAG, "Pairing mode: Static passkey (legacy MITM bond)");
         }
         iocap = ESP_IO_CAP_OUT;
-        uint32_t passkey = s_instance->passkey();
+        uint32_t passkey = effective_passkey;
         esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &passkey, sizeof(passkey));
         s_use_static_passkey = true;
         s_require_mitm = true;
-        ESP_LOGI(TAG, "Setting passkey: %06lu", (unsigned long) passkey);
+        ESP_LOGI(TAG, "Setting passkey: %06lu (slot %u)", (unsigned long) passkey,
+                 s_instance ? s_instance->active_host_slot() : 0);
     } else {
 #if defined(ESP_LE_AUTH_REQ_SC_BOND)
         auth_req = ESP_LE_AUTH_REQ_SC_BOND;
@@ -446,8 +455,10 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
             break;
         case ESP_GAP_BLE_PASSKEY_REQ_EVT:
-            if (s_instance && s_instance->has_passkey() && s_use_static_passkey) {
-                esp_ble_passkey_reply(param->ble_security.ble_req.bd_addr, true, s_instance->passkey());
+            if (s_instance && s_use_static_passkey) {
+                bool pk_has; uint32_t pk_val; bool pk_sc;
+                s_instance->get_active_slot_passkey(pk_has, pk_val, pk_sc);
+                esp_ble_passkey_reply(param->ble_security.ble_req.bd_addr, true, pk_val);
             } else {
                 esp_ble_passkey_reply(param->ble_security.ble_req.bd_addr, false, 0);
             }
@@ -485,10 +496,12 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             } else {
                 uint8_t fail_reason = param->ble_security.auth_cmpl.fail_reason;
                 ESP_LOGE(TAG, "GAP: Pairing Failed (0x%x)", fail_reason);
+                bool fb_has, fb_sc; uint32_t fb_pk;
+                if (s_instance) s_instance->get_active_slot_passkey(fb_has, fb_pk, fb_sc);
                 if (s_instance &&
-                    s_instance->has_passkey() &&
+                    fb_has &&
                     s_use_static_passkey &&
-                    !s_instance->passkey_secure_connections() &&
+                    !fb_sc &&
                     fail_reason == 0x51) {
                     ESP_LOGW(TAG, "GAP: Static passkey rejected by peer (0x51), falling back to Just Works mode");
                     apply_security_params(false);
@@ -928,6 +941,11 @@ void EspidfBleKeyboard::switch_host(uint8_t slot) {
     active_slot_ = slot;
     save_host_slots_();
 
+    // Re-apply security params for the new slot's passkey config
+    bool slot_has_pk; uint32_t slot_pk; bool slot_sc;
+    get_active_slot_passkey(slot_has_pk, slot_pk, slot_sc);
+    apply_security_params(slot_has_pk);
+
     ESP_LOGI(TAG, "Switching to host slot %u", slot);
 
     if (hosts_[slot].occupied) {
@@ -969,6 +987,21 @@ void EspidfBleKeyboard::forget_host(uint8_t slot) {
     }
 }
 
+bool EspidfBleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const {
+    const auto &cfg = host_slot_configs_[active_slot_];
+    if (cfg.has_passkey) {
+        has_passkey = true;
+        passkey = cfg.passkey;
+        secure_connections = cfg.secure_connections;
+        return true;
+    }
+    // Fall back to global config
+    has_passkey = has_passkey_;
+    passkey = passkey_;
+    secure_connections = passkey_secure_connections_;
+    return has_passkey_;
+}
+
 // ── Component Setup ──────────────────────────────────────────────────────────
 void EspidfBleKeyboard::setup() {
     s_instance = this;
@@ -997,7 +1030,9 @@ void EspidfBleKeyboard::setup() {
         ESP_LOGI(TAG, "Startup: will direct-advertise to host slot %u", active_slot_);
     }
 
-    apply_security_params(this->has_passkey_);
+    bool startup_has_pk; uint32_t startup_pk; bool startup_sc;
+    get_active_slot_passkey(startup_has_pk, startup_pk, startup_sc);
+    apply_security_params(startup_has_pk);
 
     esp_ble_gap_register_callback(gap_event_handler);
     esp_ble_gatts_register_callback(gatts_event_handler);

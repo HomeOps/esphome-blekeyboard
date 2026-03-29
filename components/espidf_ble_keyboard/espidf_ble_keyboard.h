@@ -112,6 +112,12 @@ class EspidfBleKeyboard : public Component {
   uint8_t active_host_slot() const { return active_slot_; }
   uint8_t host_slots() const { return host_slots_; }
 
+  struct HostSlotConfig {
+    bool has_passkey{false};
+    uint32_t passkey{0};
+    bool secure_connections{false};  // true = secure_connections, false = legacy
+  };
+
   struct HostSlot {
     bool occupied{false};
     esp_bd_addr_t addr{};
@@ -122,6 +128,16 @@ class EspidfBleKeyboard : public Component {
   const uint8_t *get_slot_addr(uint8_t slot) const { return slot_addrs_[slot]; }
   void assign_host_slot_(uint8_t slot, const esp_bd_addr_t addr, esp_ble_addr_type_t addr_type);
   void save_host_slots_();
+
+  void set_host_slot_passkey(uint8_t slot, uint32_t passkey, bool secure_connections) {
+    if (slot < MAX_HOST_SLOTS) {
+      host_slot_configs_[slot].has_passkey = true;
+      host_slot_configs_[slot].passkey = passkey;
+      host_slot_configs_[slot].secure_connections = secure_connections;
+    }
+  }
+  bool get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const;
+  const HostSlotConfig &get_host_slot_config(uint8_t slot) const { return host_slot_configs_[slot]; }
 
  protected:
   bool is_connected_{false};
@@ -143,6 +159,7 @@ class EspidfBleKeyboard : public Component {
   uint8_t host_slots_{MAX_HOST_SLOTS};
   uint8_t active_slot_{0};
   HostSlot hosts_[MAX_HOST_SLOTS];
+  HostSlotConfig host_slot_configs_[MAX_HOST_SLOTS]{};
   esp_bd_addr_t slot_addrs_[MAX_HOST_SLOTS]{};  // per-slot random BLE address
   void load_host_slots_();
   void generate_slot_addrs_();

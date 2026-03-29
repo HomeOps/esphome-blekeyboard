@@ -11,6 +11,8 @@ CONF_PASSKEY = "passkey"
 CONF_PASSKEY_MODE = "passkey_mode"
 CONF_WEB_CONTROL = "web_control"
 CONF_HOST_SLOTS = "host_slots"
+CONF_HOSTS = "hosts"
+CONF_SLOT = "slot"
 PASSKEY_MODE_LEGACY = "legacy"
 PASSKEY_MODE_SECURE_CONNECTIONS = "secure_connections"
 
@@ -31,6 +33,16 @@ def _web_control_schema(config):
     return config
 
 
+HOST_SCHEMA = cv.Schema({
+    cv.Required(CONF_SLOT): cv.int_range(min=0, max=9),
+    cv.Optional(CONF_PASSKEY): cv.int_range(min=0, max=999999),
+    cv.Optional(CONF_PASSKEY_MODE, default=PASSKEY_MODE_LEGACY): cv.one_of(
+        PASSKEY_MODE_LEGACY,
+        PASSKEY_MODE_SECURE_CONNECTIONS,
+        lower=True,
+    ),
+})
+
 CONFIG_SCHEMA = cv.All(
     cv.Schema({
         cv.GenerateID(): cv.declare_id(EspidfBleKeyboard),
@@ -44,6 +56,7 @@ CONFIG_SCHEMA = cv.All(
         ),
         cv.Optional(CONF_WEB_CONTROL, default=False): cv.boolean,
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
+        cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
     }).extend(cv.COMPONENT_SCHEMA),
     _web_control_schema,
 )
@@ -64,6 +77,12 @@ async def to_code(config):
     ))
 
     cg.add(var.set_host_slots(config[CONF_HOST_SLOTS]))
+
+    if CONF_HOSTS in config:
+        for host in config[CONF_HOSTS]:
+            if CONF_PASSKEY in host:
+                sc = host[CONF_PASSKEY_MODE] == PASSKEY_MODE_SECURE_CONNECTIONS
+                cg.add(var.set_host_slot_passkey(host[CONF_SLOT], host[CONF_PASSKEY], sc))
 
     if config[CONF_WEB_CONTROL]:
         cg.add_define("USE_BLE_KEYBOARD_WEB_CONTROL")
