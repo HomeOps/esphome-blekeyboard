@@ -629,7 +629,7 @@ class BleKbWebHandler : public AsyncWebHandler {
 void BleKeyboardWebControl::setup() {
   auto *handler = new BleKbWebHandler(this->keyboard_);
   this->base_->add_handler(handler);
-  ESP_LOGI(TAG, "Web control registered at /ble_keyboard");
+  ESP_LOGI(TAG, "Web control handler registered");  // already there
 }
 
 }  // namespace espidf_ble_keyboard
