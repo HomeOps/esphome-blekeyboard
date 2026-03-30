@@ -628,6 +628,11 @@ device: bluetooth_keyboard
 name: Living Room Keyboard    # card title (auto-detected from HA if omitted)
 show_fkeys: false             # hide F1-F12 row (default: true)
 host_slots: 4                 # show host switcher bar (default: 0 = hidden)
+host_names:                   # custom names for each slot (optional)
+  - TV
+  - Phone
+  - Laptop
+  - Tablet
 ```
 
 Optional configuration:
@@ -637,6 +642,7 @@ Optional configuration:
 | `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
 | `show_fkeys` | `true` | Show the F1–F12 function key row. |
 | `host_slots` | `0` | Number of host slots. Set to match your `host_slots` config to show a host switcher bar with prev/next buttons, host name, and MAC address. `0` hides the bar. |
+| `host_names` | `[]` | List of custom names for each host slot (e.g., `["TV", "Phone"]`). Index 0 = slot 0, etc. Falls back to switch_host button names from the ESP32, then "Host N". |
 
 Features:
 - **Full QWERTY layout** — letters, numbers, punctuation, all standard keys.

@@ -19,6 +19,9 @@
  *   # name: My Keyboard            # card title (default "BLE Keyboard")
  *   # show_fkeys: true             # show F1-F12 row (default true)
  *   # host_slots: 4                # show host switcher bar (default 0 = hidden)
+ *   # host_names:                   # custom names for each host slot (optional)
+ *   #   - TV
+ *   #   - Phone
  *
  * Full example with overrides:
  *   type: custom:ble-keyboard-card
@@ -26,6 +29,11 @@
  *   name: Living Room Keyboard
  *   show_fkeys: false
  *   host_slots: 4
+ *   host_names:
+ *     - TV
+ *     - Phone
+ *     - Laptop
+ *     - Tablet
  */
 
 // HID keycodes for printable characters (used when Ctrl/Alt/Win modifiers are active)
@@ -155,6 +163,7 @@ class BleKeyboardCard extends HTMLElement {
       name: config.name || null,
       show_fkeys: config.show_fkeys !== false,
       host_slots: config.host_slots || 0,
+      host_names: config.host_names || [],
     };
   }
 
@@ -546,7 +555,12 @@ class BleKeyboardCard extends HTMLElement {
 
   _updateHostDisplay() {
     if (!this._hostNameEl) return;
-    this._hostNameEl.textContent = 'Host ' + (this._activeSlot + 1);
+    const names = this._config.host_names;
+    const apiSlot = this._hostSlots.find(s => s.slot === this._activeSlot);
+    this._hostNameEl.textContent = (names && names[this._activeSlot])
+      ? names[this._activeSlot]
+      : (apiSlot && apiSlot.name) ? apiSlot.name
+      : 'Host ' + (this._activeSlot + 1);
     if (this._hostDataAvailable) {
       const slot = this._hostSlots.find(s => s.slot === this._activeSlot);
       this._hostAddrEl.textContent = (slot && slot.occupied && slot.addr) ? slot.addr : 'Empty';

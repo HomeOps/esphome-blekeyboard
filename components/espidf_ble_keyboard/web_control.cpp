@@ -6,6 +6,7 @@
 #include "esphome/core/log.h"
 #include <cstdlib>
 #include <cstring>
+#include <map>
 #include <span>
 
 namespace esphome {
@@ -200,7 +201,7 @@ setInterval(pollStatus,3000);
       d.slots.forEach(s=>{
         const b=document.createElement('button');
         b.className='host-btn'+(s.slot===d.active?' active':'')+(s.occupied?' occupied':'');
-        b.innerHTML='<span class="slot-label">Host '+(s.slot+1)+'</span>'+(s.occupied?s.addr:'Empty');
+        b.innerHTML='<span class="slot-label">'+(s.name||('Host '+(s.slot+1)))+'</span>'+(s.occupied?s.addr:'Empty');
         b.addEventListener('pointerdown',e=>{
           e.preventDefault();
           api('switch_host',{slot:s.slot});
@@ -514,6 +515,16 @@ class BleKbWebHandler : public AsyncWebHandler {
     }
 
     if (path == "hosts") {
+      // Build slot-to-name map from registered switch_host buttons
+      std::map<uint8_t, std::string> slot_names;
+      for (const auto &btn : kb_->get_buttons()) {
+        if (btn.action.find("switch_host:") == 0) {
+          int slot = -1;
+          if (sscanf(btn.action.c_str(), "switch_host:%i", &slot) == 1 && slot >= 0) {
+            slot_names[(uint8_t) slot] = btn.name;
+          }
+        }
+      }
       std::string json = "{\"active\":";
       json += std::to_string(kb_->active_host_slot());
       json += ",\"slots\":[";
@@ -530,6 +541,12 @@ class BleKbWebHandler : public AsyncWebHandler {
                    h.addr[0], h.addr[1], h.addr[2], h.addr[3], h.addr[4], h.addr[5]);
           json += ",\"addr\":\"";
           json += addr_str;
+          json += "\"";
+        }
+        auto it = slot_names.find(i);
+        if (it != slot_names.end()) {
+          json += ",\"name\":\"";
+          json += it->second;
           json += "\"";
         }
         json += "}";
