@@ -413,7 +413,9 @@ api:
 
 ### Web Control
 
-When `web_control: true` is enabled and `host_slots` > 1, a host bar appears below the toolbar showing all slots. Click a slot to switch. The active slot is highlighted. Occupied slots show the stored Bluetooth address.
+When `web_control: true` is enabled, a full control page is available at `http://<device-ip>/ble_keyboard` with keyboard, mouse, and remote sections. Section toggle buttons in the toolbar let you show/hide each section. When `host_slots` > 1, a host bar appears below the toolbar showing all slots. Click a slot to switch. The active slot is highlighted. Occupied slots show the stored Bluetooth address.
+
+![Web Control Page](docs/web_server.png)
 
 ### Action Reference
 
