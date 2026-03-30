@@ -501,6 +501,8 @@ Features:
 - **Scroll** — Scroll Up / Scroll Down buttons (hold to repeat).
 - **Auto device name** — card title is auto-detected from Home Assistant's device registry.
 
+![Mouse HA Card](docs/mouse_ha_card.png)
+
 ---
 
 ## Web Control (Standalone — No Home Assistant)
@@ -658,6 +660,8 @@ Features:
 
 > **Note:** Caps Lock state is tracked locally in the card. If Caps Lock is toggled from another keyboard, the card indicator may be out of sync.
 
+![Keyboard HA Card](docs/keyboard_ha_card.png)
+
 ---
 
 ## Media Remote Card for Home Assistant
@@ -739,6 +743,8 @@ Features:
 - **Number pad** — optional 0–9 keypad for channel/PIN entry.
 - **Color buttons** — optional red/green/yellow/blue (F1–F4).
 - **Auto device name** — card title is auto-detected from Home Assistant's device registry.
+
+![Remote HA Card](docs/remote_ha_card.png)
 
 ---
 
