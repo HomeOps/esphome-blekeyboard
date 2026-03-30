@@ -15,6 +15,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 * **Consumer Control:** Send any HID consumer code directly from YAML using `consumer:0xXXXX` syntax.
 * **Mouse Control:** Left, right, and middle click, cursor movement, and scroll wheel via HID mouse reports.
 * **Custom Text Input:** Send any text typed in Home Assistant directly to the paired host device.
+* **RSSI Sensor:** Read the signal strength (dBm) of the connected host on a configurable interval. Supports proximity-based automations via `on_rssi_above` / `on_rssi_below`.
 
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 
@@ -245,6 +246,56 @@ State behavior:
 
 * **ON** = a `GAP: Pairing Successful` event occurred on the current connection.
 * **OFF** = keyboard is disconnected (including host-side unpair) or not yet paired in this session.
+
+### `sensor` (Platform: `espidf_ble_keyboard`)
+
+Exposes the RSSI (signal strength) of the currently connected host as an ESPHome sensor entity.
+
+* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **name** (Optional, string): Friendly entity name shown in Home Assistant.
+* **update_interval** (Optional, duration): How often to read RSSI from the connected host. Default: `10s`.
+
+State behavior:
+
+* Publishes the RSSI value in **dBm** (e.g. `-65`) while a host is connected.
+* Publishes **unavailable** when the host disconnects.
+
+```yaml
+sensor:
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    name: "BLE Host RSSI"
+    update_interval: 10s
+```
+
+#### Proximity Automations
+
+Use `on_rssi_above` and `on_rssi_below` on the main `espidf_ble_keyboard` component to trigger actions based on signal strength. Both fire on every RSSI sample that crosses the threshold — add your own debounce logic (e.g. a `script` or `globals` flag) if needed.
+
+| Key | Description |
+|---|---|
+| `threshold` | RSSI value in dBm (−127 to 0). `on_rssi_above` fires when RSSI > threshold. `on_rssi_below` fires when RSSI < threshold. |
+
+The automation receives a single `rssi` variable (int, dBm) you can use in lambdas.
+
+```yaml
+espidf_ble_keyboard:
+  id: my_keyboard
+  on_rssi_above:
+    threshold: -65      # fires when host is close (strong signal)
+    then:
+      - logger.log:
+          format: "Host nearby (RSSI %d dBm)"
+          args: [rssi]
+  on_rssi_below:
+    threshold: -90      # fires when host moves far away (weak signal)
+    then:
+      - logger.log:
+          format: "Host far away (RSSI %d dBm)"
+          args: [rssi]
+```
+
+> **Tip:** Typical indoor RSSI values range from around −40 dBm (very close) to −90 dBm (far/weak). A threshold of −70 to −75 is a reasonable starting point for proximity detection.
 
 #### Action Types
 
