@@ -520,32 +520,25 @@ class BleKeyboardCard extends HTMLElement {
 
   _pollHosts() {
     if (!this._hass || !this._config.host_slots) return;
-    // Find the device IP from HA entities to call the REST API
     const slug = this._config.device;
-    // Try to find the web control text_sensor or use entity state
     const ipEntity = Object.keys(this._hass.states).find(eid =>
       eid.startsWith('text_sensor.') && eid.includes(slug) && this._hass.states[eid].state.startsWith('http')
     );
     let baseUrl = '';
     if (ipEntity) {
-      const url = this._hass.states[ipEntity].state;
-      baseUrl = url.replace(/\/ble_keyboard$/, '');
-    } else {
-      // Fallback: try sensor with IP
-      const ipSensor = Object.keys(this._hass.states).find(eid =>
-        eid.startsWith('sensor.') && eid.includes(slug) && /\d+\.\d+\.\d+\.\d+/.test(this._hass.states[eid].state)
-      );
-      if (ipSensor) baseUrl = 'http://' + this._hass.states[ipSensor].state;
+      baseUrl = this._hass.states[ipEntity].state.replace(/\/ble_keyboard$/, '');
     }
     if (!baseUrl) {
       this._updateHostDisplay();
       return;
     }
-    fetch(baseUrl + '/api/ble_keyboard/hosts')
-      .then(r => r.json())
+    // Use no-cors mode won't give us data, so try with cors and handle failure
+    fetch(baseUrl + '/api/ble_keyboard/hosts', { signal: AbortSignal.timeout(3000) })
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         this._activeSlot = data.active;
         this._hostSlots = data.slots || [];
+        this._hostDataAvailable = true;
         this._updateHostDisplay();
       })
       .catch(() => this._updateHostDisplay());
@@ -553,12 +546,12 @@ class BleKeyboardCard extends HTMLElement {
 
   _updateHostDisplay() {
     if (!this._hostNameEl) return;
-    const slot = this._hostSlots.find(s => s.slot === this._activeSlot);
     this._hostNameEl.textContent = 'Host ' + (this._activeSlot + 1);
-    if (slot && slot.occupied && slot.addr) {
-      this._hostAddrEl.textContent = slot.addr;
+    if (this._hostDataAvailable) {
+      const slot = this._hostSlots.find(s => s.slot === this._activeSlot);
+      this._hostAddrEl.textContent = (slot && slot.occupied && slot.addr) ? slot.addr : 'Empty';
     } else {
-      this._hostAddrEl.textContent = 'Empty';
+      this._hostAddrEl.textContent = '';
     }
   }
 
