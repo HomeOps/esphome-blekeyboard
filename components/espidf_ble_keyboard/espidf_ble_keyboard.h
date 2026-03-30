@@ -2,7 +2,9 @@
 #include "esphome/core/component.h"
 #include "esphome/components/button/button.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/sensor/sensor.h"
 #include <atomic>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -139,6 +141,16 @@ class EspidfBleKeyboard : public Component {
   bool get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const;
   const HostSlotConfig &get_host_slot_config(uint8_t slot) const { return host_slot_configs_[slot]; }
 
+  // RSSI sensor
+  void set_rssi_sensor(sensor::Sensor *sensor) { rssi_sensor_ = sensor; }
+  void set_rssi_update_interval(uint32_t ms) { rssi_update_interval_ms_ = ms; }
+  void update_rssi(int8_t rssi);
+  void add_rssi_above_callback(std::function<void(int8_t)> cb) { rssi_above_callbacks_.push_back(std::move(cb)); }
+  void add_rssi_below_callback(std::function<void(int8_t)> cb) { rssi_below_callbacks_.push_back(std::move(cb)); }
+
+  // Peer address (set on connect, used for RSSI read)
+  esp_bd_addr_t peer_addr_{};
+
  protected:
   bool is_connected_{false};
   uint16_t conn_id_{0};
@@ -168,6 +180,14 @@ class EspidfBleKeyboard : public Component {
   web_server_base::WebServerBase *web_server_base_{nullptr};
   BleKeyboardWebControl *web_control_{nullptr};
 #endif
+
+  // RSSI state
+  sensor::Sensor *rssi_sensor_{nullptr};
+  uint32_t rssi_update_interval_ms_{10000};
+  uint32_t rssi_last_poll_ms_{0};
+  bool rssi_pending_{false};
+  std::vector<std::function<void(int8_t)>> rssi_above_callbacks_;
+  std::vector<std::function<void(int8_t)>> rssi_below_callbacks_;
 
   // Non-blocking string typing state machine (driven from loop())
   SemaphoreHandle_t type_mutex_{nullptr};

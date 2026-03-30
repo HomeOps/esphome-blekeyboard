@@ -24,5 +24,23 @@ class SendCtrlAltDelTrigger : public Trigger<> {
   EspidfBleKeyboard *parent_;
 };
 
+class RssiAboveTrigger : public Trigger<int> {
+ public:
+  RssiAboveTrigger(EspidfBleKeyboard *parent, int8_t threshold) {
+    parent->add_rssi_above_callback([this, threshold](int8_t rssi) {
+      if (rssi > threshold) this->trigger(rssi);
+    });
+  }
+};
+
+class RssiBelowTrigger : public Trigger<int> {
+ public:
+  RssiBelowTrigger(EspidfBleKeyboard *parent, int8_t threshold) {
+    parent->add_rssi_below_callback([this, threshold](int8_t rssi) {
+      if (rssi < threshold) this->trigger(rssi);
+    });
+  }
+};
+
 }  // namespace espidf_ble_keyboard
 }  // namespace esphome

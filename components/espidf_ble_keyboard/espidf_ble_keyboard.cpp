@@ -525,6 +525,14 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
                      param->update_conn_params.latency,
                      param->update_conn_params.timeout);
             break;
+        case ESP_GAP_BLE_READ_RSSI_COMPLETE_EVT:
+            if (s_instance) {
+                s_instance->rssi_pending_ = false;
+                if (param->read_rssi_cmpl.status == ESP_BT_STATUS_SUCCESS) {
+                    s_instance->update_rssi(param->read_rssi_cmpl.rssi);
+                }
+            }
+            break;
         default:
             break;
     }
@@ -754,7 +762,10 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             break;
         case ESP_GATTS_CONNECT_EVT: {
             ESP_LOGI(TAG, "GATTS: Connected");
-            if (s_instance) s_instance->set_connected(true, param->connect.conn_id);
+            if (s_instance) {
+                s_instance->set_connected(true, param->connect.conn_id);
+                memcpy(s_instance->peer_addr_, param->connect.remote_bda, sizeof(esp_bd_addr_t));
+            }
             proto_mode_val = 0x01;
             report_ccc_val = 0;
             boot_kb_in_ccc_val = 0;
@@ -775,6 +786,10 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
                 s_instance->set_connected(false, 0);
                 // Host-side unpair often appears only as disconnect.
                 s_instance->queue_paired_state(false);
+                if (s_instance->rssi_sensor_ != nullptr) {
+                    s_instance->rssi_sensor_->publish_state(NAN);
+                    s_instance->rssi_pending_ = false;
+                }
             }
             proto_mode_val = 0x01;
             report_ccc_val = 0;
@@ -1002,6 +1017,14 @@ bool EspidfBleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &pas
     return has_passkey_;
 }
 
+void EspidfBleKeyboard::update_rssi(int8_t rssi) {
+    if (rssi_sensor_ != nullptr) {
+        rssi_sensor_->publish_state(static_cast<float>(rssi));
+    }
+    for (auto &cb : rssi_above_callbacks_) cb(rssi);
+    for (auto &cb : rssi_below_callbacks_) cb(rssi);
+}
+
 // ── Component Setup ──────────────────────────────────────────────────────────
 void EspidfBleKeyboard::setup() {
     s_instance = this;
@@ -1058,6 +1081,15 @@ void EspidfBleKeyboard::loop() {
     if (!is_connected_ || type_mutex_ == nullptr) return;
 
     uint32_t now = millis();
+
+    // RSSI polling: read signal strength of connected host on configured interval.
+    if (rssi_sensor_ != nullptr && !rssi_pending_) {
+        if (now - rssi_last_poll_ms_ >= rssi_update_interval_ms_) {
+            rssi_last_poll_ms_ = now;
+            rssi_pending_ = true;
+            esp_ble_gap_read_rssi(peer_addr_);
+        }
+    }
     if (now < type_next_ms_) return;
 
     // Snapshot queue state under mutex (non-blocking try-lock).

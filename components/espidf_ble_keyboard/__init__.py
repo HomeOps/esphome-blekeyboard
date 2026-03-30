@@ -1,6 +1,7 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
+from esphome import automation
 
 DEPENDENCIES = ["esp32"]
 
@@ -18,6 +19,12 @@ PASSKEY_MODE_SECURE_CONNECTIONS = "secure_connections"
 
 espidf_ble_keyboard_ns = cg.esphome_ns.namespace("espidf_ble_keyboard")
 EspidfBleKeyboard = espidf_ble_keyboard_ns.class_("EspidfBleKeyboard", cg.Component)
+RssiAboveTrigger = espidf_ble_keyboard_ns.class_("RssiAboveTrigger", automation.Trigger.template(cg.int_))
+RssiBelowTrigger = espidf_ble_keyboard_ns.class_("RssiBelowTrigger", automation.Trigger.template(cg.int_))
+
+CONF_ON_RSSI_ABOVE = "on_rssi_above"
+CONF_ON_RSSI_BELOW = "on_rssi_below"
+CONF_THRESHOLD = "threshold"
 
 
 def _web_control_schema(config):
@@ -57,6 +64,18 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_WEB_CONTROL, default=False): cv.boolean,
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
         cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
+        cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation(
+            cv.Schema({
+                cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiAboveTrigger),
+                cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
+            }).extend(automation.AUTOMATION_SCHEMA)
+        ),
+        cv.Optional(CONF_ON_RSSI_BELOW): automation.validate_automation(
+            cv.Schema({
+                cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiBelowTrigger),
+                cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
+            }).extend(automation.AUTOMATION_SCHEMA)
+        ),
     }).extend(cv.COMPONENT_SCHEMA),
     _web_control_schema,
 )
@@ -93,6 +112,14 @@ async def to_code(config):
 
     # set_setup_priority() removed in ESPHome 2026.x
     # Priority is now set via get_setup_priority() override in the C++ header
+
+    for conf in config.get(CONF_ON_RSSI_ABOVE, []):
+        trigger = cg.new_Pvariable(conf[automation.CONF_TRIGGER_ID], var, conf[CONF_THRESHOLD])
+        await automation.build_automation(trigger, [(cg.int_, "rssi")], conf)
+
+    for conf in config.get(CONF_ON_RSSI_BELOW, []):
+        trigger = cg.new_Pvariable(conf[automation.CONF_TRIGGER_ID], var, conf[CONF_THRESHOLD])
+        await automation.build_automation(trigger, [(cg.int_, "rssi")], conf)
 
     try:
         from esphome.components.esp32 import include_builtin_idf_component
