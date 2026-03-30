@@ -64,18 +64,14 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_WEB_CONTROL, default=False): cv.boolean,
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
         cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
-        cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation(
-            cv.Schema({
-                cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiAboveTrigger),
-                cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
-            }).extend(automation.AUTOMATION_SCHEMA)
-        ),
-        cv.Optional(CONF_ON_RSSI_BELOW): automation.validate_automation(
-            cv.Schema({
-                cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiBelowTrigger),
-                cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
-            }).extend(automation.AUTOMATION_SCHEMA)
-        ),
+        cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation({
+            cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiAboveTrigger),
+            cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
+        }),
+        cv.Optional(CONF_ON_RSSI_BELOW): automation.validate_automation({
+            cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiBelowTrigger),
+            cv.Required(CONF_THRESHOLD): cv.int_range(min=-127, max=0),
+        }),
     }).extend(cv.COMPONENT_SCHEMA),
     _web_control_schema,
 )
