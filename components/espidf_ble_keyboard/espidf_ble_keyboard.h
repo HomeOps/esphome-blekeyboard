@@ -148,8 +148,10 @@ class EspidfBleKeyboard : public Component {
   void add_rssi_above_callback(std::function<void(int8_t)> cb) { rssi_above_callbacks_.push_back(std::move(cb)); }
   void add_rssi_below_callback(std::function<void(int8_t)> cb) { rssi_below_callbacks_.push_back(std::move(cb)); }
 
-  // Peer address (set on connect, used for RSSI read)
+  // Peer address and RSSI state — public so static GAP/GATTS handlers can access them directly
   esp_bd_addr_t peer_addr_{};
+  sensor::Sensor *rssi_sensor_{nullptr};
+  bool rssi_pending_{false};
 
  protected:
   bool is_connected_{false};
@@ -181,11 +183,9 @@ class EspidfBleKeyboard : public Component {
   BleKeyboardWebControl *web_control_{nullptr};
 #endif
 
-  // RSSI state
-  sensor::Sensor *rssi_sensor_{nullptr};
+  // RSSI state (interval/timing/callbacks stay protected — only touched by member functions)
   uint32_t rssi_update_interval_ms_{10000};
   uint32_t rssi_last_poll_ms_{0};
-  bool rssi_pending_{false};
   std::vector<std::function<void(int8_t)>> rssi_above_callbacks_;
   std::vector<std::function<void(int8_t)>> rssi_below_callbacks_;
 
