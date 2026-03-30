@@ -18,12 +18,14 @@
  *   # Optional overrides:
  *   # name: My Keyboard            # card title (default "BLE Keyboard")
  *   # show_fkeys: true             # show F1-F12 row (default true)
+ *   # host_slots: 4                # show host switcher bar (default 0 = hidden)
  *
  * Full example with overrides:
  *   type: custom:ble-keyboard-card
  *   device: bluetooth_keyboard
  *   name: Living Room Keyboard
  *   show_fkeys: false
+ *   host_slots: 4
  */
 
 // HID keycodes for printable characters (used when Ctrl/Alt/Win modifiers are active)
@@ -152,6 +154,7 @@ class BleKeyboardCard extends HTMLElement {
       device: config.device,
       name: config.name || null,
       show_fkeys: config.show_fkeys !== false,
+      host_slots: config.host_slots || 0,
     };
   }
 
@@ -247,6 +250,50 @@ class BleKeyboardCard extends HTMLElement {
       .fkey-row {
         display: ${this._config.show_fkeys ? 'flex' : 'none'};
       }
+      .host-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 6px 8px;
+        background: var(--secondary-background-color, #f0f0f0);
+        border-radius: 8px;
+        border: 1px solid var(--divider-color, #e0e0e0);
+      }
+      .host-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--divider-color, #e0e0e0);
+        border-radius: 6px;
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color);
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+      }
+      .host-btn:active {
+        background: var(--primary-color, #03a9f4);
+        color: #fff;
+      }
+      .host-info {
+        flex: 1;
+        text-align: center;
+        min-width: 0;
+      }
+      .host-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--primary-text-color);
+      }
+      .host-addr {
+        font-size: 11px;
+        color: var(--secondary-text-color, #888);
+        font-family: monospace;
+      }
     `;
 
     const card = document.createElement('div');
@@ -271,6 +318,47 @@ class BleKeyboardCard extends HTMLElement {
           : (d.name || '').replace(/[^a-z0-9]/gi, '_').toLowerCase() === slug);
         if (dev) nameSpan.textContent = dev.name_by_user || dev.name;
       }).catch(() => { /* keep default */ });
+    }
+
+    // Host switcher bar
+    if (this._config.host_slots > 1) {
+      this._activeSlot = 0;
+      this._hostSlots = [];
+      const hostBar = document.createElement('div');
+      hostBar.className = 'host-bar';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'host-btn';
+      prevBtn.textContent = '\u25C0';
+      prevBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this._switchHost((this._activeSlot - 1 + this._config.host_slots) % this._config.host_slots);
+      });
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'host-btn';
+      nextBtn.textContent = '\u25B6';
+      nextBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this._switchHost((this._activeSlot + 1) % this._config.host_slots);
+      });
+
+      const hostInfo = document.createElement('div');
+      hostInfo.className = 'host-info';
+      this._hostNameEl = document.createElement('div');
+      this._hostNameEl.className = 'host-name';
+      this._hostAddrEl = document.createElement('div');
+      this._hostAddrEl.className = 'host-addr';
+      hostInfo.appendChild(this._hostNameEl);
+      hostInfo.appendChild(this._hostAddrEl);
+
+      hostBar.appendChild(prevBtn);
+      hostBar.appendChild(hostInfo);
+      hostBar.appendChild(nextBtn);
+      card.appendChild(hostBar);
+
+      this._pollHosts();
+      this._hostPollInterval = setInterval(() => this._pollHosts(), 5000);
     }
 
     // Store key elements for label updates
@@ -422,6 +510,57 @@ class BleKeyboardCard extends HTMLElement {
         btn.textContent = this._shift ? keyDef.shiftLabel : keyDef.label;
       }
     });
+  }
+
+  _switchHost(slot) {
+    if (!this._hass) return;
+    this._activeSlot = slot;
+    this._hass.callService('esphome', `${this._config.device}_switch_host`, { slot });
+    this._updateHostDisplay();
+  }
+
+  _pollHosts() {
+    if (!this._hass || !this._config.host_slots) return;
+    // Find the device IP from HA entities to call the REST API
+    const slug = this._config.device;
+    // Try to find the web control text_sensor or use entity state
+    const ipEntity = Object.keys(this._hass.states).find(eid =>
+      eid.startsWith('text_sensor.') && eid.includes(slug) && this._hass.states[eid].state.startsWith('http')
+    );
+    let baseUrl = '';
+    if (ipEntity) {
+      const url = this._hass.states[ipEntity].state;
+      baseUrl = url.replace(/\/ble_keyboard$/, '');
+    } else {
+      // Fallback: try sensor with IP
+      const ipSensor = Object.keys(this._hass.states).find(eid =>
+        eid.startsWith('sensor.') && eid.includes(slug) && /\d+\.\d+\.\d+\.\d+/.test(this._hass.states[eid].state)
+      );
+      if (ipSensor) baseUrl = 'http://' + this._hass.states[ipSensor].state;
+    }
+    if (!baseUrl) {
+      this._updateHostDisplay();
+      return;
+    }
+    fetch(baseUrl + '/api/ble_keyboard/hosts')
+      .then(r => r.json())
+      .then(data => {
+        this._activeSlot = data.active;
+        this._hostSlots = data.slots || [];
+        this._updateHostDisplay();
+      })
+      .catch(() => this._updateHostDisplay());
+  }
+
+  _updateHostDisplay() {
+    if (!this._hostNameEl) return;
+    const slot = this._hostSlots.find(s => s.slot === this._activeSlot);
+    this._hostNameEl.textContent = 'Host ' + (this._activeSlot + 1);
+    if (slot && slot.occupied && slot.addr) {
+      this._hostAddrEl.textContent = slot.addr;
+    } else {
+      this._hostAddrEl.textContent = 'Empty';
+    }
   }
 
   getCardSize() {

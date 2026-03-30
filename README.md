@@ -627,6 +627,7 @@ type: custom:ble-keyboard-card
 device: bluetooth_keyboard
 name: Living Room Keyboard    # card title (auto-detected from HA if omitted)
 show_fkeys: false             # hide F1-F12 row (default: true)
+host_slots: 4                 # show host switcher bar (default: 0 = hidden)
 ```
 
 Optional configuration:
@@ -635,6 +636,7 @@ Optional configuration:
 |---|---|---|
 | `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
 | `show_fkeys` | `true` | Show the F1–F12 function key row. |
+| `host_slots` | `0` | Number of host slots. Set to match your `host_slots` config to show a host switcher bar with prev/next buttons, host name, and MAC address. `0` hides the bar. |
 
 Features:
 - **Full QWERTY layout** — letters, numbers, punctuation, all standard keys.
@@ -643,6 +645,7 @@ Features:
 - **Function keys** — F1–F12 (can be hidden with `show_fkeys: false`).
 - **Arrow keys** — Up, Down, Left, Right + Delete.
 - **Shift labels** — key labels update to show shifted characters when Shift is active.
+- **Host switcher** — prev/next buttons to switch hosts, shows current host name and MAC address (requires `host_slots` and `switch_host` ESPHome service).
 - **Auto device name** — card title is auto-detected from Home Assistant's device registry.
 
 > **Note:** Caps Lock state is tracked locally in the card. If Caps Lock is toggled from another keyboard, the card indicator may be out of sync.
