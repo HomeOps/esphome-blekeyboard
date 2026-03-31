@@ -96,6 +96,18 @@ espidf_ble_keyboard:
   web_control: true
   # Optional: number of host slots for multi-host switching (1–10, default: 4)
   host_slots: 4
+  # Optional: per-slot passkey and pairing mode overrides
+  hosts:
+    - slot: 0
+      passkey: 111111
+      passkey_mode: legacy
+    - slot: 1
+      passkey: 222222
+      passkey_mode: legacy
+    - slot: 2
+      passkey_mode: legacy
+    - slot: 3
+      passkey_mode: legacy
 
 button:
 
@@ -189,14 +201,14 @@ button:
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 1"
+    name: "Host 0"
     action:
       type: switch_host
       slot: 0
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 2"
+    name: "Host 1"
     action:
       type: switch_host
       slot: 1
@@ -231,6 +243,10 @@ binary_sensor:
 * **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
 * **web_control** (Optional, bool): Enable a built-in web control page with keyboard and mouse UI at `http://<device-ip>/ble_keyboard`. Requires the `web_server` component. Defaults to `false`.
 * **host_slots** (Optional, int): Number of host slots for multi-host switching (1–10). Each slot can store a bonded host. Switch between hosts using buttons, HA services, or the web control page. Defaults to `4`.
+* **hosts** (Optional, list): Per-slot passkey and pairing mode overrides. Each entry has:
+  * **slot** (Required, int): Host slot number (0–9).
+  * **passkey** (Optional, int): 6-digit PIN for this slot (000000–999999). If omitted, the slot uses the global `passkey` setting (or Just Works if no global passkey).
+  * **passkey_mode** (Optional, string): `legacy` (default) or `secure_connections`. Overrides the global `passkey_mode` for this slot.
 
 ### `button` (Platform: `espidf_ble_keyboard`)
 
@@ -265,7 +281,7 @@ sensor:
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
     name: "BLE Host RSSI"
-    update_interval: 10s
+    update_interval: 15s
 ```
 
 #### Proximity Automations
@@ -405,38 +421,56 @@ espidf_ble_keyboard:
 button:
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 1"
+    name: "Host 0"
     action:
       type: switch_host
       slot: 0
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 2"
+    name: "Host 1"
     action:
       type: switch_host
       slot: 1
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 3"
+    name: "Host 2"
     action:
       type: switch_host
       slot: 2
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Host 4"
+    name: "Host 3"
     action:
       type: switch_host
       slot: 3
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
-    name: "Forget Host 1"
+    name: "Forget Host 0"
     action:
       type: forget_host
       slot: 0
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    name: "Forget Host 1"
+    action:
+      type: forget_host
+      slot: 1
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    name: "Forget Host 2"
+    action:
+      type: forget_host
+      slot: 2
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    name: "Forget Host 3"
+    action:
+      type: forget_host
+      slot: 3            
 ```
 
 String action format is also supported: `"switch_host:0"`, `"forget_host:2"`.
