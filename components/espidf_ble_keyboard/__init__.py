@@ -4,6 +4,7 @@ from esphome.const import CONF_ID
 from esphome import automation
 
 DEPENDENCIES = ["esp32"]
+AUTO_LOAD = ["sensor", "binary_sensor", "button"]
 
 # Define configuration keys
 CONF_DEVICE_NAME = "device_name"
