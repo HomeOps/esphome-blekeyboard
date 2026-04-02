@@ -462,11 +462,8 @@ class BleKeyboardCard extends HTMLElement {
     if (this._ctrl) modBits |= 0x01;
     if (this._alt) modBits |= 0x04;
     if (this._win) modBits |= 0x08;
-
-    if (keyDef.type === 'char') {
-      if (modBits !== 0) {
-        // Modifier combo (Ctrl+C, etc.) — must use send_key
-        if (this._shift) modBits |= 0x02;
+      if (this._altgr) modBits |= 0x40;
+      if (this._rshift) modBits |= 0x20;
         const code = CHAR_TO_KEYCODE[keyDef.char];
         if (code !== undefined) {
           this._sendKey(modBits, code);
@@ -490,10 +487,10 @@ class BleKeyboardCard extends HTMLElement {
 
     // Auto-release one-shot modifiers (not caps lock)
     if (this._shift) this._toggleModifier('shift');
-    if (this._ctrl) this._toggleModifier('ctrl');
-    if (this._alt) this._toggleModifier('alt');
-    if (this._win) this._toggleModifier('win');
-  }
+      if (this._rshift) this._toggleModifier('rshift');
+      if (this._ctrl) this._toggleModifier('ctrl');
+      if (this._alt) this._toggleModifier('alt');
+      if (this._altgr) this._toggleModifier('altgr');
 
   _toggleModifier(mod) {
     this[`_${mod}`] = !this[`_${mod}`];
