@@ -340,16 +340,16 @@ class BleRemoteCard extends HTMLElement {
     const actions = {
       // Power & navigation
       power:  () => this._sendConsumer(0x0030),    // HID Power
-      back:   () => this._sendKey(0, 0x29),        // Escape
-      home:   () => this._sendKey(0x08, 0),        // Win key
+      back:   () => this._sendConsumer(0x0224),    // AC Back
+      home:   () => this._sendConsumer(0x0223),    // AC Home
       mute:   () => this._sendConsumer(0x00E2),    // Mute
 
       // D-pad (arrow keys + Enter)
-      up:     () => this._sendKey(0, 0x52),
-      down:   () => this._sendKey(0, 0x51),
-      left:   () => this._sendKey(0, 0x50),
-      right:  () => this._sendKey(0, 0x4F),
-      ok:     () => this._sendKey(0, 0x28),        // Enter
+      up:     () => this._sendConsumer(0x0042),    // Menu Up
+      down:   () => this._sendConsumer(0x0043),    // Menu Down
+      left:   () => this._sendConsumer(0x0044),    // Menu Left
+      right:  () => this._sendConsumer(0x0045),    // Menu Right
+      ok:     () => this._sendConsumer(0x0041),    // Menu Pick (OK)
 
       // Volume
       vol_up: () => this._sendConsumer(0x00E9),
