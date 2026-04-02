@@ -300,17 +300,17 @@ function buildKeyboard(){
 }
 
 function toggleMod(mod){
-  if(mod==='shift'){shift=!shift}else if(mod==='ctrl'){ctrl=!ctrl}else if(mod==='alt'){alt=!alt}else if(mod==='win'){win=!win}
-  const active=mod==='shift'?shift:mod==='ctrl'?ctrl:mod==='alt'?alt:win;
+  if(mod==='shift'){shift=!shift}else if(mod==='ctrl'){ctrl=!ctrl}else if(mod==='alt'){alt=!alt}else if(mod==='win'){win=!win}else if(mod==='rshift'){rshift=!rshift}else if(mod==='altgr'){altgr=!altgr}
+  const active=mod==='shift'?shift:mod==='ctrl'?ctrl:mod==='alt'?alt:mod==='win'?win:mod==='rshift'?rshift:altgr;
   modBtns[mod].forEach(b=>b.classList.toggle('active',active));
-  if(mod==='shift')updateLabels();
+  if(mod==='shift'||mod==='rshift')updateLabels();
 }
 
 function updateLabels(){
-  const sh=shift!==capsLock;
+  const sh=(shift||rshift)!==capsLock;
   charKeys.forEach(({btn,def})=>{
     const isLetter=def.c>='a'&&def.c<='z';
-    btn.textContent=isLetter?(sh?def.sl:def.l):(shift?def.sl:def.l);
+    btn.textContent=isLetter?(sh?def.sl:def.l):((shift||rshift)?def.sl:def.l);
   });
 }
 
@@ -323,7 +323,7 @@ function onKey(k){
     updateLabels();return;
   }
   let mb=0;
-  if(ctrl)mb|=0x01;if(alt)mb|=0x04;if(win)mb|=0x08;
+  if(ctrl)mb|=0x01;if(alt)mb|=0x04;if(win)mb|=0x08;if(rshift)mb|=0x20;if(altgr)mb|=0x40;
   if(k.t==='c'){
     if(mb!==0){
       if(shift)mb|=0x02;
@@ -331,7 +331,7 @@ function onKey(k){
       if(code!==undefined)api('key',{modifier:mb,keycode:code});
     }else{
       const isL=k.c>='a'&&k.c<='z';
-      const sh=isL?(shift!==capsLock):shift;
+      const sh=isL?((shift||rshift)!==capsLock):(shift||rshift);
       const ch=sh?k.sc:k.c;
       api('string',{keys:ch});
     }
@@ -343,6 +343,8 @@ function onKey(k){
   if(ctrl)toggleMod('ctrl');
   if(alt)toggleMod('alt');
   if(win)toggleMod('win');
+  if(rshift)toggleMod('rshift');
+  if(altgr)toggleMod('altgr');
 }
 
 buildKeyboard();
