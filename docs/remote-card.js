@@ -151,6 +151,12 @@ class BleRemoteCard extends HTMLElement {
               <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0119 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.04.88-3.88 2.29-5.16L5.88 5.46A8.96 8.96 0 003 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.72-1.21-5.15-3.17-6.83z"/></svg>
             </button>
             <div style="flex:1"></div>
+            <button class="btn" id="search" title="Search">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+            <button class="btn" id="info" title="Info / Guide">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </button>
             <button class="btn" id="mute" title="Mute">
               <svg viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0014 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0021 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 003.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
             </button>
@@ -343,6 +349,9 @@ class BleRemoteCard extends HTMLElement {
       back:   () => this._sendConsumer(0x0224),    // AC Back
       home:   () => this._sendConsumer(0x0223),    // AC Home
       mute:   () => this._sendConsumer(0x00E2),    // Mute
+
+      search: () => this._sendConsumer(0x0221),    // AC Search
+      info:   () => this._sendConsumer(0x0209),    // AC More Info / Guide
 
       // D-pad (arrow keys + Enter)
       up:     () => this._sendConsumer(0x0042),    // Menu Up
