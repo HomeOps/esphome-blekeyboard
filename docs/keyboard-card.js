@@ -152,6 +152,20 @@ class BleKeyboardCard extends HTMLElement {
     if (!this._initialized) {
       this._initialize();
     }
+    // Track active host changes via HA sensor entity
+    if (this._config && this._config.host_slots > 1) {
+      const entity = this._config.active_host_entity
+        || Object.keys(hass.states).find(eid =>
+             eid.startsWith('sensor.') && eid.includes(this._config.device) && eid.endsWith('_active_host')
+           );
+      if (entity && hass.states[entity]) {
+        const val = parseInt(hass.states[entity].state, 10);
+        if (!isNaN(val) && val !== this._activeSlot) {
+          this._activeSlot = val;
+          this._updateHostDisplay();
+        }
+      }
+    }
   }
 
   setConfig(config) {
@@ -164,6 +178,7 @@ class BleKeyboardCard extends HTMLElement {
       show_fkeys: config.show_fkeys !== false,
       host_slots: config.host_slots || 0,
       host_names: config.host_names || [],
+      active_host_entity: config.active_host_entity || null,
     };
   }
 

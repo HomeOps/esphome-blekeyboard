@@ -1043,6 +1043,8 @@ void EspidfBleKeyboard::switch_host(uint8_t slot) {
 
     active_slot_ = slot;
     save_host_slots_();
+    if (active_host_sensor_ != nullptr)
+        active_host_sensor_->publish_state(slot);
 
     // Re-apply security params for the new slot's passkey config
     bool slot_has_pk; uint32_t slot_pk; bool slot_sc;
@@ -1133,6 +1135,8 @@ void EspidfBleKeyboard::setup() {
     load_host_slots_();
     load_macros_();
     generate_slot_addrs_();
+    if (active_host_sensor_ != nullptr)
+        active_host_sensor_->publish_state(active_slot_);
 
     // If active slot has a bonded host, use directed advertising on startup
     if (hosts_[active_slot_].occupied) {

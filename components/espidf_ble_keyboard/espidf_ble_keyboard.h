@@ -154,6 +154,9 @@ class EspidfBleKeyboard : public Component {
   bool get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const;
   const HostSlotConfig &get_host_slot_config(uint8_t slot) const { return host_slot_configs_[slot]; }
 
+  // Active host sensor
+  void set_active_host_sensor(sensor::Sensor *sensor) { active_host_sensor_ = sensor; }
+
   // RSSI sensor
   void set_rssi_sensor(sensor::Sensor *sensor) { rssi_sensor_ = sensor; }
   void set_rssi_update_interval(uint32_t ms) { rssi_update_interval_ms_ = ms; }
@@ -163,6 +166,7 @@ class EspidfBleKeyboard : public Component {
 
   // Peer address and RSSI state — public so static GAP/GATTS handlers can access them directly
   esp_bd_addr_t peer_addr_{};
+  sensor::Sensor *active_host_sensor_{nullptr};
   sensor::Sensor *rssi_sensor_{nullptr};
   bool rssi_pending_{false};
 
