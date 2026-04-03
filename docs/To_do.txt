@@ -1,3 +1,6 @@
 1) Fix issue with Quest browser, top line disappearing and reappearing. to check fix
 2) Fine tune media card. Extra buttons? check all are consumer buttons. to check fix
 
+
+Fix double type on keyboard-card.js in HA. Webserver ok
+

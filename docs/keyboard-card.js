@@ -129,7 +129,7 @@ const ROWS = [
     { label: ',', shiftLabel: '<', type: 'char', char: ',', shiftChar: '<' },
     { label: '.', shiftLabel: '>', type: 'char', char: '.', shiftChar: '>' },
     { label: '/', shiftLabel: '?', type: 'char', char: '/', shiftChar: '?' },
-    { label: 'Shift', type: 'modifier', mod: 'shift', bit: 0x02, flex: 2 },
+    { label: 'Shift R', type: 'modifier', mod: 'rshift', bit: 0x20, flex: 2 },
   ],
   // Bottom row
   [
@@ -137,7 +137,7 @@ const ROWS = [
     { label: 'Win', type: 'modifier', mod: 'win', bit: 0x08, flex: 1.2 },
     { label: 'Alt', type: 'modifier', mod: 'alt', bit: 0x04, flex: 1.2 },
     { label: '', type: 'char', char: ' ', shiftChar: ' ', flex: 6 },
-      { label: 'Alt R', type: 'modifier', mod: 'altgr', bit: 0x40, flex: 1.2 },
+    { label: 'Alt R', type: 'modifier', mod: 'altgr', bit: 0x40, flex: 1.2 },
     { label: 'Del', type: 'special', keycode: 0x4C, flex: 1.2 },
     { label: '\u2190', type: 'special', keycode: 0x50 },
     { label: '\u2191', type: 'special', keycode: 0x52 },
@@ -152,6 +152,20 @@ class BleKeyboardCard extends HTMLElement {
     if (!this._initialized) {
       this._initialize();
     }
+    // Track active host changes via HA sensor entity
+    if (this._config && this._config.host_slots > 1) {
+      const entity = this._config.active_host_entity
+        || Object.keys(hass.states).find(eid =>
+             eid.startsWith('sensor.') && eid.includes(this._config.device) && eid.endsWith('_active_host')
+           );
+      if (entity && hass.states[entity]) {
+        const val = parseInt(hass.states[entity].state, 10);
+        if (!isNaN(val) && val !== this._activeSlot) {
+          this._activeSlot = val;
+          this._updateHostDisplay();
+        }
+      }
+    }
   }
 
   setConfig(config) {
@@ -164,6 +178,7 @@ class BleKeyboardCard extends HTMLElement {
       show_fkeys: config.show_fkeys !== false,
       host_slots: config.host_slots || 0,
       host_names: config.host_names || [],
+      active_host_entity: config.active_host_entity || null,
     };
   }
 
@@ -176,6 +191,8 @@ class BleKeyboardCard extends HTMLElement {
     this._ctrl = false;
     this._alt = false;
     this._win = false;
+    this._rshift = false;
+    this._altgr = false;
 
     const shadow = this.attachShadow({ mode: 'open' });
 
@@ -371,7 +388,7 @@ class BleKeyboardCard extends HTMLElement {
 
     // Store key elements for label updates
     this._charKeys = [];
-    this._modifierBtns = { shift: [], ctrl: [], alt: [], win: [] };
+    this._modifierBtns = { shift: [], ctrl: [], alt: [], win: [], rshift: [], altgr: [] };
 
     // Build keyboard rows
     ROWS.forEach((row, rowIdx) => {
@@ -413,17 +430,11 @@ class BleKeyboardCard extends HTMLElement {
     shadow.appendChild(style);
     shadow.appendChild(card);
 
+    // Delegated event handler
     card.addEventListener('pointerdown', (e) => {
       const btn = e.target.closest('.key');
       if (!btn) return;
       e.preventDefault();
-      e.stopPropagation();
-
-      const now = Date.now();
-      if (btn.dataset.lastTs && (now - parseInt(btn.dataset.lastTs, 10) < 60)) {
-        return; // Prevent fast double-fires typical of touch+mouse ghosting
-      }
-      btn.dataset.lastTs = now.toString();
 
       const rowIdx = parseInt(btn.dataset.row);
       const keyIdx = parseInt(btn.dataset.key);
@@ -493,18 +504,11 @@ class BleKeyboardCard extends HTMLElement {
         this._sendString(ch);
       }
     } else if (keyDef.type === 'special') {
-      if (this._shift || this._rshift) modBits |= 0x02;
+      if (this._shift) modBits |= 0x02;
       this._sendKey(modBits, keyDef.keycode);
     }
 
     // Auto-release one-shot modifiers (not caps lock)
-    if (this._shift) this._toggleModifier('shift');
-    if (this._rshift) this._toggleModifier('rshift');
-    if (this._ctrl) this._toggleModifier('ctrl');
-    if (this._alt) this._toggleModifier('alt');
-    if (this._win) this._toggleModifier('win');
-    // Auto-release one-shot modifiers (not caps lock)
-  }
     if (this._shift) this._toggleModifier('shift');
     if (this._rshift) this._toggleModifier('rshift');
     if (this._ctrl) this._toggleModifier('ctrl');
@@ -521,19 +525,19 @@ class BleKeyboardCard extends HTMLElement {
       this._modifierBtns[mod].forEach(btn => btn.classList.toggle('active', active));
     }
 
-    if (mod === 'shift') {
+    if (mod === 'shift' || mod === 'rshift') {
       this._updateKeyLabels();
     }
   }
 
   _updateKeyLabels() {
-    const showShifted = this._shift !== this._capsLock;
+    const sh = (this._shift || this._rshift) !== this._capsLock;
     this._charKeys.forEach(({ btn, keyDef }) => {
       const isLetter = keyDef.char >= 'a' && keyDef.char <= 'z';
       if (isLetter) {
-        btn.textContent = showShifted ? keyDef.shiftLabel : keyDef.label;
+        btn.textContent = sh ? keyDef.shiftLabel : keyDef.label;
       } else {
-        btn.textContent = this._shift ? keyDef.shiftLabel : keyDef.label;
+        btn.textContent = (this._shift || this._rshift) ? keyDef.shiftLabel : keyDef.label;
       }
     });
   }
