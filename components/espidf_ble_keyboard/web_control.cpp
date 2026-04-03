@@ -458,24 +458,24 @@ buildKeyboard();
   }
 })();
 
-// ── Media Controls ──
+// ── Remote Controls ──
 (function(){
-  const grid=document.querySelector('.media-grid');
-  if(!grid)return;
+  const card=document.getElementById('media-card');
+  if(!card)return;
   let ri=null;
   function stopRepeat(){if(ri){clearInterval(ri);ri=null}}
-  grid.addEventListener('pointerdown',e=>{
-    const b=e.target.closest('.media-btn');if(!b)return;
+  card.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('.rmt-btn');if(!b)return;
     e.preventDefault();b.classList.add('p');
     const action=b.dataset.action;
     api('press',{action:action});
     if(b.dataset.repeat){ri=setInterval(()=>api('press',{action:action}),200)}
   });
-  grid.addEventListener('pointerup',e=>{
-    const b=e.target.closest('.media-btn');if(b)b.classList.remove('p');stopRepeat();
+  card.addEventListener('pointerup',e=>{
+    const b=e.target.closest('.rmt-btn');if(b)b.classList.remove('p');stopRepeat();
   });
-  grid.addEventListener('pointerleave',e=>{
-    const b=e.target.closest('.media-btn');if(b)b.classList.remove('p');stopRepeat();
+  card.addEventListener('pointerleave',e=>{
+    const b=e.target.closest('.rmt-btn');if(b)b.classList.remove('p');stopRepeat();
   },true);
 })();
 
