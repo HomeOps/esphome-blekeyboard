@@ -148,10 +148,11 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 </div>
 
 <script>
+let fq=Promise.resolve();const qf=(u,o)=>new Promise((res,rej)=>{fq=fq.then(()=>fetch(u,o).then(res).catch(rej));});
 // API helper
 function api(endpoint,params){
   const url='/api/ble_keyboard/'+endpoint+'?'+new URLSearchParams(params);
-  fetch(url,{method:'POST'}).catch(()=>{});
+  qf(url,{method:'POST'}).catch(()=>{});
 }
 
 // ── Theme ──
@@ -211,7 +212,7 @@ const sdot=document.getElementById('sdot');
 const stxt=document.getElementById('stxt');
 const dname=document.getElementById('dname');
 function pollStatus(){
-  fetch('/api/ble_keyboard/status').then(r=>r.json()).then(d=>{
+  qf('/api/ble_keyboard/status').then(r=>r.json()).then(d=>{
     const c=d.connected,p=d.paired;
     sdot.className='status-dot'+(p?' paired':c?' connected':'');
     stxt.className='status-text'+((c||p)?' on':'');
@@ -224,14 +225,14 @@ function pollStatus(){
   });
 }
 pollStatus();
-setInterval(pollStatus,10000);
+setTimeout(function loopS(){pollStatus();setTimeout(loopS,10000);},10000);
 
 // ── Host Switcher ──
 (function(){
   const bar=document.getElementById('host-bar');
   let lastHostsRaw=null;
   function loadHosts(){
-    fetch('/api/ble_keyboard/hosts').then(r=>r.text()).then(txt=>{
+    qf('/api/ble_keyboard/hosts').then(r=>r.text()).then(txt=>{
       if(txt===lastHostsRaw)return;
       lastHostsRaw=txt;
       const d=JSON.parse(txt);
@@ -265,14 +266,14 @@ setInterval(pollStatus,10000);
     }).catch(()=>{bar.style.display='none'});
   }
   loadHosts();
-  setInterval(loadHosts,15000);
+  setTimeout(function loopH(){loadHosts();setTimeout(loopH,15000);},15000);
 })();
 
 // ── Programmed Buttons ──
 (function(){
   const card=document.getElementById('btns-card');
   const container=document.getElementById('prog-btns');
-  fetch('/api/ble_keyboard/buttons').then(r=>r.json()).then(btns=>{
+  qf('/api/ble_keyboard/buttons').then(r=>r.json()).then(btns=>{
     if(!btns.length){card.style.display='none';return}
     card.style.display='';
     container.innerHTML='';
@@ -723,6 +724,10 @@ void BleKeyboardWebControl::setup() {
 }  // namespace esphome
 
 #endif  // USE_BLE_KEYBOARD_WEB_CONTROL
+
+
+
+
 
 
 
