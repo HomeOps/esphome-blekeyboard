@@ -516,11 +516,11 @@ class BleKbWebHandler : public AsyncWebHandler {
   void handleRequest(AsyncWebServerRequest *request) override {
       std::string url = get_url(request);
 
-      auto send_response = [request](int code, const char* type, const char* content) {
-        AsyncWebServerResponse* response = request->beginResponse(code, type, content);
-        response->addHeader("Connection", "close");
-        request->send(response);
-      };
+      auto send_response = [request](int code, const char* type, const char* content, bool keep_alive = false) {
+          AsyncWebServerResponse* response = request->beginResponse(code, type, content);
+          if (!keep_alive) response->addHeader("Connection", "close");
+          request->send(response);
+        };
 
     // Serve the page
     if (url == "/ble_keyboard") {
@@ -627,30 +627,30 @@ class BleKbWebHandler : public AsyncWebHandler {
       int x = request->hasArg("x") ? atoi(request->arg("x").c_str()) : 0;
       int y = request->hasArg("y") ? atoi(request->arg("y").c_str()) : 0;
       kb_->send_mouse_move((int8_t) x, (int8_t) y);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "mouse_click") {
       int btn = request->hasArg("btn") ? atoi(request->arg("btn").c_str()) : 1;
       kb_->send_mouse_click((uint8_t) btn);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "mouse_scroll") {
       int amount = request->hasArg("amount") ? atoi(request->arg("amount").c_str()) : 0;
       kb_->send_mouse_scroll((int8_t) amount);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "string") {
       if (request->hasArg("keys")) {
         std::string keys = request->arg("keys").c_str();
         kb_->send_string(keys);
       }
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "key") {
       int modifier = request->hasArg("modifier") ? atoi(request->arg("modifier").c_str()) : 0;
       int keycode = request->hasArg("keycode") ? atoi(request->arg("keycode").c_str()) : 0;
       kb_->send_key_combo((uint8_t) modifier, (uint8_t) keycode);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "press") {
       // Press a button by action string
@@ -691,17 +691,17 @@ class BleKbWebHandler : public AsyncWebHandler {
             kb_->forget_host((uint8_t) slot);
         } else kb_->send_string(action);
       }
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "switch_host") {
       int slot = request->hasArg("slot") ? atoi(request->arg("slot").c_str()) : 0;
       kb_->switch_host((uint8_t) slot);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else if (path == "forget_host") {
       int slot = request->hasArg("slot") ? atoi(request->arg("slot").c_str()) : 0;
       kb_->forget_host((uint8_t) slot);
-      send_response(200, "text/plain", "OK");
+      send_response(200, "text/plain", "OK", true);
 
     } else {
       send_response(404, "text/plain", "Unknown endpoint");
