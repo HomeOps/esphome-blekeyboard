@@ -159,26 +159,36 @@ const thmBtn=document.getElementById('thm');
 const logBtn=document.getElementById('log-btn');
 const logView=document.getElementById('log-view');
 const logOut=document.getElementById('log-out');
-let logSource=null;
+let logSource=null, pingTimer=null;
+function startLogs(){
+  if(logSource)logSource.close();
+  logSource=new EventSource('/events');
+  logSource.addEventListener('log',e=>{
+    let msg=e.data;
+    try{const d=JSON.parse(e.data);if(d.message)msg=d.message;}catch(err){}
+    msg=msg.replace(/\x1B\[[0-9;]*[a-zA-Z]/g,'');
+    const div=document.createElement('div');
+    div.textContent=msg;
+    logOut.appendChild(div);
+    while(logOut.childNodes.length>300)logOut.firstChild.remove();
+    logOut.scrollTop=logOut.scrollHeight;
+  });
+  logSource.addEventListener('ping',()=>{
+    clearTimeout(pingTimer);
+    pingTimer=setTimeout(startLogs,15000);
+  });
+  const rs=()=>{clearTimeout(pingTimer);pingTimer=setTimeout(startLogs,5000);};
+  logSource.onopen=()=>{clearTimeout(pingTimer);pingTimer=setTimeout(startLogs,15000);};
+  logSource.onerror=rs;
+}
 logBtn.addEventListener('click',()=>{
   if(logView.style.display==='none'){
     logView.style.display='flex';
-    if(!logSource){
-      logSource=new EventSource('/events');
-      logSource.addEventListener('log',e=>{
-        let msg=e.data;
-        try{const d=JSON.parse(e.data);if(d.message)msg=d.message;}catch(err){}
-        msg=msg.replace(/\x1B\[[0-9;]*[a-zA-Z]/g,'');
-        const div=document.createElement('div');
-        div.textContent=msg;
-        logOut.appendChild(div);
-        if(logOut.childNodes.length>100)logOut.firstChild.remove();
-        logOut.scrollTop=logOut.scrollHeight;
-      });
-    }
+    if(!logSource)startLogs();
   }else{
     logView.style.display='none';
     if(logSource){logSource.close();logSource=null;}
+    clearTimeout(pingTimer);
   }
 });
 document.getElementById('log-clear').addEventListener('click',()=>{logOut.innerHTML='';});
