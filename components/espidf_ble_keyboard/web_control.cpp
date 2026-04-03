@@ -626,6 +626,7 @@ class BleKbWebHandler : public AsyncWebHandler {
       auto send_response = [request](int code, const char* type, const char* content) {
         AsyncWebServerResponse* response = request->beginResponse(code, type, content);
         response->addHeader("Connection", "close");
+        response->addHeader("Access-Control-Allow-Origin", "*");
         request->send(response);
       };
 
