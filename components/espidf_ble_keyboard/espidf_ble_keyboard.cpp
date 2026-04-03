@@ -933,6 +933,90 @@ void EspidfBleKeyboard::save_host_slots_() {
     nvs_close(handle);
 }
 
+// ── User-editable macros (NVS-persisted) ──────────────────────────
+
+void EspidfBleKeyboard::load_macros_() {
+    nvs_handle_t handle;
+    if (nvs_open("espidf_ble_kb", NVS_READONLY, &handle) != ESP_OK) return;
+
+    uint8_t count = 0;
+    if (nvs_get_u8(handle, "macro_cnt", &count) == ESP_OK) {
+        for (uint8_t i = 0; i < count && i < MAX_MACROS; i++) {
+            char key[16];
+            char buf[64];
+            size_t len;
+            std::string name, action;
+
+            snprintf(key, sizeof(key), "macro%u_name", i);
+            len = sizeof(buf);
+            if (nvs_get_str(handle, key, buf, &len) == ESP_OK)
+                name = buf;
+
+            snprintf(key, sizeof(key), "macro%u_act", i);
+            len = sizeof(buf);
+            if (nvs_get_str(handle, key, buf, &len) == ESP_OK)
+                action = buf;
+
+            if (!name.empty() && !action.empty()) {
+                macros_.push_back({name, action});
+                ESP_LOGI(TAG, "Loaded macro %u: %s -> %s", i, name.c_str(), action.c_str());
+            }
+        }
+    }
+    nvs_close(handle);
+}
+
+void EspidfBleKeyboard::save_macros_() {
+    nvs_handle_t handle;
+    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+
+    uint8_t count = macros_.size();
+    nvs_set_u8(handle, "macro_cnt", count);
+
+    for (uint8_t i = 0; i < MAX_MACROS; i++) {
+        char key[16];
+        if (i < count) {
+            snprintf(key, sizeof(key), "macro%u_name", i);
+            nvs_set_str(handle, key, macros_[i].name.c_str());
+            snprintf(key, sizeof(key), "macro%u_act", i);
+            nvs_set_str(handle, key, macros_[i].action.c_str());
+        } else {
+            // Erase stale entries
+            snprintf(key, sizeof(key), "macro%u_name", i);
+            nvs_erase_key(handle, key);
+            snprintf(key, sizeof(key), "macro%u_act", i);
+            nvs_erase_key(handle, key);
+        }
+    }
+    nvs_commit(handle);
+    nvs_close(handle);
+}
+
+bool EspidfBleKeyboard::add_macro(const std::string &name, const std::string &action) {
+    if (macros_.size() >= MAX_MACROS) return false;
+    macros_.push_back({name, action});
+    save_macros_();
+    ESP_LOGI(TAG, "Added macro: %s -> %s", name.c_str(), action.c_str());
+    return true;
+}
+
+bool EspidfBleKeyboard::update_macro(uint8_t index, const std::string &name, const std::string &action) {
+    if (index >= macros_.size()) return false;
+    macros_[index].name = name;
+    macros_[index].action = action;
+    save_macros_();
+    ESP_LOGI(TAG, "Updated macro %u: %s -> %s", index, name.c_str(), action.c_str());
+    return true;
+}
+
+bool EspidfBleKeyboard::delete_macro(uint8_t index) {
+    if (index >= macros_.size()) return false;
+    ESP_LOGI(TAG, "Deleted macro %u: %s", index, macros_[index].name.c_str());
+    macros_.erase(macros_.begin() + index);
+    save_macros_();
+    return true;
+}
+
 void EspidfBleKeyboard::assign_host_slot_(uint8_t slot, const esp_bd_addr_t addr, esp_ble_addr_type_t addr_type) {
     if (slot >= MAX_HOST_SLOTS) return;
     // Check if this address is already in another slot
@@ -1047,6 +1131,7 @@ void EspidfBleKeyboard::setup() {
 
     maybe_reset_bonds_after_security_config_change();
     load_host_slots_();
+    load_macros_();
     generate_slot_addrs_();
 
     // If active slot has a bonded host, use directed advertising on startup

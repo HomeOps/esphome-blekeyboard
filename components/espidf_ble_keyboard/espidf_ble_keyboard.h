@@ -77,6 +77,13 @@ class EspidfBleKeyboard : public Component {
   }
   const std::vector<ButtonInfo> &get_buttons() const { return buttons_; }
 
+  // User-editable macros (NVS-persisted, web-editable)
+  static const uint8_t MAX_MACROS = 16;
+  const std::vector<ButtonInfo> &get_macros() const { return macros_; }
+  bool add_macro(const std::string &name, const std::string &action);
+  bool update_macro(uint8_t index, const std::string &name, const std::string &action);
+  bool delete_macro(uint8_t index);
+
 #ifdef USE_BLE_KEYBOARD_WEB_CONTROL
   void set_web_server_base(web_server_base::WebServerBase *base) { web_server_base_ = base; }
 #endif
@@ -168,6 +175,9 @@ class EspidfBleKeyboard : public Component {
 
   bool web_control_enabled_{false};
   std::vector<ButtonInfo> buttons_;
+  std::vector<ButtonInfo> macros_;   // user-editable, NVS-persisted
+  void load_macros_();
+  void save_macros_();
 
   // Multi-host state
   uint8_t host_slots_{MAX_HOST_SLOTS};

@@ -65,6 +65,17 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .prog-btn{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:12px;font-weight:500;cursor:pointer;touch-action:manipulation;transition:background .1s}
 .prog-btn:active,.prog-btn.p{background:var(--active);color:#fff;border-color:var(--active)}
 .prog-empty{font-size:12px;color:var(--muted);padding:4px 0}
+.macro-wrap{display:flex;align-items:center;gap:4px}
+.macro-act{width:24px;height:24px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.macro-act:active{background:var(--active);color:#fff}
+.macro-act.del{color:#c44}
+.macro-act.del:hover{background:#c44;color:#fff}
+.macro-form{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.macro-form input,.macro-form select{flex:1;min-width:60px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:12px}
+.macro-form select{flex:0 1 auto;min-width:100px}
+.macro-form button{padding:6px 12px;border:none;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.macro-form button:active{opacity:.8}
+.macro-form .cancel{background:var(--muted)}
 .host-bar{display:flex;gap:6px;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px}
 .host-btn{flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .15s}
 .host-btn.active{background:var(--active);color:#fff;border-color:var(--active)}
@@ -184,9 +195,38 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 </div></div>
 </div>
 
-<div class="card" id="btns-card" style="display:none">
-<h2><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 12h2v2H7v-2zm0-4h2v2H7V8zm4 4h2v2h-2v-2zm0-4h2v2h-2V8zm4 4h2v2h-2v-2zm0-4h2v2h-2V8z"/></svg>Buttons</h2>
+<div class="card" id="btns-card">
+<h2><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 12h2v2H7v-2zm0-4h2v2H7V8zm4 4h2v2h-2v-2zm0-4h2v2h-2V8zm4 4h2v2h-2v-2zm0-4h2v2h-2V8z"/></svg>Buttons &amp; Macros</h2>
 <div class="prog-btns" id="prog-btns"><span class="prog-empty">Loading...</span></div>
+<div class="macro-form" id="macro-form">
+<input id="mn" placeholder="Name" maxlength="31">
+<input id="ma" placeholder="Action" maxlength="63">
+<select id="mp"><option value="">Preset...</option>
+<option value="ctrl_alt_del">Ctrl+Alt+Del</option>
+<option value="play_pause">Play/Pause</option>
+<option value="next_track">Next Track</option>
+<option value="prev_track">Prev Track</option>
+<option value="stop">Stop</option>
+<option value="volume_up">Volume Up</option>
+<option value="volume_down">Volume Down</option>
+<option value="mute">Mute</option>
+<option value="power">Power</option>
+<option value="sleep">Sleep</option>
+<option value="shutdown">Shutdown</option>
+<option value="hibernate">Hibernate</option>
+<option value="consumer:0x0030">HID Power</option>
+<option value="consumer:0x0223">HID Home</option>
+<option value="consumer:0x0224">HID Back</option>
+<option value="consumer:0x0221">HID Search</option>
+<option value="combo:0:75">Page Up</option>
+<option value="combo:0:78">Page Down</option>
+<option value="combo:2:4">Ctrl+A</option>
+<option value="combo:2:6">Ctrl+C</option>
+<option value="combo:2:25">Ctrl+V</option>
+<option value="combo:2:29">Ctrl+Z</option>
+</select>
+<button id="macro-save">+ Add</button>
+</div>
 </div>
 </div>
 
@@ -276,26 +316,86 @@ setInterval(pollStatus,3000);
   setInterval(loadHosts,5000);
 })();
 
-// ── Programmed Buttons ──
+// ── Buttons & Macros ──
 (function(){
-  const card=document.getElementById('btns-card');
   const container=document.getElementById('prog-btns');
-  fetch('/api/ble_keyboard/buttons').then(r=>r.json()).then(btns=>{
-    if(!btns.length){card.style.display='none';return}
-    card.style.display='';
-    container.innerHTML='';
-    btns.forEach(b=>{
-      const el=document.createElement('button');
-      el.className='prog-btn';
-      el.textContent=b.name;
-      el.addEventListener('pointerdown',e=>{
-        e.preventDefault();el.classList.add('p');
-        api('press',{action:b.action});
-        setTimeout(()=>el.classList.remove('p'),150);
+  const nameIn=document.getElementById('mn');
+  const actIn=document.getElementById('ma');
+  const presetSel=document.getElementById('mp');
+  const saveBtn=document.getElementById('macro-save');
+  let editIdx=-1;
+
+  presetSel.addEventListener('change',()=>{
+    if(presetSel.value){actIn.value=presetSel.value;if(!nameIn.value)nameIn.value=presetSel.options[presetSel.selectedIndex].text}
+  });
+
+  function loadButtons(){
+    fetch('/api/ble_keyboard/buttons').then(r=>r.json()).then(btns=>{
+      container.innerHTML='';
+      if(!btns.length){container.innerHTML='<span class="prog-empty">No buttons or macros</span>';return}
+      btns.forEach(b=>{
+        if(!b.editable){
+          const el=document.createElement('button');
+          el.className='prog-btn';
+          el.textContent=b.name;
+          el.addEventListener('pointerdown',e=>{
+            e.preventDefault();el.classList.add('p');
+            api('press',{action:b.action});
+            setTimeout(()=>el.classList.remove('p'),150);
+          });
+          container.appendChild(el);
+        }else{
+          const wrap=document.createElement('div');
+          wrap.className='macro-wrap';
+          const el=document.createElement('button');
+          el.className='prog-btn';
+          el.textContent=b.name;
+          el.title=b.action;
+          el.addEventListener('pointerdown',e=>{
+            e.preventDefault();el.classList.add('p');
+            api('press',{action:b.action});
+            setTimeout(()=>el.classList.remove('p'),150);
+          });
+          const eb=document.createElement('button');
+          eb.className='macro-act';
+          eb.textContent='\u270E';
+          eb.title='Edit';
+          eb.addEventListener('click',()=>{
+            nameIn.value=b.name;actIn.value=b.action;editIdx=b.index;
+            saveBtn.textContent='Save';
+          });
+          const db=document.createElement('button');
+          db.className='macro-act del';
+          db.textContent='\u2715';
+          db.title='Delete';
+          db.addEventListener('click',()=>{
+            if(confirm('Delete macro "'+b.name+'"?')){
+              fetch('/api/ble_keyboard/macro_delete?'+new URLSearchParams({index:b.index}),{method:'POST'}).then(()=>{
+                if(editIdx===b.index){editIdx=-1;nameIn.value='';actIn.value='';saveBtn.textContent='+ Add'}
+                loadButtons();
+              });
+            }
+          });
+          wrap.appendChild(el);wrap.appendChild(eb);wrap.appendChild(db);
+          container.appendChild(wrap);
+        }
       });
-      container.appendChild(el);
+    }).catch(()=>{container.innerHTML='<span class="prog-empty">Error loading</span>'});
+  }
+
+  saveBtn.addEventListener('click',()=>{
+    const n=nameIn.value.trim(),a=actIn.value.trim();
+    if(!n||!a){alert('Name and action are required');return}
+    const ep=editIdx>=0?'macro_update':'macro_add';
+    const p=editIdx>=0?{index:editIdx,name:n,action:a}:{name:n,action:a};
+    fetch('/api/ble_keyboard/'+ep+'?'+new URLSearchParams(p),{method:'POST'}).then(r=>{
+      if(!r.ok)return r.text().then(t=>{alert(t)});
+      nameIn.value='';actIn.value='';presetSel.value='';editIdx=-1;saveBtn.textContent='+ Add';
+      loadButtons();
     });
-  }).catch(()=>{card.style.display='none'});
+  });
+
+  loadButtons();
 })();
 
 // ── Keyboard ──
@@ -572,14 +672,30 @@ class BleKbWebHandler : public AsyncWebHandler {
         return out;
       };
       std::string json = "[";
+      bool first = true;
+      // YAML-defined buttons (read-only)
       const auto &btns = kb_->get_buttons();
       for (size_t i = 0; i < btns.size(); i++) {
-        if (i > 0) json += ",";
+        if (!first) json += ",";
+        first = false;
         json += "{\"name\":\"";
         json += json_escape(btns[i].name);
         json += "\",\"action\":\"";
         json += json_escape(btns[i].action);
-        json += "\"}";
+        json += "\",\"editable\":false}";
+      }
+      // User-defined macros (editable)
+      const auto &macros = kb_->get_macros();
+      for (size_t i = 0; i < macros.size(); i++) {
+        if (!first) json += ",";
+        first = false;
+        json += "{\"name\":\"";
+        json += json_escape(macros[i].name);
+        json += "\",\"action\":\"";
+        json += json_escape(macros[i].action);
+        json += "\",\"editable\":true,\"index\":";
+        json += std::to_string(i);
+        json += "}";
       }
       json += "]";
       send_response(200, "application/json", json.c_str());
@@ -713,6 +829,43 @@ class BleKbWebHandler : public AsyncWebHandler {
       int slot = request->hasArg("slot") ? atoi(request->arg("slot").c_str()) : 0;
       kb_->forget_host((uint8_t) slot);
       send_response(200, "text/plain", "OK");
+
+    } else if (path == "macro_add") {
+      std::string name = request->hasArg("name") ? request->arg("name").c_str() : "";
+      std::string action = request->hasArg("action") ? request->arg("action").c_str() : "";
+      if (name.empty() || action.empty()) {
+        send_response(400, "text/plain", "name and action required");
+      } else if (name.size() > 31 || action.size() > 63) {
+        send_response(400, "text/plain", "name max 31, action max 63 chars");
+      } else if (!kb_->add_macro(name, action)) {
+        send_response(400, "text/plain", "Max macros reached");
+      } else {
+        send_response(200, "text/plain", "OK");
+      }
+
+    } else if (path == "macro_update") {
+      int index = request->hasArg("index") ? atoi(request->arg("index").c_str()) : -1;
+      std::string name = request->hasArg("name") ? request->arg("name").c_str() : "";
+      std::string action = request->hasArg("action") ? request->arg("action").c_str() : "";
+      if (index < 0 || name.empty() || action.empty()) {
+        send_response(400, "text/plain", "index, name, and action required");
+      } else if (name.size() > 31 || action.size() > 63) {
+        send_response(400, "text/plain", "name max 31, action max 63 chars");
+      } else if (!kb_->update_macro((uint8_t) index, name, action)) {
+        send_response(404, "text/plain", "Invalid index");
+      } else {
+        send_response(200, "text/plain", "OK");
+      }
+
+    } else if (path == "macro_delete") {
+      int index = request->hasArg("index") ? atoi(request->arg("index").c_str()) : -1;
+      if (index < 0) {
+        send_response(400, "text/plain", "index required");
+      } else if (!kb_->delete_macro((uint8_t) index)) {
+        send_response(404, "text/plain", "Invalid index");
+      } else {
+        send_response(200, "text/plain", "OK");
+      }
 
     } else {
       send_response(404, "text/plain", "Unknown endpoint");
