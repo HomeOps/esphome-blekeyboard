@@ -287,9 +287,6 @@ class BleMouseCard extends HTMLElement {
     // Pointer events for drag tracking
     pad.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      if (pad.dataset.deb) return;
-      pad.dataset.deb = '1';
-      setTimeout(() => delete pad.dataset.deb, 80);
       pad.setPointerCapture(e.pointerId);
       onStart(e.clientX, e.clientY);
     });
@@ -331,9 +328,6 @@ class BleMouseCard extends HTMLElement {
       const el = this.shadowRoot.getElementById(id);
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        if (el.dataset.deb) return;
-        el.dataset.deb = '1';
-        setTimeout(() => delete el.dataset.deb, 80);
         el.classList.add('pressed');
         this._callService('mouse_click', { btn:button });
       });
@@ -367,9 +361,6 @@ class BleMouseCard extends HTMLElement {
     for (const [btn, amount] of [[upBtn, 3], [downBtn, -3]]) {
       btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        if (btn.dataset.deb) return;
-        btn.dataset.deb = '1';
-        setTimeout(() => delete btn.dataset.deb, 80);
         btn.classList.add('pressed');
         startScroll(amount);
       });
