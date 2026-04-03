@@ -160,10 +160,12 @@ const logBtn=document.getElementById('log-btn');
 const logView=document.getElementById('log-view');
 const logOut=document.getElementById('log-out');
 let logSource=null, pingTimer=null;
+function resetPing(){clearTimeout(pingTimer);pingTimer=setTimeout(startLogs,65000);}
 function startLogs(){
   if(logSource)logSource.close();
   logSource=new EventSource('/events');
   logSource.addEventListener('log',e=>{
+    resetPing();
     let msg=e.data;
     try{const d=JSON.parse(e.data);if(d.message)msg=d.message;}catch(err){}
     msg=msg.replace(/\x1B\[[0-9;]*[a-zA-Z]/g,'');
@@ -173,12 +175,9 @@ function startLogs(){
     while(logOut.childNodes.length>300)logOut.firstChild.remove();
     logOut.scrollTop=logOut.scrollHeight;
   });
-  logSource.addEventListener('ping',()=>{
-    clearTimeout(pingTimer);
-    pingTimer=setTimeout(startLogs,15000);
-  });
+  logSource.addEventListener('ping',resetPing);
   const rs=()=>{clearTimeout(pingTimer);pingTimer=setTimeout(startLogs,5000);};
-  logSource.onopen=()=>{clearTimeout(pingTimer);pingTimer=setTimeout(startLogs,15000);};
+  logSource.onopen=resetPing;
   logSource.onerror=rs;
 }
 logBtn.addEventListener('click',()=>{
@@ -724,6 +723,7 @@ void BleKeyboardWebControl::setup() {
 }  // namespace esphome
 
 #endif  // USE_BLE_KEYBOARD_WEB_CONTROL
+
 
 
 
