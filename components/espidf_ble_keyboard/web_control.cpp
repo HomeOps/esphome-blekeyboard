@@ -514,7 +514,7 @@ class BleKbWebHandler : public AsyncWebHandler {
 
     // Serve the page
     if (url == "/ble_keyboard") {
-      send_response(200, "text/html", PAGE_HTML);
+      request->send(200, "text/html", PAGE_HTML);
       return;
     }
 
@@ -714,6 +714,7 @@ void BleKeyboardWebControl::setup() {
 }  // namespace esphome
 
 #endif  // USE_BLE_KEYBOARD_WEB_CONTROL
+
 
 
 
