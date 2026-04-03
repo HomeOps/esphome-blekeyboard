@@ -503,6 +503,13 @@ class BleKeyboardCard extends HTMLElement {
     if (this._ctrl) this._toggleModifier('ctrl');
     if (this._alt) this._toggleModifier('alt');
     if (this._win) this._toggleModifier('win');
+    // Auto-release one-shot modifiers (not caps lock)
+  }
+    if (this._shift) this._toggleModifier('shift');
+    if (this._rshift) this._toggleModifier('rshift');
+    if (this._ctrl) this._toggleModifier('ctrl');
+    if (this._alt) this._toggleModifier('alt');
+    if (this._win) this._toggleModifier('win');
     if (this._altgr) this._toggleModifier('altgr');
   }
 
