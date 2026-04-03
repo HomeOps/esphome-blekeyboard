@@ -419,9 +419,11 @@ class BleKeyboardCard extends HTMLElement {
       e.preventDefault();
       e.stopPropagation();
 
-      if (btn.dataset.deb) return;
-      btn.dataset.deb = '1';
-      setTimeout(() => delete btn.dataset.deb, 350);
+      const now = Date.now();
+      if (btn.dataset.lastTs && (now - parseInt(btn.dataset.lastTs, 10) < 60)) {
+        return; // Prevent fast double-fires typical of touch+mouse ghosting
+      }
+      btn.dataset.lastTs = now.toString();
 
       const rowIdx = parseInt(btn.dataset.row);
       const keyIdx = parseInt(btn.dataset.key);
@@ -466,8 +468,13 @@ class BleKeyboardCard extends HTMLElement {
     if (this._ctrl) modBits |= 0x01;
     if (this._alt) modBits |= 0x04;
     if (this._win) modBits |= 0x08;
-      if (this._altgr) modBits |= 0x40;
-      if (this._rshift) modBits |= 0x20;
+    if (this._altgr) modBits |= 0x40;
+    if (this._rshift) modBits |= 0x20;
+
+    if (keyDef.type === 'char') {
+      if (modBits !== 0) {
+        // Modifier combo — send as keycode
+        if (this._shift) modBits |= 0x02;
         const code = CHAR_TO_KEYCODE[keyDef.char];
         if (code !== undefined) {
           this._sendKey(modBits, code);
@@ -475,26 +482,29 @@ class BleKeyboardCard extends HTMLElement {
       } else {
         // Pure typing — use send_string
         const isLetter = keyDef.char >= 'a' && keyDef.char <= 'z';
+        const anyShift = this._shift || this._rshift;
         let shifted;
         if (isLetter) {
-          shifted = this._shift !== this._capsLock; // XOR
+          shifted = anyShift !== this._capsLock; // XOR
         } else {
-          shifted = this._shift;
+          shifted = anyShift;
         }
         const ch = shifted ? keyDef.shiftChar : keyDef.char;
         this._sendString(ch);
       }
     } else if (keyDef.type === 'special') {
-      if (this._shift) modBits |= 0x02;
+      if (this._shift || this._rshift) modBits |= 0x02;
       this._sendKey(modBits, keyDef.keycode);
     }
 
     // Auto-release one-shot modifiers (not caps lock)
     if (this._shift) this._toggleModifier('shift');
-      if (this._rshift) this._toggleModifier('rshift');
-      if (this._ctrl) this._toggleModifier('ctrl');
-      if (this._alt) this._toggleModifier('alt');
-      if (this._altgr) this._toggleModifier('altgr');
+    if (this._rshift) this._toggleModifier('rshift');
+    if (this._ctrl) this._toggleModifier('ctrl');
+    if (this._alt) this._toggleModifier('alt');
+    if (this._win) this._toggleModifier('win');
+    if (this._altgr) this._toggleModifier('altgr');
+  }
 
   _toggleModifier(mod) {
     this[`_${mod}`] = !this[`_${mod}`];
