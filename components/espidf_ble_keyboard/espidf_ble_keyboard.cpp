@@ -1426,87 +1426,81 @@ void EspidfBleKeyboard::send_hibernate() {
     send_string("shutdown /h\n");
 }
 
-void EspidfBleKeyboardButton::press_action() {
-    if (!parent_) return;
+// ── Centralized action executor ──────────────────────────────────
 
-    // Check if the action string starts with "combo:"
-    if (action_.find("combo:") == 0) {
-        int mod, key;
-        if (sscanf(action_.c_str(), "combo:%i:%i", &mod, &key) == 2) {
-            parent_->send_key_combo((uint8_t)mod, (uint8_t)key);
-            return;
-        }
+void EspidfBleKeyboard::execute_action(const std::string &action) {
+    // Parametric actions
+    if (action.find("combo:") == 0) {
+        int mod = 0, key = 0;
+        if (sscanf(action.c_str(), "combo:%i:%i", &mod, &key) == 2)
+            send_key_combo((uint8_t) mod, (uint8_t) key);
+        return;
     }
-
-    // Check if the action string starts with "consumer:"
-    if (action_.find("consumer:") == 0) {
-        int usage;
-        if (sscanf(action_.c_str(), "consumer:%i", &usage) == 1) {
-            parent_->send_consumer((uint16_t)usage);
-            return;
-        }
+    if (action.find("consumer:") == 0) {
+        int usage = 0;
+        if (sscanf(action.c_str(), "consumer:%i", &usage) == 1)
+            send_consumer((uint16_t) usage);
+        return;
     }
-
-    // Check if the action string starts with "mouse_click:"
-    if (action_.find("mouse_click:") == 0) {
-        int buttons;
-        if (sscanf(action_.c_str(), "mouse_click:%i", &buttons) == 1) {
-            parent_->send_mouse_click((uint8_t)buttons);
-            return;
-        }
+    if (action.find("mouse_click:") == 0) {
+        int buttons = 0;
+        if (sscanf(action.c_str(), "mouse_click:%i", &buttons) == 1)
+            send_mouse_click((uint8_t) buttons);
+        return;
     }
-
-    // Check if the action string starts with "mouse_move:"
-    if (action_.find("mouse_move:") == 0) {
-        int x, y;
-        if (sscanf(action_.c_str(), "mouse_move:%i:%i", &x, &y) == 2) {
-            parent_->send_mouse_move((int8_t)x, (int8_t)y);
-            return;
-        }
+    if (action.find("mouse_move:") == 0) {
+        int x = 0, y = 0;
+        if (sscanf(action.c_str(), "mouse_move:%i:%i", &x, &y) == 2)
+            send_mouse_move((int8_t) x, (int8_t) y);
+        return;
     }
-
-    // Check if the action string starts with "mouse_scroll:"
-    if (action_.find("mouse_scroll:") == 0) {
-        int wheel;
-        if (sscanf(action_.c_str(), "mouse_scroll:%i", &wheel) == 1) {
-            parent_->send_mouse_scroll((int8_t)wheel);
-            return;
-        }
+    if (action.find("mouse_scroll:") == 0) {
+        int wheel = 0;
+        if (sscanf(action.c_str(), "mouse_scroll:%i", &wheel) == 1)
+            send_mouse_scroll((int8_t) wheel);
+        return;
     }
-
-    // Multi-host switching: "switch_host:N" or "forget_host:N"
-    if (action_.find("switch_host:") == 0) {
-        int slot;
-        if (sscanf(action_.c_str(), "switch_host:%i", &slot) == 1) {
-            parent_->switch_host((uint8_t)slot);
-            return;
-        }
+    if (action.find("switch_host:") == 0) {
+        int slot = 0;
+        if (sscanf(action.c_str(), "switch_host:%i", &slot) == 1)
+            switch_host((uint8_t) slot);
+        return;
     }
-    if (action_.find("forget_host:") == 0) {
-        int slot;
-        if (sscanf(action_.c_str(), "forget_host:%i", &slot) == 1) {
-            parent_->forget_host((uint8_t)slot);
-            return;
-        }
+    if (action.find("forget_host:") == 0) {
+        int slot = 0;
+        if (sscanf(action.c_str(), "forget_host:%i", &slot) == 1)
+            forget_host((uint8_t) slot);
+        return;
     }
 
     // Named actions
-    if (action_ == "ctrl_alt_del")      parent_->send_ctrl_alt_del();
-    else if (action_ == "sleep")        parent_->send_sleep();
-    else if (action_ == "shutdown")     parent_->send_shutdown();
-    else if (action_ == "hibernate")    parent_->send_hibernate();
-    else if (action_ == "power")        parent_->send_power();
-    else if (action_ == "play_pause")   parent_->send_media_play_pause();
-    else if (action_ == "next_track")   parent_->send_media_next();
-    else if (action_ == "prev_track")   parent_->send_media_prev();
-    else if (action_ == "stop")         parent_->send_media_stop();
-    else if (action_ == "volume_up")    parent_->send_volume_up();
-    else if (action_ == "volume_down")  parent_->send_volume_down();
-    else if (action_ == "mute")         parent_->send_mute();
-    else if (action_ == "left_click")   parent_->send_mouse_click(0x01);
-    else if (action_ == "right_click")  parent_->send_mouse_click(0x02);
-    else if (action_ == "middle_click") parent_->send_mouse_click(0x04);
-    else parent_->send_string(action_);
+    if (action == "ctrl_alt_del")      send_ctrl_alt_del();
+    else if (action == "sleep")        send_sleep();
+    else if (action == "shutdown")     send_shutdown();
+    else if (action == "hibernate")    send_hibernate();
+    else if (action == "power")        send_power();
+    else if (action == "play_pause")   send_media_play_pause();
+    else if (action == "next_track")   send_media_next();
+    else if (action == "prev_track")   send_media_prev();
+    else if (action == "stop")         send_media_stop();
+    else if (action == "volume_up")    send_volume_up();
+    else if (action == "volume_down")  send_volume_down();
+    else if (action == "mute")         send_mute();
+    else if (action == "left_click")   send_mouse_click(0x01);
+    else if (action == "right_click")  send_mouse_click(0x02);
+    else if (action == "middle_click") send_mouse_click(0x04);
+    else send_string(action);  // Fallback: send as typed text
+}
+
+bool EspidfBleKeyboard::execute_macro(uint8_t index) {
+    if (index >= macros_.size()) return false;
+    execute_action(macros_[index].action);
+    return true;
+}
+
+void EspidfBleKeyboardButton::press_action() {
+    if (!parent_) return;
+    parent_->execute_action(action_);
 }
 
 }  // namespace espidf_ble_keyboard

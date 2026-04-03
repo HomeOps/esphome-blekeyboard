@@ -783,40 +783,7 @@ class BleKbWebHandler : public AsyncWebHandler {
       // Press a button by action string
       if (request->hasArg("action")) {
         std::string action = request->arg("action").c_str();
-        // Find and press the button by triggering its action directly
-        // Reuse the same logic as press_action by calling the component methods
-        if (action.find("combo:") == 0) {
-          int mod = 0, key = 0;
-          if (sscanf(action.c_str(), "combo:%i:%i", &mod, &key) == 2)
-            kb_->send_key_combo((uint8_t) mod, (uint8_t) key);
-        } else if (action.find("consumer:") == 0) {
-          int usage = 0;
-          if (sscanf(action.c_str(), "consumer:%i", &usage) == 1)
-            kb_->send_consumer((uint16_t) usage);
-        } else if (action == "ctrl_alt_del") kb_->send_ctrl_alt_del();
-        else if (action == "sleep") kb_->send_sleep();
-        else if (action == "shutdown") kb_->send_shutdown();
-        else if (action == "hibernate") kb_->send_hibernate();
-        else if (action == "power") kb_->send_power();
-        else if (action == "play_pause") kb_->send_media_play_pause();
-        else if (action == "next_track") kb_->send_media_next();
-        else if (action == "prev_track") kb_->send_media_prev();
-        else if (action == "stop") kb_->send_media_stop();
-        else if (action == "volume_up") kb_->send_volume_up();
-        else if (action == "volume_down") kb_->send_volume_down();
-        else if (action == "mute") kb_->send_mute();
-        else if (action == "left_click") kb_->send_mouse_click(0x01);
-        else if (action == "right_click") kb_->send_mouse_click(0x02);
-        else if (action == "middle_click") kb_->send_mouse_click(0x04);
-        else if (action.find("switch_host:") == 0) {
-          int slot = 0;
-          if (sscanf(action.c_str(), "switch_host:%i", &slot) == 1)
-            kb_->switch_host((uint8_t) slot);
-        } else if (action.find("forget_host:") == 0) {
-          int slot = 0;
-          if (sscanf(action.c_str(), "forget_host:%i", &slot) == 1)
-            kb_->forget_host((uint8_t) slot);
-        } else kb_->send_string(action);
+        kb_->execute_action(action);
       }
       send_response(200, "text/plain", "OK");
 

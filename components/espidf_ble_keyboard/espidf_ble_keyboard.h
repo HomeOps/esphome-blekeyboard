@@ -84,6 +84,12 @@ class EspidfBleKeyboard : public Component {
   bool update_macro(uint8_t index, const std::string &name, const std::string &action);
   bool delete_macro(uint8_t index);
 
+  /// Execute an action string (combo:, consumer:, named actions, or literal text).
+  /// Used by buttons, macros, web API, and YAML automations.
+  void execute_action(const std::string &action);
+  /// Execute a macro by index. Returns false if index is out of range.
+  bool execute_macro(uint8_t index);
+
 #ifdef USE_BLE_KEYBOARD_WEB_CONTROL
   void set_web_server_base(web_server_base::WebServerBase *base) { web_server_base_ = base; }
 #endif
