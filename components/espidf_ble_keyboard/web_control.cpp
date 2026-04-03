@@ -518,7 +518,7 @@ class BleKbWebHandler : public AsyncWebHandler {
 
       auto send_response = [request](int code, const char* type, const char* content) {
         AsyncWebServerResponse* response = request->beginResponse(code, type, content);
-        // Re-enable keep-alive now that JS requests are strictly queued
+        response->addHeader("Connection", "close");
         request->send(response);
       };
 
@@ -724,6 +724,7 @@ void BleKeyboardWebControl::setup() {
 }  // namespace esphome
 
 #endif  // USE_BLE_KEYBOARD_WEB_CONTROL
+
 
 
 
