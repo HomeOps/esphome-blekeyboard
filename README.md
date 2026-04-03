@@ -342,6 +342,13 @@ espidf_ble_keyboard:
 | `"switch_host:N"` | Switch to host slot N (0–9). Reconnects to stored host or advertises for new pairing. |
 | `"forget_host:N"` | Remove BLE bond for host slot N (0–9) and clear the slot. |
 
+**Lambda helpers** (for use in YAML automations):
+
+| Method | Description |
+|--------|-------------|
+| `execute_action("action_string")` | Run any action string from a lambda. Works with all action types above. |
+| `execute_macro(index)` | Run a web-defined macro by index (0-based). Returns `false` if index is out of range. |
+
 ---
 
 ## Dict Action Format
@@ -663,6 +670,9 @@ The web control page uses these local HTTP endpoints (useful for custom integrat
 | `/api/ble_keyboard/hosts` | GET | — | Returns `{"active":N,"slots":[{"slot":N,"occupied":bool,"addr":"XX:XX:..."},...]}`  |
 | `/api/ble_keyboard/switch_host` | POST | `slot` (int) | Switch to host slot 0–9 |
 | `/api/ble_keyboard/forget_host` | POST | `slot` (int) | Remove bond for host slot 0–9 |
+| `/api/ble_keyboard/macro_add` | POST | `name`, `action` | Add a new macro (max 16) |
+| `/api/ble_keyboard/macro_update` | POST | `index`, `name`, `action` | Update an existing macro |
+| `/api/ble_keyboard/macro_delete` | POST | `index` (int) | Delete a macro by index |
 
 Example: `curl -X POST "http://<device-ip>/api/ble_keyboard/string?keys=Hello"`
 
@@ -831,6 +841,51 @@ Features:
 - **Auto device name** — card title is auto-detected from Home Assistant's device registry.
 
 ![Remote HA Card](docs/remote_ha_card.png)
+
+---
+
+## Web Macros
+
+When `web_control: true` is enabled, macros can be created, edited, and deleted directly from the web UI at `/ble_keyboard` — no reflash needed. Macros are stored in NVS flash and persist across reboots. Up to 16 macros are supported.
+
+The web UI provides:
+- **Add form** with name, action input, and a preset dropdown for common actions
+- **Edit/Delete** controls on each macro (pencil and X buttons)
+- YAML-defined buttons appear alongside macros but are not editable
+
+### Triggering Macros from YAML
+
+Use `execute_macro(index)` to run a macro by its index (0-based), or `execute_action("action_string")` to run any action string:
+
+```yaml
+binary_sensor:
+  - platform: gpio
+    pin: GPIO0
+    name: "Macro Button"
+    on_press:
+      then:
+        - lambda: |-
+            id(my_keyboard).execute_macro(0);  // run first web macro
+```
+
+```yaml
+button:
+  - platform: template
+    name: "Play/Pause"
+    on_press:
+      then:
+        - lambda: |-
+            id(my_keyboard).execute_action("play_pause");
+```
+
+### Macro REST API
+
+| Method | Endpoint | Parameters | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/ble_keyboard/buttons` | — | Returns all buttons and macros as JSON. Macros have `"editable":true` and `"index":N`. |
+| POST | `/api/ble_keyboard/macro_add` | `name`, `action` | Add a new macro (max 16). |
+| POST | `/api/ble_keyboard/macro_update` | `index`, `name`, `action` | Update an existing macro. |
+| POST | `/api/ble_keyboard/macro_delete` | `index` | Delete a macro by index. |
 
 ---
 

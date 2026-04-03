@@ -360,6 +360,11 @@
       <p>Pair with up to 10 hosts and switch between them with a button press. Uses directed advertising for fast reconnection. Slots persist across reboots.</p>
     </div>
     <div class="feature">
+      <div class="feature-icon">🔧</div>
+      <h3>Web Macros</h3>
+      <p>Create, edit, and delete macro keys directly from the web UI — no reflash needed. Macros persist in NVS across reboots. Trigger from the web, YAML automations, or GPIO inputs.</p>
+    </div>
+    <div class="feature">
       <div class="feature-icon">⚡</div>
       <h3>Stable &amp; Efficient</h3>
       <p>Direct API implementation ensures reliability even with complex ESPHome configurations.</p>
@@ -440,6 +445,8 @@
       <tr><td><code>text entity</code></td><td class="desc">Type any text from Home Assistant and press Send Custom Text button. See README for setup.</td></tr>
       <tr><td><code>"switch_host:0"</code></td><td class="desc">Switch to host slot 0–9. Reconnects to stored host or advertises for new pairing.</td></tr>
       <tr><td><code>"forget_host:0"</code></td><td class="desc">Remove BLE bond for host slot 0–9 and clear the stored address.</td></tr>
+      <tr><td><code>execute_action()</code></td><td class="desc">Run any action string from a lambda — <code>id(kb).execute_action("play_pause");</code>. Works with all action types.</td></tr>
+      <tr><td><code>execute_macro(N)</code></td><td class="desc">Run a web-defined macro by index — <code>id(kb).execute_macro(0);</code>. Trigger macros from GPIO, automations, or scripts.</td></tr>
     </table>
   </div>
 
@@ -460,6 +467,16 @@
 <span class="yaml-key">device</span><span class="yaml-val">:</span> <span class="yaml-str">bluetooth_keyboard</span>
 <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">BLE Keyboard</span>          <span class="yaml-comment"># optional card title</span>
 <span class="yaml-key">show_fkeys</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>            <span class="yaml-comment"># optional show F1-F12 row (default: true)</span></pre>
+  </div>
+
+  <div class="code-section">
+    <div class="code-header"><div class="dot"></div><span>Remote Card — dashboard YAML</span></div>
+    <pre><span class="yaml-key">type</span><span class="yaml-val">:</span> <span class="yaml-str">custom:ble-remote-card</span>
+<span class="yaml-key">device</span><span class="yaml-val">:</span> <span class="yaml-str">bluetooth_keyboard</span>
+<span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">Media Remote</span>           <span class="yaml-comment"># optional card title (auto from HA if omitted)</span>
+<span class="yaml-key">show_numpad</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>            <span class="yaml-comment"># optional number pad (default: false)</span>
+<span class="yaml-key">show_apps</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>              <span class="yaml-comment"># optional app launch row (default: true)</span>
+<span class="yaml-key">show_color</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>             <span class="yaml-comment"># optional color buttons (default: false)</span></pre>
   </div>
 
   <div class="code-section">
@@ -499,7 +516,21 @@
         <span class="yaml-key">keycode</span><span class="yaml-val">:</span> <span class="yaml-str">int</span>
       <span class="yaml-key">then</span><span class="yaml-val">:</span>
         <span class="yaml-val">- </span><span class="yaml-key">lambda</span><span class="yaml-val">:</span> <span class="yaml-str">|-
-            id(my_keyboard).send_key_combo(modifier, keycode);</span></pre>
+            id(my_keyboard).send_key_combo(modifier, keycode);</span>
+    <span class="yaml-comment"># Remote card service</span>
+    <span class="yaml-val">- </span><span class="yaml-key">service</span><span class="yaml-val">:</span> <span class="yaml-str">send_consumer</span>
+      <span class="yaml-key">variables</span><span class="yaml-val">:</span>
+        <span class="yaml-key">code</span><span class="yaml-val">:</span> <span class="yaml-str">int</span>
+      <span class="yaml-key">then</span><span class="yaml-val">:</span>
+        <span class="yaml-val">- </span><span class="yaml-key">lambda</span><span class="yaml-val">:</span> <span class="yaml-str">|-
+            id(my_keyboard).send_consumer(code);</span>
+    <span class="yaml-comment"># Host switching service</span>
+    <span class="yaml-val">- </span><span class="yaml-key">service</span><span class="yaml-val">:</span> <span class="yaml-str">switch_host</span>
+      <span class="yaml-key">variables</span><span class="yaml-val">:</span>
+        <span class="yaml-key">slot</span><span class="yaml-val">:</span> <span class="yaml-str">int</span>
+      <span class="yaml-key">then</span><span class="yaml-val">:</span>
+        <span class="yaml-val">- </span><span class="yaml-key">lambda</span><span class="yaml-val">:</span> <span class="yaml-str">|-
+            id(my_keyboard).switch_host(slot);</span></pre>
   </div>
 
 </div>
