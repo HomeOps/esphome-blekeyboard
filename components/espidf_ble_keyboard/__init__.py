@@ -72,7 +72,7 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_MOUSE_ACCEL, default=0.15): cv.float_range(min=0.0, max=2.0),
         cv.Optional(CONF_MOUSE_MAX_SPEED, default=4.0): cv.float_range(min=0.5, max=20.0),
         cv.Optional(CONF_SCROLL_SENSITIVITY, default=2.0): cv.float_range(min=0.1, max=10.0),
-        cv.Optional(CONF_CUSTOM_TEXT_ID): cv.use_id(cg.EntityBase),
+        cv.Optional(CONF_CUSTOM_TEXT_ID): cv.ensure_list(cv.use_id(cg.EntityBase)),
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
         cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
         cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation({
@@ -116,8 +116,10 @@ async def to_code(config):
 
     if CONF_CUSTOM_TEXT_ID in config:
         cg.add_define("USE_TEXT")
-        text_entity = await cg.get_variable(config[CONF_CUSTOM_TEXT_ID])
-        cg.add(var.set_custom_text(text_entity))
+        for i, text_id in enumerate(config[CONF_CUSTOM_TEXT_ID]):
+            text_entity = await cg.get_variable(text_id)
+            cg.add(var.add_custom_text(text_entity))
+            cg.add(var.register_button(f"Send {text_id.id}", f"send_custom_text:{i}"))
 
     if config[CONF_WEB_CONTROL]:
         cg.add_define("USE_BLE_KEYBOARD_WEB_CONTROL")

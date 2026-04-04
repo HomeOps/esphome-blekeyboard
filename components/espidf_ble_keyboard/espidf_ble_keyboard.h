@@ -167,10 +167,10 @@ class EspidfBleKeyboard : public Component {
   bool get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const;
   const HostSlotConfig &get_host_slot_config(uint8_t slot) const { return host_slot_configs_[slot]; }
 
-  // Custom text entity
+  // Custom text entities
 #ifdef USE_TEXT
-  void set_custom_text(text::Text *t) { custom_text_ = t; }
-  text::Text *get_custom_text() const { return custom_text_; }
+  void add_custom_text(text::Text *t) { custom_texts_.push_back(t); }
+  const std::vector<text::Text *> &get_custom_texts() const { return custom_texts_; }
 #endif
 
   // Active host sensor
@@ -249,7 +249,7 @@ class EspidfBleKeyboard : public Component {
   uint32_t last_mouse_click_ms_{0};
   uint8_t last_mouse_click_{0};
 #ifdef USE_TEXT
-  text::Text *custom_text_{nullptr};
+  std::vector<text::Text *> custom_texts_;
 #endif
 };
 

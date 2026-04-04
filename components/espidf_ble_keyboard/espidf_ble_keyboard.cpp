@@ -1528,9 +1528,12 @@ void EspidfBleKeyboard::execute_action(const std::string &action) {
     else if (action == "right_click")  send_mouse_click(0x02);
     else if (action == "middle_click") send_mouse_click(0x04);
 #ifdef USE_TEXT
-    else if (action == "send_custom_text") {
-        if (custom_text_ != nullptr && !custom_text_->state.empty())
-            send_string(custom_text_->state);
+    else if (action == "send_custom_text" || action.find("send_custom_text:") == 0) {
+        int idx = 0;
+        if (action.find("send_custom_text:") == 0)
+            sscanf(action.c_str(), "send_custom_text:%i", &idx);
+        if (idx >= 0 && idx < (int) custom_texts_.size() && !custom_texts_[idx]->state.empty())
+            send_string(custom_texts_[idx]->state);
     }
 #endif
     else if (action.find("string:") == 0) send_string(action.substr(7));
