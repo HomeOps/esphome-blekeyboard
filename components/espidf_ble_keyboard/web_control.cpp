@@ -624,6 +624,7 @@ buildKeyboard();
   }
   function onEnd(){
     if(!tracking)return;tracking=false;pad.classList.remove('active');
+    accumX=0;accumY=0;
     if(!moved&&Date.now()-startTime<250)api('mouse_click',{btn:1});
   }
 
