@@ -230,6 +230,8 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 <option value="combo:2:6">Ctrl+C</option>
 <option value="combo:2:25">Ctrl+V</option>
 <option value="combo:2:29">Ctrl+Z</option>
+<option value="delay:100">Delay 100ms</option>
+<option value="delay:500">Delay 500ms</option>
 </select>
 <button id="macro-save">+ Add</button>
 </div>
@@ -333,7 +335,11 @@ setInterval(pollStatus,3000);
   let editIdx=-1;
 
   presetSel.addEventListener('change',()=>{
-    if(presetSel.value){actIn.value=presetSel.value;if(!nameIn.value)nameIn.value=presetSel.options[presetSel.selectedIndex].text}
+    if(presetSel.value){
+      if(actIn.value.trim()){actIn.value+=(' | '+presetSel.value)}else{actIn.value=presetSel.value}
+      if(!nameIn.value)nameIn.value=presetSel.options[presetSel.selectedIndex].text;
+    }
+    presetSel.value='';
   });
 
   function loadButtons(){

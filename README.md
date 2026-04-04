@@ -897,6 +897,21 @@ The web UI provides:
 - **Add form** with name, action input, and a preset dropdown for common actions
 - **Edit/Delete** controls on each macro (pencil and X buttons)
 - YAML-defined buttons appear alongside macros but are not editable
+- Selecting a preset appends to the action field, making it easy to build multi-step macros
+
+### Multi-Step Macros
+
+Macros support multiple commands separated by `|`. A 50ms delay is automatically inserted between steps. Use `delay:N` for explicit pauses (max 10000ms).
+
+Examples:
+| Action string | Description |
+|---------------|-------------|
+| `combo:2:6 \| delay:100 \| combo:2:25` | Copy, wait 100ms, Paste |
+| `combo:2:4 \| delay:50 \| combo:2:6` | Select All, Copy |
+| `play_pause \| delay:500 \| next_track` | Play/Pause, wait 500ms, Next Track |
+| `combo:0:40 \| delay:200 \| combo:0:40` | Enter twice with 200ms gap |
+
+Multi-step actions work everywhere: web macros, YAML buttons, `execute_action()`, and the `/api/ble_keyboard/press` endpoint.
 
 ### Triggering Macros from YAML
 
@@ -916,11 +931,11 @@ binary_sensor:
 ```yaml
 button:
   - platform: template
-    name: "Play/Pause"
+    name: "Copy-Paste"
     on_press:
       then:
         - lambda: |-
-            id(my_keyboard).execute_action("play_pause");
+            id(my_keyboard).execute_action("combo:2:6 | delay:100 | combo:2:25");
 ```
 
 ### Macro REST API

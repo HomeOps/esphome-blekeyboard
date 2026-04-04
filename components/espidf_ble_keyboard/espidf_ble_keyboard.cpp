@@ -1427,6 +1427,25 @@ void EspidfBleKeyboard::send_hibernate() {
 // ── Centralized action executor ──────────────────────────────────
 
 void EspidfBleKeyboard::execute_action(const std::string &action) {
+    // Multi-step actions: split on '|' and execute each step
+    if (action.find('|') != std::string::npos) {
+        size_t start = 0;
+        while (start < action.size()) {
+            size_t end = action.find('|', start);
+            if (end == std::string::npos) end = action.size();
+            std::string step = action.substr(start, end - start);
+            while (!step.empty() && step.front() == ' ') step.erase(step.begin());
+            while (!step.empty() && step.back() == ' ') step.pop_back();
+            if (!step.empty()) {
+                execute_action(step);
+            }
+            start = end + 1;
+            if (start < action.size() && step.find("delay:") != 0) {
+                vTaskDelay(pdMS_TO_TICKS(50));
+            }
+        }
+        return;
+    }
     // Delay action for multi-step macros
     if (action.find("delay:") == 0) {
         int ms = 0;
@@ -1499,25 +1518,7 @@ void EspidfBleKeyboard::execute_action(const std::string &action) {
 
 bool EspidfBleKeyboard::execute_macro(uint8_t index) {
     if (index >= macros_.size()) return false;
-    const std::string &action = macros_[index].action;
-    // Multi-step macros: split on '|' and execute each step
-    size_t start = 0;
-    while (start < action.size()) {
-        size_t end = action.find('|', start);
-        if (end == std::string::npos) end = action.size();
-        std::string step = action.substr(start, end - start);
-        // Trim whitespace
-        while (!step.empty() && step.front() == ' ') step.erase(step.begin());
-        while (!step.empty() && step.back() == ' ') step.pop_back();
-        if (!step.empty()) {
-            execute_action(step);
-        }
-        start = end + 1;
-        // Small default delay between steps (unless step was an explicit delay)
-        if (start < action.size() && step.find("delay:") != 0) {
-            vTaskDelay(pdMS_TO_TICKS(50));
-        }
-    }
+    execute_action(macros_[index].action);
     return true;
 }
 
