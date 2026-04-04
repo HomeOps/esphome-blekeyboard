@@ -215,6 +215,12 @@ class EspidfBleKeyboard : public Component {
   size_t type_index_{0};
   bool type_key_up_pending_{false};
   uint32_t type_next_ms_{0};
+
+  // Dedup guard — ESPHome API can deliver service calls twice
+  uint32_t last_send_string_ms_{0};
+  std::string last_send_string_;
+  uint32_t last_send_key_ms_{0};
+  uint16_t last_send_key_id_{0};  // (modifier << 8) | keycode
 };
 
 class EspidfBleKeyboardButton : public button::Button, public Component {

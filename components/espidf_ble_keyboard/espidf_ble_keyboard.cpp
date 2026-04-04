@@ -1291,7 +1291,16 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
 }
 
 void EspidfBleKeyboard::send_string(const std::string &str) {
-    ESP_LOGD(TAG, "send_string called: \"%s\" (len=%u, queue_before=%u)",
+    // Dedup: ESPHome API can deliver the same service call twice within ~5ms
+    uint32_t now = millis();
+    if (str == last_send_string_ && (now - last_send_string_ms_) < 30) {
+        ESP_LOGD(TAG, "send_string dedup: \"%s\" (duplicate after %ums)", str.c_str(), now - last_send_string_ms_);
+        return;
+    }
+    last_send_string_ = str;
+    last_send_string_ms_ = now;
+
+    ESP_LOGD(TAG, "send_string: \"%s\" (len=%u, queue=%u)",
              str.c_str(), str.size(), type_queue_.size());
     // Non-blocking: append to queue; loop() drains it one keystroke at a time.
     if (type_mutex_ == nullptr) return;
@@ -1301,7 +1310,18 @@ void EspidfBleKeyboard::send_string(const std::string &str) {
 }
 
 void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
-    ESP_LOGD(TAG, "send_key_combo called: mod=0x%02X key=0x%02X", modifiers, keycode);
+    // Dedup: ESPHome API can deliver the same service call twice within ~5ms
+    uint32_t now = millis();
+    uint16_t key_id = ((uint16_t) modifiers << 8) | keycode;
+    if (key_id == last_send_key_id_ && (now - last_send_key_ms_) < 30) {
+        ESP_LOGD(TAG, "send_key_combo dedup: mod=0x%02X key=0x%02X (duplicate after %ums)",
+                 modifiers, keycode, now - last_send_key_ms_);
+        return;
+    }
+    last_send_key_id_ = key_id;
+    last_send_key_ms_ = now;
+
+    ESP_LOGD(TAG, "send_key_combo: mod=0x%02X key=0x%02X", modifiers, keycode);
     if (!is_connected_) return;
     uint8_t report[8] = {0};
     report[0] = modifiers;
