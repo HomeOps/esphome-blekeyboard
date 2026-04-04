@@ -1359,6 +1359,13 @@ void EspidfBleKeyboard::send_shutdown() {
 
 void EspidfBleKeyboard::send_consumer(uint16_t usage) {
     if (!is_connected_) return;
+    uint32_t now = millis();
+    if (usage == last_consumer_usage_ && (now - last_consumer_ms_) < 30) {
+        ESP_LOGD(TAG, "send_consumer dedup: 0x%04X (duplicate after %ums)", usage, now - last_consumer_ms_);
+        return;
+    }
+    last_consumer_usage_ = usage;
+    last_consumer_ms_ = now;
     uint8_t report[2] = {(uint8_t)(usage & 0xFF), (uint8_t)(usage >> 8)};
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_consumer_report_handle, 2, report, false);
     vTaskDelay(pdMS_TO_TICKS(50));
@@ -1387,6 +1394,13 @@ void EspidfBleKeyboard::send_mute()              { send_consumer(0x00E2); }
 
 void EspidfBleKeyboard::send_mouse_click(uint8_t buttons) {
     if (!is_connected_) return;
+    uint32_t now = millis();
+    if (buttons == last_mouse_click_ && (now - last_mouse_click_ms_) < 30) {
+        ESP_LOGD(TAG, "send_mouse_click dedup: 0x%02X (duplicate after %ums)", buttons, now - last_mouse_click_ms_);
+        return;
+    }
+    last_mouse_click_ = buttons;
+    last_mouse_click_ms_ = now;
     uint8_t report[4] = {buttons, 0, 0, 0};
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_mouse_report_handle, 4, report, false);
     vTaskDelay(pdMS_TO_TICKS(50));

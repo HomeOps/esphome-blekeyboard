@@ -235,6 +235,10 @@ class EspidfBleKeyboard : public Component {
   std::string last_send_string_;
   uint32_t last_send_key_ms_{0};
   uint16_t last_send_key_id_{0};  // (modifier << 8) | keycode
+  uint32_t last_consumer_ms_{0};
+  uint16_t last_consumer_usage_{0};
+  uint32_t last_mouse_click_ms_{0};
+  uint8_t last_mouse_click_{0};
 };
 
 class EspidfBleKeyboardButton : public button::Button, public Component {
