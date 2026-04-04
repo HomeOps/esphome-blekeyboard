@@ -778,7 +778,6 @@ buildKeyboard();
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
     dragBtn.classList.remove('dragging');
-    bar.style.touchAction='';
     if(didDrag){
       const target=hitBtn(e.clientX,e.clientY);
       if(target&&target!==dragBtn){
