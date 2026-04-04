@@ -427,8 +427,8 @@ setInterval(pollStatus,3000);
           wrap.className='macro-wrap';
           const el=document.createElement('button');
           el.className='prog-btn';
-          el.textContent=b.name;
-          el.title=b.action;
+          el.textContent='['+b.index+'] '+b.name;
+          el.title='Macro #'+b.index+': '+b.action;
           el.addEventListener('pointerdown',e=>{
             e.preventDefault();el.classList.add('p');
             api('press',{action:b.action});
