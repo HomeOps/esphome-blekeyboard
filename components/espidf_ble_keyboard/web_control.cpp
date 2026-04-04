@@ -28,7 +28,7 @@ body.light{--bg:#f0f2f5;--fg:#1a1e28;--card:#ffffff;--border:#d0d5dd;--muted:#6b
 body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;max-width:680px;margin:0 auto;user-select:none;-webkit-user-select:none;transition:background .2s,color .2s}
 h2{font-size:15px;font-weight:600;margin:12px 0 8px;color:var(--accent);display:flex;align-items:center;gap:6px}
 h2 svg{width:18px;height:18px;fill:var(--accent)}
-.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;gap:6px;overflow:hidden}
 .toolbar-left{display:flex;align-items:center;gap:8px}
 .status-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);transition:background .3s}
 .status-dot.connected{background:var(--accent)}
@@ -36,7 +36,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .status-text{font-size:12px;color:var(--muted)}
 .status-text.on{color:var(--accent)}
 .dev-name{font-size:11px;color:var(--name);margin-left:4px;font-weight:500}
-.toolbar-right{display:flex;align-items:center;gap:6px}
+.toolbar-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .zoom-controls{display:flex;align-items:center;gap:4px}
 .zoom-btn,.theme-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
 .zoom-btn:active,.theme-btn:active{background:var(--active);color:#fff}
@@ -90,7 +90,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .host-btn.active .slot-label{color:rgba(255,255,255,.7)}
 .forget-btn{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:#c44;font-size:11px;font-weight:600;cursor:pointer;touch-action:manipulation;transition:background .15s;white-space:nowrap}
 .forget-btn:hover{background:#c44;color:#fff}
-.section-toggles{display:flex;gap:4px;align-items:center}
+.section-toggles{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .toggle-btn{padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--muted);font-size:10px;font-weight:500;cursor:pointer;touch-action:manipulation;transition:background .15s,color .15s}
 .toggle-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
 .rmt-section{margin-bottom:10px}
