@@ -51,7 +51,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .k.active{background:var(--active);color:#fff;border-color:var(--active)}
 .k.caps{background:var(--caps);color:#fff;border-color:var(--caps)}
 .k.fk{font-size:10px;padding:6px 1px}
-.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:pan-y;position:relative;overflow:hidden;transition:border-color .15s}
+.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
 .touchpad.active{border-color:var(--active)}
 .touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:12px;pointer-events:none;opacity:.5}
 .touchpad.active .touchpad-hint{opacity:0}
