@@ -72,7 +72,7 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_MOUSE_ACCEL, default=0.15): cv.float_range(min=0.0, max=2.0),
         cv.Optional(CONF_MOUSE_MAX_SPEED, default=4.0): cv.float_range(min=0.5, max=20.0),
         cv.Optional(CONF_SCROLL_SENSITIVITY, default=2.0): cv.float_range(min=0.1, max=10.0),
-        cv.Optional(CONF_CUSTOM_TEXT_ID): cv.use_id(cg.Nameable),
+        cv.Optional(CONF_CUSTOM_TEXT_ID): cv.use_id(cg.EntityBase),
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
         cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
         cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation({
