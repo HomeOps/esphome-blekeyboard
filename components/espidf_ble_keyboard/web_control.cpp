@@ -51,7 +51,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .k.active{background:var(--active);color:#fff;border-color:var(--active)}
 .k.caps{background:var(--caps);color:#fff;border-color:var(--caps)}
 .k.fk{font-size:10px;padding:6px 1px}
-.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
+.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:pan-y;position:relative;overflow:hidden;transition:border-color .15s}
 .touchpad.active{border-color:var(--active)}
 .touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:12px;pointer-events:none;opacity:.5}
 .touchpad.active .touchpad-hint{opacity:0}
@@ -645,9 +645,34 @@ buildKeyboard();
   pad.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX,e.clientY)});
   window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
   window.addEventListener('mouseup',()=>onEnd());
-  function winTouchMove(e){e.preventDefault();const t=e.touches[0];onMove(t.clientX,t.clientY)}
-  function winTouchEnd(e){e.preventDefault();if(e.touches.length===0){onEnd();window.removeEventListener('touchmove',winTouchMove);window.removeEventListener('touchend',winTouchEnd)}}
-  pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onStart(t.clientX,t.clientY);window.addEventListener('touchmove',winTouchMove,{passive:false});window.addEventListener('touchend',winTouchEnd,{passive:false})},{passive:false});
+
+  // Touch: detect intent before committing — vertical swipe = page scroll, otherwise = mouse
+  let tDecided=false,tActive=false,tSX=0,tSY=0;
+  function winTouchMove(e){
+    const t=e.touches[0];
+    if(!tDecided){
+      const dx=Math.abs(t.clientX-tSX),dy=Math.abs(t.clientY-tSY);
+      if(dx+dy<8)return;
+      tDecided=true;
+      if(dy>dx*1.5){tActive=false;onEnd();cleanup();return}  // vertical scroll — let browser handle
+      tActive=true;pad.style.touchAction='none';
+    }
+    if(tActive){e.preventDefault();onMove(t.clientX,t.clientY)}
+  }
+  function winTouchEnd(e){
+    if(e.touches.length===0){
+      if(!tDecided&&!tActive)onEnd();  // tap
+      else if(tActive)onEnd();
+      cleanup();
+    }
+  }
+  function cleanup(){window.removeEventListener('touchmove',winTouchMove);window.removeEventListener('touchend',winTouchEnd);pad.style.touchAction='';tDecided=false;tActive=false}
+  pad.addEventListener('touchstart',e=>{
+    const t=e.touches[0];tSX=t.clientX;tSY=t.clientY;tDecided=false;tActive=false;
+    onStart(t.clientX,t.clientY);
+    window.addEventListener('touchmove',winTouchMove,{passive:false});
+    window.addEventListener('touchend',winTouchEnd,{passive:false});
+  },{passive:true});
 
   let wheelAccum=0;
   pad.addEventListener('wheel',e=>{
