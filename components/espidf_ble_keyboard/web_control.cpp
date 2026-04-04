@@ -724,9 +724,8 @@ buildKeyboard();
     });
   });
 
-  // Drag reorder (touch + mouse via pointer events)
-  let dragBtn=null,dragPid=null,startX=0,startY=0,didDrag=false;
-  const DRAG_THRESHOLD=10;
+  // Drag reorder: long-press (300ms) to enter drag mode, then slide to target
+  let dragBtn=null,dragPid=null,didDrag=false,holdTimer=null;
 
   function hitBtn(x,y){
     const btns=bar.querySelectorAll('.toggle-btn');
@@ -737,20 +736,27 @@ buildKeyboard();
     return null;
   }
 
+  function cancelHold(){if(holdTimer){clearTimeout(holdTimer);holdTimer=null}}
+
   bar.addEventListener('pointerdown',e=>{
     const btn=e.target.closest('.toggle-btn');
     if(!btn)return;
-    dragBtn=btn;dragPid=e.pointerId;startX=e.clientX;startY=e.clientY;didDrag=false;
+    e.preventDefault();
+    dragPid=e.pointerId;didDrag=false;
     btn._wasDragged=false;
+    cancelHold();
+    holdTimer=setTimeout(()=>{
+      holdTimer=null;didDrag=true;
+      dragBtn=btn;
+      btn._wasDragged=true;
+      btn.classList.add('dragging');
+      bar.style.touchAction='none';
+    },300);
   });
 
   bar.addEventListener('pointermove',e=>{
-    if(!dragBtn||e.pointerId!==dragPid)return;
-    if(!didDrag){
-      if(Math.abs(e.clientX-startX)+Math.abs(e.clientY-startY)<DRAG_THRESHOLD)return;
-      didDrag=true;dragBtn.classList.add('dragging');
-      bar.style.touchAction='none';
-    }
+    if(e.pointerId!==dragPid)return;
+    if(!didDrag){cancelHold();return}
     e.preventDefault();
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
@@ -759,13 +765,13 @@ buildKeyboard();
   });
 
   function endDrag(e){
-    if(!dragBtn)return;
+    cancelHold();
+    if(!dragBtn){dragPid=null;return}
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
     dragBtn.classList.remove('dragging');
     bar.style.touchAction='';
     if(didDrag){
-      dragBtn._wasDragged=true;
       const target=hitBtn(e.clientX,e.clientY);
       if(target&&target!==dragBtn){
         const ids=[...els].map(b=>b.dataset.section);
@@ -777,7 +783,7 @@ buildKeyboard();
         saveOrder();
       }
     }
-    dragBtn=null;dragPid=null;
+    dragBtn=null;dragPid=null;didDrag=false;
   }
   bar.addEventListener('pointerup',endDrag);
   bar.addEventListener('pointercancel',endDrag);
