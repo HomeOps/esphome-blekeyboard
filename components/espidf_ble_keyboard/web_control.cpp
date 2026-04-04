@@ -597,14 +597,14 @@ buildKeyboard();
 (function(){
   const pad=document.getElementById('touchpad');
   let tracking=false,lastX=0,lastY=0,lastTime=0,startTime=0,moved=false,startSX=0,startSY=0;
-  let accumX=0,accumY=0;
+  let accumX=0,accumY=0,moveAC=null;
   let baseSens=1.0,accelFactor=0.15,maxSens=4.0,scrollSens=2;
   const tapDeadZone=5;
   fetch('/api/ble_keyboard/mouse_config').then(r=>r.json()).then(c=>{
     baseSens=c.sensitivity;accelFactor=c.acceleration;maxSens=c.max_speed;scrollSens=c.scroll_sensitivity;
   }).catch(()=>{});
 
-  function onStart(x,y){tracking=true;lastX=startSX=x;lastY=startSY=y;lastTime=startTime=Date.now();moved=false;accumX=0;accumY=0;pad.classList.add('active')}
+  function onStart(x,y){tracking=true;lastX=startSX=x;lastY=startSY=y;lastTime=startTime=Date.now();moved=false;accumX=0;accumY=0;moveAC=new AbortController();pad.classList.add('active')}
   function onMove(x,y){
     if(!tracking)return;
     if(!moved){const td=Math.abs(x-startSX)+Math.abs(y-startSY);if(td<tapDeadZone)return}
@@ -617,13 +617,14 @@ buildKeyboard();
     const dx=Math.trunc(accumX),dy=Math.trunc(accumY);
     if(dx!==0||dy!==0){
       const cx=Math.max(-127,Math.min(127,dx)),cy=Math.max(-127,Math.min(127,dy));
-      api('mouse_move',{x:cx,y:cy});
+      fetch('/api/ble_keyboard/mouse_move?'+new URLSearchParams({x:cx,y:cy}),{method:'POST',signal:moveAC.signal}).catch(()=>{});
       accumX-=dx;accumY-=dy;moved=true;
     }
     lastX=x;lastY=y;lastTime=now;
   }
   function onEnd(){
     if(!tracking)return;tracking=false;pad.classList.remove('active');
+    if(moveAC){moveAC.abort();moveAC=null}
     accumX=0;accumY=0;
     if(!moved&&Date.now()-startTime<250)api('mouse_click',{btn:1});
   }
