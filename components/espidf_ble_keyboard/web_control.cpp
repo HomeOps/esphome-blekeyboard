@@ -43,7 +43,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .theme-btn{font-size:14px}
 .zoom-label{font-size:11px;color:var(--muted);min-width:36px;text-align:center}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
-.scalable{transform-origin:top center;transition:transform .15s}
+.scalable{transform-origin:top left;transition:transform .15s}
 .row{display:flex;gap:3px;margin-bottom:3px}
 .row:last-child{margin-bottom:0}
 .k{flex:1;min-width:0;padding:9px 1px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--fg);font-size:12px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .08s}
@@ -82,8 +82,8 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .macro-edit-btn{margin-left:auto;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--muted);font-size:11px;cursor:pointer}
 .macro-edit-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
 .macros-card:not(.editing) .macro-act,.macros-card:not(.editing) .macro-form{display:none}
-.host-bar{display:flex;gap:6px;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px}
-.host-btn{flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .15s}
+.host-bar{display:flex;gap:6px;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;overflow:hidden}
+.host-btn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;padding:8px 4px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .15s}
 .host-btn.active{background:var(--active);color:#fff;border-color:var(--active)}
 .host-btn.occupied{border-color:var(--accent)}
 .host-btn .slot-label{font-size:10px;color:var(--muted);display:block}
