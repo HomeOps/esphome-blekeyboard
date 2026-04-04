@@ -710,22 +710,24 @@ buildKeyboard();
     localStorage.setItem(OKEY,JSON.stringify(ids));
   }
 
-  // Toggle visibility
+  // Apply saved visibility
   bar.querySelectorAll('.toggle-btn').forEach(btn=>{
     const id=btn.dataset.section;
     if(state[id]===false){btn.classList.remove('on');const el=document.getElementById(id);if(el)el.style.display='none'}
-    btn.addEventListener('click',()=>{
-      if(btn._wasDragged)return;
-      const on=btn.classList.toggle('on');
-      const el=document.getElementById(id);
-      if(el)el.style.display=on?'':'none';
-      state[id]=on;
-      localStorage.setItem(KEY,JSON.stringify(state));
-    });
   });
 
+  function toggleSection(btn){
+    const id=btn.dataset.section;
+    const on=btn.classList.toggle('on');
+    const el=document.getElementById(id);
+    if(el)el.style.display=on?'':'none';
+    state[id]=on;
+    localStorage.setItem(KEY,JSON.stringify(state));
+  }
+
   // Drag reorder: long-press (300ms) to enter drag mode, then slide to target
-  let dragBtn=null,dragPid=null,didDrag=false,holdTimer=null;
+  // Short tap toggles section visibility. All via pointer events (no click).
+  let dragBtn=null,tapBtn=null,dragPid=null,didDrag=false,holdTimer=null;
 
   function hitBtn(x,y){
     const btns=bar.querySelectorAll('.toggle-btn');
@@ -742,13 +744,11 @@ buildKeyboard();
     const btn=e.target.closest('.toggle-btn');
     if(!btn)return;
     e.preventDefault();
-    dragPid=e.pointerId;didDrag=false;
-    btn._wasDragged=false;
+    tapBtn=btn;dragPid=e.pointerId;didDrag=false;
     cancelHold();
     holdTimer=setTimeout(()=>{
       holdTimer=null;didDrag=true;
-      dragBtn=btn;
-      btn._wasDragged=true;
+      dragBtn=btn;tapBtn=null;
       btn.classList.add('dragging');
       bar.style.touchAction='none';
     },300);
@@ -756,7 +756,7 @@ buildKeyboard();
 
   bar.addEventListener('pointermove',e=>{
     if(e.pointerId!==dragPid)return;
-    if(!didDrag){cancelHold();return}
+    if(!didDrag){cancelHold();tapBtn=null;return}
     e.preventDefault();
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
@@ -766,6 +766,9 @@ buildKeyboard();
 
   function endDrag(e){
     cancelHold();
+    // Short tap — toggle section
+    if(tapBtn&&!didDrag){toggleSection(tapBtn);tapBtn=null;dragPid=null;return}
+    tapBtn=null;
     if(!dragBtn){dragPid=null;return}
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
