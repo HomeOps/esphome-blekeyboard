@@ -22,6 +22,7 @@
  *   # host_names:                   # custom names for each host slot (optional)
  *   #   - TV
  *   #   - Phone
+ *   # active_host_entity: sensor.bluetooth_keyboard_active_host  # (auto-detected)
  *
  * Full example with overrides:
  *   type: custom:ble-keyboard-card
@@ -34,6 +35,7 @@
  *     - Phone
  *     - Laptop
  *     - Tablet
+ *   active_host_entity: sensor.bluetooth_keyboard_active_host
  */
 
 // HID keycodes for printable characters (used when Ctrl/Alt/Win modifiers are active)

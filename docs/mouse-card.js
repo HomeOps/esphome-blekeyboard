@@ -18,6 +18,8 @@
  *   # Optional overrides:
  *   # name: Mouse Control          # card title (default "Mouse Control")
  *   # sensitivity: 1.5             # movement multiplier (default 1.5)
+ *   # mouse_acceleration: 0.15     # speed-based acceleration factor (default 0.15)
+ *   # mouse_max_speed: 4.5         # max sensitivity cap (default 4.5)
  *   # scroll_sensitivity: 2        # scroll multiplier (default 2)
  *   # tap_to_click: true           # tap touchpad = left click (default true)
  *
@@ -26,6 +28,8 @@
  *   device: bluetooth_keyboard
  *   name: Living Room Mouse
  *   sensitivity: 2.0
+ *   mouse_acceleration: 0.2
+ *   mouse_max_speed: 6.0
  *   scroll_sensitivity: 3
  *   tap_to_click: false
  */

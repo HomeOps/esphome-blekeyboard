@@ -390,6 +390,10 @@
   <span class="yaml-key">passkey_mode</span><span class="yaml-val">:</span> <span class="yaml-str">legacy</span>  <span class="yaml-comment"># use secure_connections for iOS/macOS</span>
   <span class="yaml-key">web_control</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>  <span class="yaml-comment"># optional, built-in web UI</span>
   <span class="yaml-key">host_slots</span><span class="yaml-val">:</span> <span class="yaml-str">4</span>  <span class="yaml-comment"># optional, multi-host switching (1–10)</span>
+  <span class="yaml-key">mouse_sensitivity</span><span class="yaml-val">:</span> <span class="yaml-str">1.0</span>  <span class="yaml-comment"># optional, web mouse base speed (default: 1.0)</span>
+  <span class="yaml-key">mouse_acceleration</span><span class="yaml-val">:</span> <span class="yaml-str">0.15</span>  <span class="yaml-comment"># optional, web mouse accel factor (default: 0.15)</span>
+  <span class="yaml-key">mouse_max_speed</span><span class="yaml-val">:</span> <span class="yaml-str">4.0</span>  <span class="yaml-comment"># optional, web mouse max sensitivity (default: 4.0)</span>
+  <span class="yaml-key">scroll_sensitivity</span><span class="yaml-val">:</span> <span class="yaml-str">2.0</span>  <span class="yaml-comment"># optional, web mouse scroll speed (default: 2.0)</span>
 
 <span class="yaml-key">button</span><span class="yaml-val">:</span>
   <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
@@ -413,6 +417,23 @@
 
 <span class="yaml-comment"># ON  = GAP pairing completed successfully on current connection</span>
 <span class="yaml-comment"># OFF = disconnected/unpaired, or no successful pairing yet in this session</span></pre>
+  </div>
+
+  <p class="section-title">Sensors</p>
+  <div class="code-section">
+    <div class="code-header"><div class="dot"></div><span>sensor — RSSI &amp; Active Host</span></div>
+    <pre><span class="yaml-key">sensor</span><span class="yaml-val">:</span>
+  <span class="yaml-comment"># RSSI — signal strength of connected host</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+    <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
+    <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"BLE Host RSSI"</span>
+    <span class="yaml-key">update_interval</span><span class="yaml-val">:</span> <span class="yaml-str">10s</span>
+  <span class="yaml-comment"># Active Host — publishes current host slot (0-based)</span>
+  <span class="yaml-comment"># Required for keyboard card host switcher to stay in sync</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+    <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
+    <span class="yaml-key">type</span><span class="yaml-val">:</span> <span class="yaml-str">active_host</span>
+    <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"BLE Keyboard Active Host"</span></pre>
   </div>
 
   <p class="section-title">Built-in Actions</p>
@@ -457,6 +478,8 @@
 <span class="yaml-key">device</span><span class="yaml-val">:</span> <span class="yaml-str">bluetooth_keyboard</span>
 <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">Mouse Control</span>        <span class="yaml-comment"># optional card title</span>
 <span class="yaml-key">sensitivity</span><span class="yaml-val">:</span> <span class="yaml-str">1.5</span>            <span class="yaml-comment"># optional cursor speed (default: 1.5)</span>
+<span class="yaml-key">mouse_acceleration</span><span class="yaml-val">:</span> <span class="yaml-str">0.15</span>   <span class="yaml-comment"># optional acceleration factor (default: 0.15)</span>
+<span class="yaml-key">mouse_max_speed</span><span class="yaml-val">:</span> <span class="yaml-str">4.5</span>       <span class="yaml-comment"># optional max sensitivity cap (default: 4.5)</span>
 <span class="yaml-key">scroll_sensitivity</span><span class="yaml-val">:</span> <span class="yaml-str">2</span>      <span class="yaml-comment"># optional scroll speed (default: 2)</span>
 <span class="yaml-key">tap_to_click</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>          <span class="yaml-comment"># optional tap = left click (default: true)</span></pre>
   </div>
@@ -466,7 +489,11 @@
     <pre><span class="yaml-key">type</span><span class="yaml-val">:</span> <span class="yaml-str">custom:ble-keyboard-card</span>
 <span class="yaml-key">device</span><span class="yaml-val">:</span> <span class="yaml-str">bluetooth_keyboard</span>
 <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">BLE Keyboard</span>          <span class="yaml-comment"># optional card title</span>
-<span class="yaml-key">show_fkeys</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>            <span class="yaml-comment"># optional show F1-F12 row (default: true)</span></pre>
+<span class="yaml-key">show_fkeys</span><span class="yaml-val">:</span> <span class="yaml-str">true</span>            <span class="yaml-comment"># optional show F1-F12 row (default: true)</span>
+<span class="yaml-key">host_slots</span><span class="yaml-val">:</span> <span class="yaml-str">4</span>              <span class="yaml-comment"># optional host switcher (default: 0 = hidden)</span>
+<span class="yaml-key">host_names</span><span class="yaml-val">:</span>                  <span class="yaml-comment"># optional custom names per slot</span>
+  <span class="yaml-val">-</span> <span class="yaml-str">TV</span>
+  <span class="yaml-val">-</span> <span class="yaml-str">Phone</span></pre>
   </div>
 
   <div class="code-section">
