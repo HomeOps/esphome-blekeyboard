@@ -362,10 +362,17 @@ setInterval(pollStatus,3000);
       const fb=document.createElement('button');
       fb.className='forget-btn';
       fb.textContent='Forget Host';
+      let confirmPending=false,confirmTimer=null;
       fb.addEventListener('click',()=>{
-        const active=d.active;
-        if(confirm('Forget host in slot '+(active+1)+'?')){
-          api('forget_host',{slot:active});
+        if(!confirmPending){
+          confirmPending=true;
+          fb.textContent='Confirm?';
+          fb.style.background='#c44';fb.style.color='#fff';
+          confirmTimer=setTimeout(()=>{confirmPending=false;fb.textContent='Forget Host';fb.style.background='';fb.style.color=''},3000);
+        }else{
+          clearTimeout(confirmTimer);confirmPending=false;
+          fb.textContent='Forget Host';fb.style.background='';fb.style.color='';
+          api('forget_host',{slot:d.active});
           setTimeout(loadHosts,1000);
         }
       });
