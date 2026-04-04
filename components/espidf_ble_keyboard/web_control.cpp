@@ -298,6 +298,16 @@ function api(endpoint,params){
   fetch(url,{method:'POST'}).catch(()=>{});
 }
 
+// Tap helper: visual feedback on press, fires action on release only if finger didn't scroll
+function onTap(el,fn,cls){
+  cls=cls||'p';
+  let sx,sy,ok;
+  el.addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;ok=true;el.classList.add(cls)});
+  el.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;el.classList.remove(cls)}});
+  el.addEventListener('pointerup',e=>{el.classList.remove(cls);if(ok){ok=false;fn(e)}});
+  el.addEventListener('pointercancel',()=>{ok=false;el.classList.remove(cls)});
+}
+
 // ── Theme ──
 const thmBtn=document.getElementById('thm');
 if(localStorage.getItem('blekb_theme')==='light')document.body.classList.add('light');
@@ -351,12 +361,11 @@ setInterval(pollStatus,3000);
         const b=document.createElement('button');
         b.className='host-btn'+(s.slot===d.active?' active':'')+(s.occupied?' occupied':'');
         b.innerHTML='<span class="slot-label">'+(s.name||('Host '+(s.slot+1)))+'</span>'+(s.occupied?s.addr:'Empty');
-        b.addEventListener('pointerdown',e=>{
-          e.preventDefault();
+        onTap(b,()=>{
           api('switch_host',{slot:s.slot});
           bar.querySelectorAll('.host-btn').forEach(x=>x.classList.remove('active'));
           b.classList.add('active');
-        });
+        },'active');
         bar.appendChild(b);
       });
       const fb=document.createElement('button');
@@ -438,11 +447,7 @@ setInterval(pollStatus,3000);
           const el=document.createElement('button');
           el.className='prog-btn';
           el.textContent=b.name;
-          el.addEventListener('pointerdown',e=>{
-            e.preventDefault();el.classList.add('p');
-            api('press',{action:b.action});
-            setTimeout(()=>el.classList.remove('p'),150);
-          });
+          onTap(el,()=>api('press',{action:b.action}));
           containerBtns.appendChild(el);
         }else{
           hasMacros=true;
@@ -453,11 +458,7 @@ setInterval(pollStatus,3000);
           const editing=macrosCard.classList.contains('editing');
           el.textContent=editing?'['+b.index+'] '+b.name:b.name;
           el.title=editing?'Macro #'+b.index+': '+b.action:b.name;
-          el.addEventListener('pointerdown',e=>{
-            e.preventDefault();el.classList.add('p');
-            api('press',{action:b.action});
-            setTimeout(()=>el.classList.remove('p'),150);
-          });
+          onTap(el,()=>api('press',{action:b.action}));
           const eb=document.createElement('button');
           eb.className='macro-act';
           eb.textContent='\u270E';
@@ -540,13 +541,19 @@ function buildKeyboard(){
     });
     kb.appendChild(rd);
   });
+  {let sx,sy,ok,ab;
   kb.addEventListener('pointerdown',e=>{
-    const b=e.target.closest('.k');if(!b)return;
-    e.preventDefault();
-    b.classList.add('p');setTimeout(()=>b.classList.remove('p'),120);
-    const k=ROWS[+b.dataset.r][+b.dataset.k];
-    onKey(k);
+    ab=e.target.closest('.k');if(!ab)return;
+    sx=e.clientX;sy=e.clientY;ok=true;ab.classList.add('p');
   });
+  kb.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;if(ab)ab.classList.remove('p')}});
+  kb.addEventListener('pointerup',e=>{
+    if(ab)ab.classList.remove('p');
+    if(ok&&ab){const k=ROWS[+ab.dataset.r][+ab.dataset.k];onKey(k)}
+    ok=false;ab=null;
+  });
+  kb.addEventListener('pointercancel',()=>{if(ab)ab.classList.remove('p');ok=false;ab=null});
+  }
 }
 
 function toggleMod(mod){
@@ -654,9 +661,7 @@ buildKeyboard();
   const btnMap={ml:1,mm:4,mr:2};
   for(const[id,btn]of Object.entries(btnMap)){
     const el=document.getElementById(id);
-    el.addEventListener('pointerdown',e=>{e.preventDefault();el.classList.add('p');api('mouse_click',{btn:btn})});
-    el.addEventListener('pointerup',()=>el.classList.remove('p'));
-    el.addEventListener('pointerleave',()=>el.classList.remove('p'));
+    onTap(el,()=>api('mouse_click',{btn:btn}));
   }
 
   // Scroll buttons
@@ -665,9 +670,9 @@ buildKeyboard();
   function stopScroll(){if(si){clearInterval(si);si=null}}
   for(const[id,a]of[['su',3],['sd',-3]]){
     const el=document.getElementById(id);
-    el.addEventListener('pointerdown',e=>{e.preventDefault();startScroll(a)});
+    el.addEventListener('pointerdown',()=>startScroll(a));
     el.addEventListener('pointerup',stopScroll);
-    el.addEventListener('pointerleave',stopScroll);
+    el.addEventListener('pointercancel',stopScroll);
   }
 })();
 
@@ -677,19 +682,19 @@ buildKeyboard();
   if(!card)return;
   let ri=null;
   function stopRepeat(){if(ri){clearInterval(ri);ri=null}}
+  {let sx,sy,ok,ab;
   card.addEventListener('pointerdown',e=>{
-    const b=e.target.closest('.rmt-btn');if(!b)return;
-    e.preventDefault();b.classList.add('p');
-    const action=b.dataset.action;
-    api('press',{action:action});
-    if(b.dataset.repeat){ri=setInterval(()=>api('press',{action:action}),200)}
+    ab=e.target.closest('.rmt-btn');if(!ab)return;
+    sx=e.clientX;sy=e.clientY;ok=true;ab.classList.add('p');
   });
-  card.addEventListener('pointerup',e=>{
-    const b=e.target.closest('.rmt-btn');if(b)b.classList.remove('p');stopRepeat();
+  card.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;if(ab)ab.classList.remove('p');stopRepeat()}});
+  card.addEventListener('pointerup',()=>{
+    if(ab)ab.classList.remove('p');
+    if(ok&&ab){api('press',{action:ab.dataset.action})}
+    ok=false;ab=null;stopRepeat();
   });
-  card.addEventListener('pointerleave',e=>{
-    const b=e.target.closest('.rmt-btn');if(b)b.classList.remove('p');stopRepeat();
-  },true);
+  card.addEventListener('pointercancel',()=>{if(ab)ab.classList.remove('p');ok=false;ab=null;stopRepeat()});
+  }
 })();
 
 // ── Section Toggles + Drag Reorder ──
