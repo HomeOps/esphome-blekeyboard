@@ -51,7 +51,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .k.active{background:var(--active);color:#fff;border-color:var(--active)}
 .k.caps{background:var(--caps);color:#fff;border-color:var(--caps)}
 .k.fk{font-size:10px;padding:6px 1px}
-.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:none;position:relative;overflow:hidden;transition:border-color .15s}
+.touchpad{width:100%;aspect-ratio:16/9;background:var(--bg);border-radius:10px;border:2px solid var(--border);cursor:crosshair;touch-action:pan-y;position:relative;overflow:hidden;transition:border-color .15s}
 .touchpad.active{border-color:var(--active)}
 .touchpad-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--muted);font-size:12px;pointer-events:none;opacity:.5}
 .touchpad.active .touchpad-hint{opacity:0}
@@ -646,9 +646,25 @@ buildKeyboard();
   window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
   window.addEventListener('mouseup',()=>onEnd());
 
-  function winTouchMove(e){e.preventDefault();const t=e.touches[0];onMove(t.clientX,t.clientY)}
-  function winTouchEnd(e){e.preventDefault();if(e.touches.length===0){onEnd();window.removeEventListener('touchmove',winTouchMove);window.removeEventListener('touchend',winTouchEnd)}}
-  pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onStart(t.clientX,t.clientY);window.addEventListener('touchmove',winTouchMove,{passive:false});window.addEventListener('touchend',winTouchEnd,{passive:false})},{passive:false});
+  let tClaimed=false,tSX=0,tSY=0;
+  function tCleanup(){window.removeEventListener('touchmove',winTouchMove);window.removeEventListener('touchend',winTouchEnd);tClaimed=false}
+  function winTouchMove(e){
+    const t=e.touches[0];
+    if(!tClaimed){
+      const dx=Math.abs(t.clientX-tSX),dy=Math.abs(t.clientY-tSY);
+      if(dx+dy<6)return;  // wait for clear direction
+      if(dy>dx){onEnd();tCleanup();return}  // vertical — let browser scroll (touchcancel follows)
+      tClaimed=true;
+    }
+    e.preventDefault();onMove(t.clientX,t.clientY);
+  }
+  function winTouchEnd(e){if(e.touches.length===0){onEnd();tCleanup()}}
+  pad.addEventListener('touchstart',e=>{
+    const t=e.touches[0];tSX=t.clientX;tSY=t.clientY;tClaimed=false;
+    onStart(t.clientX,t.clientY);
+    window.addEventListener('touchmove',winTouchMove,{passive:false});
+    window.addEventListener('touchend',winTouchEnd,{passive:false});
+  },{passive:true});
 
   let wheelAccum=0;
   pad.addEventListener('wheel',e=>{
