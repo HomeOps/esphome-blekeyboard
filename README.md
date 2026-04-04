@@ -96,6 +96,11 @@ espidf_ble_keyboard:
   web_control: true
   # Optional: number of host slots for multi-host switching (1–10, default: 4)
   host_slots: 4
+  # Optional: web mouse sensitivity settings
+  mouse_sensitivity: 1.0       # base movement speed (default: 1.0)
+  mouse_acceleration: 0.15     # speed-based acceleration factor (default: 0.15)
+  mouse_max_speed: 4.0         # max sensitivity cap (default: 4.0)
+  scroll_sensitivity: 2.0      # scroll speed multiplier (default: 2.0)
   # Optional: per-slot passkey and pairing mode overrides
   hosts:
     - slot: 0
@@ -243,6 +248,10 @@ binary_sensor:
 * **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
 * **web_control** (Optional, bool): Enable a built-in web control page with keyboard and mouse UI at `http://<device-ip>/ble_keyboard`. Requires the `web_server` component. Defaults to `false`.
 * **host_slots** (Optional, int): Number of host slots for multi-host switching (1–10). Each slot can store a bonded host. Switch between hosts using buttons, HA services, or the web control page. Defaults to `4`.
+* **mouse_sensitivity** (Optional, float): Web mouse base movement multiplier. Defaults to `1.0`. Range: 0.1–10.0.
+* **mouse_acceleration** (Optional, float): Web mouse speed-based acceleration factor. Defaults to `0.15`. Range: 0.0–2.0.
+* **mouse_max_speed** (Optional, float): Web mouse maximum sensitivity cap. Defaults to `4.0`. Range: 0.5–20.0.
+* **scroll_sensitivity** (Optional, float): Web mouse scroll speed multiplier. Defaults to `2.0`. Range: 0.1–10.0.
 * **hosts** (Optional, list): Per-slot passkey and pairing mode overrides. Each entry has:
   * **slot** (Required, int): Host slot number (0–9).
   * **passkey** (Optional, int): 6-digit PIN for this slot (000000–999999). If omitted, the slot uses the global `passkey` setting (or Just Works if no global passkey).
@@ -602,7 +611,9 @@ Example with all optional overrides:
 type: custom:ble-mouse-card
 device: bluetooth_keyboard
 name: Living Room Mouse       # card title (auto-detected from HA if omitted)
-sensitivity: 2.0              # base cursor speed (default: 1.5), acceleration scales up to 3x
+sensitivity: 2.0              # base cursor speed (default: 1.5)
+mouse_acceleration: 0.2       # speed-based acceleration factor (default: 0.15)
+mouse_max_speed: 6.0          # max sensitivity cap (default: 4.5)
 scroll_sensitivity: 3         # faster scroll (default: 2)
 tap_to_click: false           # disable tap-to-click (default: true)
 ```
@@ -612,7 +623,9 @@ Optional configuration:
 | Option | Default | Description |
 |---|---|---|
 | `name` | Auto from HA | Card title. Auto-detected from HA device registry if omitted. |
-| `sensitivity` | `1.5` | Base cursor speed. Mouse acceleration scales up to 3x for fast swipes. |
+| `sensitivity` | `1.5` | Base cursor speed multiplier. |
+| `mouse_acceleration` | `0.15` | Speed-based acceleration factor. Higher = more acceleration on fast swipes. |
+| `mouse_max_speed` | `4.5` | Maximum sensitivity cap. Limits how fast the cursor can move. |
 | `scroll_sensitivity` | `2` | Scroll speed multiplier. |
 | `tap_to_click` | `true` | Tap the touchpad for a left click (5px dead zone prevents accidental clicks). |
 
@@ -763,6 +776,7 @@ host_names:                   # custom names for each slot (optional)
   - Phone
   - Laptop
   - Tablet
+active_host_entity: sensor.bluetooth_keyboard_active_host  # (auto-detected)
 ```
 
 Optional configuration:
@@ -773,6 +787,7 @@ Optional configuration:
 | `show_fkeys` | `true` | Show the F1–F12 function key row. |
 | `host_slots` | `0` | Number of host slots. Set to match your `host_slots` config to show a host switcher bar with prev/next buttons, host name, and MAC address. `0` hides the bar. |
 | `host_names` | `[]` | List of custom names for each host slot (e.g., `["TV", "Phone"]`). Index 0 = slot 0, etc. Falls back to switch_host button names from the ESP32, then "Host N". |
+| `active_host_entity` | Auto | Entity ID of the active host sensor. Auto-detected by name pattern (`sensor.*_active_host`). Set explicitly if auto-detection fails. |
 
 Features:
 - **Full QWERTY layout** — letters, numbers, punctuation, all standard keys.
