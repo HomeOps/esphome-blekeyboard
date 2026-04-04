@@ -362,8 +362,7 @@ setInterval(pollStatus,3000);
       const fb=document.createElement('button');
       fb.className='forget-btn';
       fb.textContent='Forget Host';
-      fb.addEventListener('pointerdown',e=>{
-        e.preventDefault();
+      fb.addEventListener('click',()=>{
         const active=d.active;
         if(confirm('Forget host in slot '+(active+1)+'?')){
           api('forget_host',{slot:active});
