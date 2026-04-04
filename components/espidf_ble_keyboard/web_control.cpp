@@ -630,9 +630,9 @@ buildKeyboard();
   pad.addEventListener('mousedown',e=>{e.preventDefault();onStart(e.clientX,e.clientY)});
   window.addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
   window.addEventListener('mouseup',()=>onEnd());
-  pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onStart(t.clientX,t.clientY)},{passive:false});
-  pad.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];onMove(t.clientX,t.clientY)},{passive:false});
-  pad.addEventListener('touchend',e=>{e.preventDefault();if(e.touches.length===0)onEnd()},{passive:false});
+  function winTouchMove(e){e.preventDefault();const t=e.touches[0];onMove(t.clientX,t.clientY)}
+  function winTouchEnd(e){e.preventDefault();if(e.touches.length===0){onEnd();window.removeEventListener('touchmove',winTouchMove);window.removeEventListener('touchend',winTouchEnd)}}
+  pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onStart(t.clientX,t.clientY);window.addEventListener('touchmove',winTouchMove,{passive:false});window.addEventListener('touchend',winTouchEnd,{passive:false})},{passive:false});
 
   let wheelAccum=0;
   pad.addEventListener('wheel',e=>{
