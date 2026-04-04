@@ -1280,6 +1280,8 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
         return ESP_FAIL;
     }
 
+    ESP_LOGD(TAG, "BLE report -> handle=0x%04X mod=0x%02X key=0x%02X",
+             primary_handle, report[0], report[2]);
     esp_err_t ret = esp_ble_gatts_send_indicate(s_gatts_if, conn_id, primary_handle, len, const_cast<uint8_t *>(report), false);
     if (ret != ESP_OK) {
         ESP_LOGW(TAG, "Keyboard report send failed on handle 0x%04X (%d), caller will retry",
@@ -1289,6 +1291,8 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
 }
 
 void EspidfBleKeyboard::send_string(const std::string &str) {
+    ESP_LOGD(TAG, "send_string called: \"%s\" (len=%u, queue_before=%u)",
+             str.c_str(), str.size(), type_queue_.size());
     // Non-blocking: append to queue; loop() drains it one keystroke at a time.
     if (type_mutex_ == nullptr) return;
     xSemaphoreTake(type_mutex_, portMAX_DELAY);
@@ -1297,6 +1301,7 @@ void EspidfBleKeyboard::send_string(const std::string &str) {
 }
 
 void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
+    ESP_LOGD(TAG, "send_key_combo called: mod=0x%02X key=0x%02X", modifiers, keycode);
     if (!is_connected_) return;
     uint8_t report[8] = {0};
     report[0] = modifiers;

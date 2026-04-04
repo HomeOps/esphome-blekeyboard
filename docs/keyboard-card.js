@@ -430,18 +430,11 @@ class BleKeyboardCard extends HTMLElement {
     shadow.appendChild(style);
     shadow.appendChild(card);
 
-    // Delegated event handler — use click to avoid duplicate pointer events
-    // in HA Lovelace (composed pointerdown can fire twice through Shadow DOM)
-    this._lastKeyTime = 0;
-    card.addEventListener('click', (e) => {
+    // Delegated event handler
+    card.addEventListener('pointerdown', (e) => {
       const btn = e.target.closest('.key');
       if (!btn) return;
       e.preventDefault();
-
-      // Guard against rapid duplicate events
-      const now = Date.now();
-      if (now - this._lastKeyTime < 80) return;
-      this._lastKeyTime = now;
 
       const rowIdx = parseInt(btn.dataset.row);
       const keyIdx = parseInt(btn.dataset.key);

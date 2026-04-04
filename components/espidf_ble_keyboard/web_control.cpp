@@ -785,6 +785,7 @@ class BleKbWebHandler : public AsyncWebHandler {
     } else if (path == "string") {
       if (request->hasArg("keys")) {
         std::string keys = request->arg("keys").c_str();
+        ESP_LOGD(TAG, "WEB /string keys=\"%s\"", keys.c_str());
         kb_->send_string(keys);
       }
       send_response(200, "text/plain", "OK");
@@ -792,6 +793,7 @@ class BleKbWebHandler : public AsyncWebHandler {
     } else if (path == "key") {
       int modifier = request->hasArg("modifier") ? atoi(request->arg("modifier").c_str()) : 0;
       int keycode = request->hasArg("keycode") ? atoi(request->arg("keycode").c_str()) : 0;
+      ESP_LOGD(TAG, "WEB /key mod=%d keycode=%d", modifier, keycode);
       kb_->send_key_combo((uint8_t) modifier, (uint8_t) keycode);
       send_response(200, "text/plain", "OK");
 
