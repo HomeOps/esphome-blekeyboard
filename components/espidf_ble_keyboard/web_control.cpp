@@ -727,7 +727,8 @@ buildKeyboard();
 
   // Drag reorder: long-press (300ms) to enter drag mode, then slide to target
   // Short tap toggles section visibility. All via pointer events (no click).
-  let dragBtn=null,tapBtn=null,dragPid=null,didDrag=false,holdTimer=null;
+  let dragBtn=null,tapBtn=null,dragPid=null,didDrag=false,holdTimer=null,startX=0,startY=0;
+  const MOVE_THRESHOLD=15;
 
   function hitBtn(x,y){
     const btns=bar.querySelectorAll('.toggle-btn');
@@ -745,19 +746,23 @@ buildKeyboard();
     if(!btn)return;
     e.preventDefault();
     tapBtn=btn;dragPid=e.pointerId;didDrag=false;
+    startX=e.clientX;startY=e.clientY;
     cancelHold();
     holdTimer=setTimeout(()=>{
       holdTimer=null;didDrag=true;
       dragBtn=btn;tapBtn=null;
       btn.classList.add('dragging');
-      bar.style.touchAction='none';
     },300);
   });
 
   bar.addEventListener('pointermove',e=>{
     if(e.pointerId!==dragPid)return;
-    if(!didDrag){cancelHold();tapBtn=null;return}
     e.preventDefault();
+    const moved=Math.abs(e.clientX-startX)+Math.abs(e.clientY-startY)>MOVE_THRESHOLD;
+    if(!didDrag){
+      if(moved){cancelHold();tapBtn=null}
+      return;
+    }
     const els=bar.querySelectorAll('.toggle-btn');
     els.forEach(b=>b.classList.remove('drag-over'));
     const target=hitBtn(e.clientX,e.clientY);
