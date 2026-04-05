@@ -101,6 +101,9 @@ espidf_ble_keyboard:
   mouse_acceleration: 0.15     # speed-based acceleration factor (default: 0.15)
   mouse_max_speed: 4.0         # max sensitivity cap (default: 4.0)
   scroll_sensitivity: 2.0      # scroll speed multiplier (default: 2.0)
+  # Optional: link text entities for custom text input (shows Send button in web UI)
+  custom_text_id:
+    - custom_text
   # Optional: per-slot passkey and pairing mode overrides
   hosts:
     - slot: 0
@@ -198,11 +201,10 @@ button:
     name: "Scroll Down"
     action: "mouse_scroll:-3"
 
-  - platform: template
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
     name: "Send Custom Text"
-    on_press:
-      - lambda: |-
-          id(my_keyboard).send_string(id(custom_text).state);
+    action: "send_custom_text"
 
   - platform: espidf_ble_keyboard
     keyboard_id: my_keyboard
@@ -252,6 +254,7 @@ binary_sensor:
 * **mouse_acceleration** (Optional, float): Web mouse speed-based acceleration factor. Defaults to `0.15`. Range: 0.0–2.0.
 * **mouse_max_speed** (Optional, float): Web mouse maximum sensitivity cap. Defaults to `4.0`. Range: 0.5–20.0.
 * **scroll_sensitivity** (Optional, float): Web mouse scroll speed multiplier. Defaults to `2.0`. Range: 0.1–10.0.
+* **custom_text_id** (Optional, ID or list of IDs): Link one or more ESPHome `text` entities for custom text input. Automatically registers a "Send" button in the web UI for each. Use `send_custom_text` or `send_custom_text:N` action to trigger.
 * **hosts** (Optional, list): Per-slot passkey and pairing mode overrides. Each entry has:
   * **slot** (Required, int): Host slot number (0–9).
   * **passkey** (Optional, int): 6-digit PIN for this slot (000000–999999). If omitted, the slot uses the global `passkey` setting (or Just Works if no global passkey).
@@ -382,6 +385,8 @@ espidf_ble_keyboard:
 | `"forget_host:N"` | Remove BLE bond for host slot N (0–9) and clear the slot. |
 | `"string:hello"` | Explicit text typing — useful in multi-step macros to distinguish text from action names. |
 | `"delay:N"` | Pause for N milliseconds (max 10000). Used between steps in multi-step macros. |
+| `"send_custom_text"` | Send the first linked text entity's content. Requires `custom_text_id` in config. |
+| `"send_custom_text:N"` | Send the Nth linked text entity (0-based). E.g. `send_custom_text:1` for the second. |
 
 **Lambda helpers** (for use in YAML automations):
 
@@ -956,9 +961,15 @@ button:
 
 ## Custom Text Input
 
-You can send arbitrary text from Home Assistant to the paired host device without hardcoding it in the YAML. Add the following to your ESPHome config:
+You can send arbitrary text from Home Assistant to the paired host device without hardcoding it in the YAML. Link text entities to the keyboard component with `custom_text_id`, then use the `send_custom_text` action:
 
 ```yaml
+espidf_ble_keyboard:
+  id: my_keyboard
+  custom_text_id:
+    - custom_text          # links the text entity below
+    # - username_text      # add more text entities as needed
+
 text:
   - platform: template
     name: "Custom Text"
@@ -967,14 +978,16 @@ text:
     optimistic: true
 
 button:
-  - platform: template
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
     name: "Send Custom Text"
-    on_press:
-      - lambda: |-
-          id(my_keyboard).send_string(id(custom_text).state);
+    action: "send_custom_text"       # sends first text entity (index 0)
+    # action: "send_custom_text:1"   # sends second text entity (index 1)
 ```
 
-This adds a text input field and a send button to Home Assistant. You can also drive it from a Home Assistant automation — for example, updating the text entity from an `input_text` helper and then pressing the button:
+This adds a text input field and a send button to both Home Assistant and the web UI (via auto-registered buttons). A single ID also works: `custom_text_id: custom_text`.
+
+You can also drive it from a Home Assistant automation — for example, updating the text entity from an `input_text` helper and then pressing the button:
 
 ```yaml
 automation:

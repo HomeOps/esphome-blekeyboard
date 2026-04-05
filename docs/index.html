@@ -394,6 +394,8 @@
   <span class="yaml-key">mouse_acceleration</span><span class="yaml-val">:</span> <span class="yaml-str">0.15</span>  <span class="yaml-comment"># optional, web mouse accel factor (default: 0.15)</span>
   <span class="yaml-key">mouse_max_speed</span><span class="yaml-val">:</span> <span class="yaml-str">4.0</span>  <span class="yaml-comment"># optional, web mouse max sensitivity (default: 4.0)</span>
   <span class="yaml-key">scroll_sensitivity</span><span class="yaml-val">:</span> <span class="yaml-str">2.0</span>  <span class="yaml-comment"># optional, web mouse scroll speed (default: 2.0)</span>
+  <span class="yaml-key">custom_text_id</span><span class="yaml-val">:</span>        <span class="yaml-comment"># optional, link text entities for Send buttons</span>
+    <span class="yaml-val">-</span> <span class="yaml-str">custom_text</span>
 
 <span class="yaml-key">button</span><span class="yaml-val">:</span>
   <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
@@ -463,7 +465,7 @@
       <tr><td><code>"mouse_move:50:0"</code></td><td class="desc">Move mouse cursor — relative X:Y pixels (-127 to 127).</td></tr>
       <tr><td><code>"mouse_scroll:3"</code></td><td class="desc">Scroll mouse wheel — positive = up, negative = down (-127 to 127).</td></tr>
       <tr><td><code>type: mouse_click</code></td><td class="desc">Dict format — <code>type: mouse_click</code>, <code>buttons: 0x01</code>. 0x01=left, 0x02=right, 0x04=middle.</td></tr>
-      <tr><td><code>text entity</code></td><td class="desc">Type any text from Home Assistant and press Send Custom Text button. See README for setup.</td></tr>
+      <tr><td><code>"send_custom_text"</code></td><td class="desc">Send linked text entity content. Use <code>send_custom_text:N</code> for multiple entities. Requires <code>custom_text_id</code> in config.</td></tr>
       <tr><td><code>"switch_host:0"</code></td><td class="desc">Switch to host slot 0–9. Reconnects to stored host or advertises for new pairing.</td></tr>
       <tr><td><code>"forget_host:0"</code></td><td class="desc">Remove BLE bond for host slot 0–9 and clear the stored address.</td></tr>
       <tr><td><code>"string:hello"</code></td><td class="desc">Explicit text typing — useful in multi-step macros to distinguish text from action names.</td></tr>

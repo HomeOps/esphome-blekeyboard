@@ -1054,10 +1054,19 @@ void EspidfBleKeyboard::switch_host(uint8_t slot) {
     ESP_LOGI(TAG, "Switching to host slot %u", slot);
 
     if (hosts_[slot].occupied) {
-        // Directed advertising to the bonded host
-        s_directed_adv_pending = true;
-        memcpy(s_directed_addr, hosts_[slot].addr, sizeof(esp_bd_addr_t));
-        s_directed_addr_type = hosts_[slot].addr_type;
+        // Check if stored address is a resolvable private address (RPA).
+        // RPA has bits [7:6] of first byte = 01. Android rotates these, so
+        // directed advertising to a stale RPA will always fail.
+        uint8_t addr_top = hosts_[slot].addr[0] >> 6;
+        if (addr_top == 0x01) {
+            ESP_LOGI(TAG, "Host slot %u has RPA address — using undirected advertising", slot);
+            // Skip directed, go straight to undirected so the phone can reconnect
+        } else {
+            // Static/public address — directed advertising is reliable
+            s_directed_adv_pending = true;
+            memcpy(s_directed_addr, hosts_[slot].addr, sizeof(esp_bd_addr_t));
+            s_directed_addr_type = hosts_[slot].addr_type;
+        }
     }
     // else: empty slot — undirected advertising (pairing mode)
 
@@ -1139,11 +1148,17 @@ void EspidfBleKeyboard::setup() {
         active_host_sensor_->publish_state(active_slot_);
 
     // If active slot has a bonded host, use directed advertising on startup
+    // Skip directed for RPA addresses (Android rotates these)
     if (hosts_[active_slot_].occupied) {
-        s_directed_adv_pending = true;
-        memcpy(s_directed_addr, hosts_[active_slot_].addr, sizeof(esp_bd_addr_t));
-        s_directed_addr_type = hosts_[active_slot_].addr_type;
-        ESP_LOGI(TAG, "Startup: will direct-advertise to host slot %u", active_slot_);
+        uint8_t addr_top = hosts_[active_slot_].addr[0] >> 6;
+        if (addr_top == 0x01) {
+            ESP_LOGI(TAG, "Startup: host slot %u has RPA address — using undirected advertising", active_slot_);
+        } else {
+            s_directed_adv_pending = true;
+            memcpy(s_directed_addr, hosts_[active_slot_].addr, sizeof(esp_bd_addr_t));
+            s_directed_addr_type = hosts_[active_slot_].addr_type;
+            ESP_LOGI(TAG, "Startup: will direct-advertise to host slot %u", active_slot_);
+        }
     }
 
     bool startup_has_pk; uint32_t startup_pk; bool startup_sc;
