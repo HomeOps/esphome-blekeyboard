@@ -500,14 +500,29 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             } else {
                 uint8_t fail_reason = param->ble_security.auth_cmpl.fail_reason;
                 ESP_LOGE(TAG, "GAP: Pairing Failed (0x%x)", fail_reason);
+
+                // Check if this is a known device (in hosts table)
+                bool is_known_device = false;
+                if (s_instance) {
+                    for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
+                        auto &hs = s_instance->get_host_slot(i);
+                        if (hs.occupied && memcmp(hs.addr, param->ble_security.auth_cmpl.bd_addr, sizeof(esp_bd_addr_t)) == 0) {
+                            is_known_device = true;
+                            ESP_LOGW(TAG, "GAP: Pairing failed with known device in slot %u — bond may be stale", i);
+                            break;
+                        }
+                    }
+                }
+
+                // If passkey was rejected (0x51) or device is known with stale bond, remove old bond and try Just Works
                 bool fb_has, fb_sc; uint32_t fb_pk;
                 if (s_instance) s_instance->get_active_slot_passkey(fb_has, fb_pk, fb_sc);
                 if (s_instance &&
                     fb_has &&
                     s_use_static_passkey &&
                     !fb_sc &&
-                    fail_reason == 0x51) {
-                    ESP_LOGW(TAG, "GAP: Static passkey rejected by peer (0x51), falling back to Just Works mode");
+                    (fail_reason == 0x51 || is_known_device)) {
+                    ESP_LOGW(TAG, "GAP: Removing stale bond and falling back to Just Works mode");
                     apply_security_params(false);
                     esp_ble_remove_bond_device(param->ble_security.auth_cmpl.bd_addr);
                 }
