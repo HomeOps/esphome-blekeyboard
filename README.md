@@ -4,8 +4,8 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 
 ## Features
 
-* **Standard HID Keyboard:** Recognized as a native keyboard by Windows, Android, and iOS. Full HOGP-compliant BLE HID with Device Information and Battery services. Use `passkey_mode: legacy` for Windows/Android, `passkey_mode: secure_connections` for iOS.
-* **Secure Pairing:** Supports a configurable 6-digit static passkey (PIN) for secure bonding, with automatic Android compatibility fallback in `passkey_mode: legacy`.
+* **Standard HID Keyboard:** Recognized as a native keyboard by Windows, Android, and iOS. Full HOGP-compliant BLE HID with Device Information and Battery services. Use `passkey_mode: legacy` for Windows (Just Works for Android), `passkey_mode: secure_connections` for iOS.
+* **Secure Pairing:** Supports a configurable 6-digit static passkey (PIN) for secure bonding on Windows and iOS. Android uses Just Works pairing (no PIN) due to HID compatibility limitations.
 * **Efficient Memory Usage:** Direct API implementation ensures stability even with complex ESPHome configurations.
 * **Key Combos:** Send any modifier + key combination using hex keycodes (e.g. Win+R, Ctrl+C).
 * **String Typing:** Type any string directly — all printable ASCII characters are supported (US keyboard layout).
@@ -87,9 +87,10 @@ espidf_ble_keyboard:
   key_delay_ms: 80
   # Optional: Set a 6-digit pairing code.
   # If omitted, the device will use "Just Works" (no PIN) pairing.
+  # Note: Android does not support passkey pairing for BLE HID devices.
   passkey: 123456
   # Optional pairing mode when passkey is set:
-  # legacy (default, Windows/Android-friendly) or secure_connections (Apple-friendly)
+  # legacy (default, Windows-friendly) or secure_connections (iOS-required)
   passkey_mode: legacy
   # Optional: enable built-in web control page at http://<device-ip>/ble_keyboard
   # Requires web_server component. No HA cards or services needed.
@@ -247,7 +248,7 @@ binary_sensor:
 * **device_name** (Optional, string): The BLE device name advertised during pairing. Defaults to `ESP32 BLE KB`. Maximum 29 characters.
 * **key_delay_ms** (Optional, int): Total delay per character when typing strings, in milliseconds. Split evenly between key-down and key-up. Defaults to `80`. Increase if characters are being dropped on slow BLE connections.
 * **passkey** (Optional, int): A 6-digit static PIN (000000–999999). If set, the device uses static passkey pairing (legacy MITM bond) and requires this PIN during initial pairing.
-* **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows and Android. `secure_connections` uses LE Secure Connections MITM bonding — tested and recommended for iOS.
+* **passkey_mode** (Optional, string): Passkey security mode. `legacy` (default) uses legacy MITM bonding — tested and recommended for Windows. `secure_connections` uses LE Secure Connections MITM bonding — required for iOS passkey pairing (legacy mode does not work on iOS). Android does not support passkey pairing with BLE HID keyboards.
 * **web_control** (Optional, bool): Enable a built-in web control page with keyboard and mouse UI at `http://<device-ip>/ble_keyboard`. Requires the `web_server` component. Defaults to `false`.
 * **host_slots** (Optional, int): Number of host slots for multi-host switching (1–10). Each slot can store a bonded host. Switch between hosts using buttons, HA services, or the web control page. Defaults to `4`.
 * **mouse_sensitivity** (Optional, float): Web mouse base movement multiplier. Defaults to `1.0`. Range: 0.1–10.0.
@@ -1024,18 +1025,14 @@ When you first flash the device or change the `passkey`:
 
 ## Pairing with Android
 
-Android is stricter about BLE HID security than Windows. For best results:
+Android does not support passkey pairing with BLE HID keyboards. For reliable pairing:
 
-1. Configure a 6-digit `passkey` in `espidf_ble_keyboard`.
-2. Flash firmware, then restart Bluetooth on the phone (or reboot phone once).
+1. **Do not set a `passkey`** in `espidf_ble_keyboard` (omit the passkey option entirely).
+2. Use `passkey_mode: legacy` (the default).
 3. In Android Bluetooth settings, remove any previous entry for your device name (default: **ESP32 BLE KB**) before re-pairing.
-4. Start pairing and enter the configured passkey when prompted.
+4. Start pairing - it should connect instantly without prompting for a PIN.
 
-If Android shows a different host-generated code instead of your configured passkey, remove old bonds on both Android and the ESP32 side (reboot/reflash), then pair again.
-
-If pairing repeatedly fails with auth error `0x51` in `passkey_mode: legacy`, this component automatically falls back from static passkey mode to Just Works mode for compatibility on the next attempt.
-
-If pairing fails with "can't connect", remove the old bond on Android and pair again after rebooting the ESP32.
+Android uses Just Works pairing for BLE HID devices. Attempting to use passkeys will result in pairing failures or automatic fallback to Just Works.
 
 ---
 
@@ -1047,6 +1044,8 @@ For iOS using passkey pairing:
 2. Remove any previous bond for your device name (default: **ESP32 BLE KB**) from iOS Bluetooth settings.
 3. Reboot the ESP32 (or reflash), then pair again from iOS.
 4. Enter the configured passkey when prompted.
+
+For Just Works pairing (no passkey), use `passkey_mode: secure_connections` for best compatibility.
 
 After pairing, you should see all CCC subscriptions in the log (keyboard, consumer, system) confirming iOS has fully enumerated the HID service.
 
@@ -1066,9 +1065,9 @@ For first-time pairing, Android may require more than one attempt while it refre
 
 Recommended pairing modes:
 
-* **Fastest pairing (recommended default):** Omit `passkey` (Just Works). Windows and Android typically pair instantly.
-* **Windows/Android with passkey:** Set `passkey` with `passkey_mode: legacy` (default). Windows typically pairs quickly; Android may require a second attempt before fallback completes.
-* **iOS with passkey:** Set `passkey` with `passkey_mode: secure_connections`.
+* **Fastest pairing (recommended for Android/Windows):** Omit `passkey` (Just Works) with `passkey_mode: legacy`. Pairs instantly on Android and Windows. For iOS, use `passkey_mode: secure_connections`.
+* **Windows with passkey:** Set `passkey` with `passkey_mode: legacy`. Pairs quickly with PIN entry.
+* **iOS with passkey:** Set `passkey` with `passkey_mode: secure_connections` (legacy mode does not work on iOS).
 
 Recommended order:
 
@@ -1086,7 +1085,7 @@ After the first successful bond, reconnect behavior is typically stable.
 * **PIN prompt not appearing:** Windows often caches old security profiles. Fully "Remove" the device from Windows Bluetooth settings and try again.
 * **Windows needs multiple pairing attempts:** Remove old Bluetooth entries first, then retry pairing after the first failed attempt. The component now avoids duplicate advertising restarts and keeps existing bonds unless the auth failure is a known `0x51` mismatch.
 * **Android says "can't connect":** Android often keeps stale BLE bonds. Remove the device from Bluetooth settings, reboot the ESP32, then pair again. If still failing, toggle phone Bluetooth off/on and retry.
-* **Android shows the wrong pairing code:** Ensure `passkey` is set in YAML and old bonds are removed before pairing. If Android still shows a host-generated code, remove all existing bonds and pair from a clean state. In `passkey_mode: legacy`, the component can automatically fall back to Just Works mode after repeated `0x51` auth failures.
+* **Android pairing issues:** Android does not support passkey pairing with BLE HID keyboards. Ensure no `passkey` is configured in your YAML - use Just Works pairing with `passkey_mode: legacy`. Remove old bonds and try again.
 * **iOS not pairing:** Set `passkey_mode: secure_connections`, remove old Bluetooth bonds on both devices, then pair again.
 * **iOS pairs but no typing/control:** Ensure you are using `passkey_mode: secure_connections`. Remove the bond on both the iOS device and the ESP32 (reboot/reflash), then pair again. After pairing, check the log for `Consumer CCC=0x0001` and `System CCC=0x0001` — if these are missing, iOS has not fully subscribed to the HID reports. Reflash and re-pair from a clean state.
 * **Typing speed / dropped characters:** The default `key_delay_ms: 80` (40ms key-down + 40ms key-up) suits most connections. If characters are dropped on a slow BLE connection, increase this value (e.g. `key_delay_ms: 120`). If typing feels too slow, it can be reduced.
