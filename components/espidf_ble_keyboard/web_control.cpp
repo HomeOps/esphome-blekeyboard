@@ -33,15 +33,15 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .status-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);transition:background .3s}
 .status-dot.connected{background:var(--accent)}
 .status-dot.paired{background:var(--active)}
-.status-text{font-size:12px;color:var(--muted)}
+.status-text{font-size:13px;color:var(--muted)}
 .status-text.on{color:var(--accent)}
-.dev-name{font-size:11px;color:var(--name);margin-left:4px;font-weight:500}
+.dev-name{font-size:12px;color:var(--name);margin-left:4px;font-weight:500}
 .toolbar-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .zoom-controls{display:flex;align-items:center;gap:4px}
-.zoom-btn,.theme-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.zoom-btn,.theme-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
 .zoom-btn:active,.theme-btn:active{background:var(--active);color:#fff}
-.theme-btn{font-size:14px}
-.zoom-label{font-size:11px;color:var(--muted);min-width:36px;text-align:center}
+.theme-btn{font-size:15px}
+.zoom-label{font-size:12px;color:var(--muted);min-width:36px;text-align:center}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
 .scalable{transform-origin:top left;transition:transform .15s}
 .row{display:flex;gap:3px;margin-bottom:3px}
