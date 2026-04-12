@@ -66,7 +66,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .prog-btn:active,.prog-btn.p{background:var(--active);color:#fff;border-color:var(--active)}
 .prog-empty{font-size:12px;color:var(--muted);padding:4px 0}
 .macro-wrap{display:flex;align-items:center;gap:4px}
-.macro-act{width:24px;height:24px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.macro-act{width:24px;height:24px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--name);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .macro-act:active{background:var(--active);color:#fff}
 .macro-act.del{color:#c44}
 .macro-act.del:hover{background:#c44;color:#fff}
@@ -79,7 +79,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .combo-row{display:flex;gap:4px;width:100%;align-items:center;flex-wrap:wrap}
 .mod-btn{padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
 .mod-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
-.macro-edit-btn{margin-left:auto;padding:4px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--muted);font-size:11px;cursor:pointer}
+.macro-edit-btn{margin-left:auto;padding:4px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--name);font-size:11px;cursor:pointer}
 .macro-edit-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
 .macros-card:not(.editing) .macro-act,.macros-card:not(.editing) .macro-form{display:none}
 .host-bar{display:flex;gap:6px;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;overflow:hidden}
