@@ -86,7 +86,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .host-btn{flex:1 0 60px;padding:8px 4px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:500;cursor:pointer;text-align:center;touch-action:manipulation;transition:background .15s}
 .host-btn.active{background:var(--active);color:#fff;border-color:var(--active)}
 .host-btn.occupied{border-color:var(--accent)}
-.host-btn .slot-label{font-size:10px;color:var(--fg);display:block}
+.host-btn .slot-label{font-size:11px;color:var(--fg);display:block}
 .host-btn.active .slot-label{color:rgba(255,255,255,.7)}
 .forget-btn{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:#c44;font-size:11px;font-weight:600;cursor:pointer;touch-action:manipulation;transition:background .15s;white-space:nowrap}
 .forget-btn:active{background:#c44;color:#fff}
