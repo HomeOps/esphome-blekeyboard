@@ -23,8 +23,8 @@ static const char PAGE_HTML[] PROGMEM = R"rawhtml(<!DOCTYPE html>
 <title>BLE Keyboard &amp; Mouse</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#1a1e28;--fg:#e2e8f0;--card:#13161e;--border:#252a38;--muted:#6b7a99;--accent:#00d4aa;--active:#03a9f4;--caps:#ff9800;--name:#8892a8}
-body.light{--bg:#f0f2f5;--fg:#1a1e28;--card:#ffffff;--border:#d0d5dd;--muted:#6b7a99;--accent:#00875a;--active:#0288d1;--caps:#e65100;--name:#555}
+:root{--bg:#1a1e28;--fg:#e2e8f0;--card:#13161e;--border:#252a38;--muted:#6b7a99;--accent:#00d4aa;--active:#03a9f4;--caps:#ff9800;--name:var(--muted)}
+body.light{--bg:#f0f2f5;--fg:#1a1e28;--card:#ffffff;--border:#d0d5dd;--muted:#6b7a99;--accent:#00875a;--active:#0288d1;--caps:#e65100;--name:var(--muted)}
 body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:12px;max-width:680px;margin:0 auto;user-select:none;-webkit-user-select:none;transition:background .2s,color .2s}
 h2{font-size:15px;font-weight:600;margin:12px 0 8px;color:var(--accent);display:flex;align-items:center;gap:6px}
 h2 svg{width:18px;height:18px;fill:var(--accent)}
@@ -35,13 +35,13 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .status-dot.paired{background:var(--active)}
 .status-text{font-size:13px;color:var(--muted)}
 .status-text.on{color:var(--accent)}
-.dev-name{font-size:13px;color:var(--name);margin-left:4px;font-weight:500}
+.dev-name{font-size:13px;color:var(--muted);margin-left:4px;font-weight:500}
 .toolbar-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .zoom-controls{display:flex;align-items:center;gap:4px}
 .zoom-btn,.theme-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
 .zoom-btn:active,.theme-btn:active{background:var(--active);color:#fff}
 .theme-btn{font-size:15px}
-.zoom-label{font-size:13px;color:var(--muted);min-width:36px;text-align:center}
+.zoom-label{font-size:13px;color:var(--name);min-width:36px;text-align:center}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px}
 .scalable{transform-origin:top left;transition:transform .15s}
 .row{display:flex;gap:3px;margin-bottom:3px}
@@ -79,7 +79,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .combo-row{display:flex;gap:4px;width:100%;align-items:center;flex-wrap:wrap}
 .mod-btn{padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--fg);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
 .mod-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
-.macro-edit-btn{margin-left:auto;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--muted);font-size:11px;cursor:pointer}
+.macro-edit-btn{margin-left:auto;padding:4px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--muted);font-size:11px;cursor:pointer}
 .macro-edit-btn.on{background:var(--active);color:#fff;border-color:var(--active)}
 .macros-card:not(.editing) .macro-act,.macros-card:not(.editing) .macro-form{display:none}
 .host-bar{display:flex;gap:6px;padding:8px 10px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;overflow:hidden}
