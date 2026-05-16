@@ -579,18 +579,27 @@ function buildKeyboard(){
   updateLabels();
   if(kbListenersBound)return;
   kbListenersBound=true;
+  // L-Enter visual sync: pressing either half highlights both halves + bridge.
+  function setKeyP(el,on){
+    if(!el)return;
+    el.classList.toggle('p',on);
+    let partner=null;
+    if(el.classList.contains('kb-l-top'))partner=document.querySelector('#kb-rows .k.kb-l-bot');
+    else if(el.classList.contains('kb-l-bot'))partner=document.querySelector('#kb-rows .k.kb-l-top');
+    if(partner)partner.classList.toggle('p',on);
+  }
   let sx,sy,ok,ab;
   kb.addEventListener('pointerdown',e=>{
     ab=e.target.closest('.k');if(!ab)return;
-    sx=e.clientX;sy=e.clientY;ok=true;ab.classList.add('p');
+    sx=e.clientX;sy=e.clientY;ok=true;setKeyP(ab,true);
   });
-  kb.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;if(ab)ab.classList.remove('p')}});
+  kb.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;setKeyP(ab,false)}});
   kb.addEventListener('pointerup',e=>{
-    if(ab)ab.classList.remove('p');
+    setKeyP(ab,false);
     if(ok&&ab){const rows=(LAYOUTS[currentLayout]||LAYOUTS.us).ROWS;const k=rows[+ab.dataset.r][+ab.dataset.k];onKey(k)}
     ok=false;ab=null;
   });
-  kb.addEventListener('pointercancel',()=>{if(ab)ab.classList.remove('p');ok=false;ab=null});
+  kb.addEventListener('pointercancel',()=>{setKeyP(ab,false);ok=false;ab=null});
 }
 
 function toggleMod(mod){

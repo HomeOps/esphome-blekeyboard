@@ -578,9 +578,17 @@ class BleKeyboardCard extends HTMLElement {
       const rows = (LAYOUTS[this._config.layout] || LAYOUTS.us).ROWS;
       const keyDef = rows[rowIdx][keyIdx];
 
-      // Visual press feedback
+      // Visual press feedback — L-Enter halves stay in sync so the full L
+      // (top + bridge + bottom) highlights as one when either half is tapped.
+      let partner = null;
+      if (btn.classList.contains('kb-l-top')) partner = shadow.querySelector('.key.kb-l-bot');
+      else if (btn.classList.contains('kb-l-bot')) partner = shadow.querySelector('.key.kb-l-top');
       btn.classList.add('pressed');
-      setTimeout(() => btn.classList.remove('pressed'), 120);
+      if (partner) partner.classList.add('pressed');
+      setTimeout(() => {
+        btn.classList.remove('pressed');
+        if (partner) partner.classList.remove('pressed');
+      }, 120);
 
       this._onKeyPress(keyDef);
     });
