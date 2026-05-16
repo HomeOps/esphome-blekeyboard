@@ -388,6 +388,7 @@ class BleKeyboardCard extends HTMLElement {
         border-bottom-color: transparent;
         position: relative;
         z-index: 1;
+        overflow: visible;
       }
       .key.kb-l-top::after {
         content: '';
