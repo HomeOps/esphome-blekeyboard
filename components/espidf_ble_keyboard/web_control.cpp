@@ -129,7 +129,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 </div>
 <div class="toolbar-right">
 <div class="section-toggles" id="toggle-bar">
-<button class="toggle-btn on" data-section="keyboard-card">Keyboard</button>
+<button class="toggle-btn on" data-section="keyboard">Keyboard</button>
 <button class="toggle-btn on" data-section="mouse-card">Mouse</button>
 <button class="toggle-btn on" data-section="media-card">Remote</button>
 <button class="toggle-btn on" data-section="btns-card">Buttons</button>
@@ -145,9 +145,9 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 </div>
 
 <div class="host-bar" id="host-bar" style="display:none"></div>
-<div class="card" id="keyboard-card">
+<div class="card" id="keyboard">
 <div class="kb-header"><span class="kb-title">Keyboard</span><select id="layoutSel" class="layout-sel"></select></div>
-<div id="keyboard"></div>
+<div id="kb-rows"></div>
 </div>
 
 <div class="card" id="mouse-card">
@@ -544,7 +544,7 @@ let capsBtn=null;
 
 let kbListenersBound=false;
 function buildKeyboard(){
-  const kb=document.getElementById('keyboard');
+  const kb=document.getElementById('kb-rows');
   kb.innerHTML='';
   charKeys.length=0;
   Object.keys(modBtns).forEach(m=>modBtns[m].length=0);
