@@ -31,6 +31,7 @@
  *   device: bluetooth_keyboard
  *   name: Living Room Keyboard
  *   show_fkeys: false
+ *   layout: uk
  *   host_slots: 4
  *   host_names:
  *     - TV
