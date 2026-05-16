@@ -358,7 +358,10 @@ class BleKeyboardCard extends HTMLElement {
         line-height: 1.2;
         overflow: hidden;
         white-space: nowrap;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
       }
+      .key:focus, .key:focus-visible { outline: none; }
       .key:active, .key.pressed {
         background: var(--primary-color, #03a9f4);
         color: #fff;
@@ -391,7 +394,7 @@ class BleKeyboardCard extends HTMLElement {
         top: 100%;
         left: -1px;
         right: -1px;
-        height: 4px;
+        height: 5px;
         background: var(--secondary-background-color, #f0f0f0);
         border-left: 1px solid var(--divider-color, #e0e0e0);
         border-right: 1px solid var(--divider-color, #e0e0e0);
