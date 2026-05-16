@@ -189,7 +189,7 @@ uk: { name: 'English (UK)', ROWS: [
   ],
   // QWERTY row \u2014 UK: ends with top portion of L-Enter (sends same Enter keycode)
   [
-    { label: 'Tab', type: 'special', keycode: 0x2B, flex: 1.3 },
+    { label: 'Tab', type: 'special', keycode: 0x2B, flex: 1.5 },
     { label: 'q', shiftLabel: 'Q', type: 'char', char: 'q', shiftChar: 'Q' },
     { label: 'w', shiftLabel: 'W', type: 'char', char: 'w', shiftChar: 'W' },
     { label: 'e', shiftLabel: 'E', type: 'char', char: 'e', shiftChar: 'E' },
@@ -202,7 +202,7 @@ uk: { name: 'English (UK)', ROWS: [
     { label: 'p', shiftLabel: 'P', type: 'char', char: 'p', shiftChar: 'P' },
     { label: '[', shiftLabel: '{', type: 'char', char: '[', shiftChar: '{' },
     { label: ']', shiftLabel: '}', type: 'char', char: ']', shiftChar: '}' },
-    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.5 },
+    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.25, cls: 'kb-l-top' },
   ],
   // Home row \u2014 UK adds #/~ between '@ and Enter; Shift+' = @
   [
@@ -219,7 +219,7 @@ uk: { name: 'English (UK)', ROWS: [
     { label: ';', shiftLabel: ':', type: 'char', char: ';', shiftChar: ':' },
     { label: "'", shiftLabel: '@', type: 'char', char: "'", shiftChar: '@' },
     { label: '#', shiftLabel: '~', type: 'char', char: '#', shiftChar: '~' },
-    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.8 },
+    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.75, cls: 'kb-l-bot' },
   ],
   // Shift row \u2014 UK adds the ISO \| key between LShift and Z; narrower LShift, wider RShift
   [
@@ -378,6 +378,32 @@ class BleKeyboardCard extends HTMLElement {
         font-size: 11px;
         padding: 6px 2px;
       }
+      .key.kb-l-top {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom-color: transparent;
+        position: relative;
+        z-index: 1;
+      }
+      .key.kb-l-top::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: -1px;
+        right: -1px;
+        height: 4px;
+        background: var(--secondary-background-color, #f0f0f0);
+        border-left: 1px solid var(--divider-color, #e0e0e0);
+        border-right: 1px solid var(--divider-color, #e0e0e0);
+        pointer-events: none;
+      }
+      .key.kb-l-top:active::after, .key.kb-l-top.pressed::after {
+        background: var(--primary-color, #03a9f4);
+        border-color: var(--primary-color, #03a9f4);
+      }
+      .key.kb-l-bot {
+        border-top-left-radius: 0;
+      }
       .key-space {
         font-size: 11px;
         letter-spacing: 2px;
@@ -510,6 +536,7 @@ class BleKeyboardCard extends HTMLElement {
         btn.className = 'key';
         if (rowIdx === 0) btn.classList.add('key-fkey');
         if (keyDef.char === ' ') btn.classList.add('key-space');
+        if (keyDef.cls) btn.classList.add(keyDef.cls);
         if (keyDef.flex) btn.style.flex = keyDef.flex;
 
         btn.textContent = keyDef.char === ' ' ? 'Space' : keyDef.label;
