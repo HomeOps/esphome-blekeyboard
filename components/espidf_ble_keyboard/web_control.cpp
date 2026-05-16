@@ -54,6 +54,7 @@ h2 svg{width:18px;height:18px;fill:var(--accent)}
 .k:active,.k.p{background:var(--active);color:#fff;border-color:var(--active)}
 .k.active{background:var(--active);color:#fff;border-color:var(--active)}
 .k.caps{background:var(--caps);color:#fff;border-color:var(--caps)}
+.k.shift-lock{background:var(--caps);color:#fff;border-color:var(--caps)}
 .k.fk{font-size:10px;padding:6px 1px}
 .k.kb-l-top{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:transparent;position:relative;z-index:1}
 .k.kb-l-top::after{content:'';position:absolute;top:100%;left:-1px;right:-1px;height:5px;background:var(--bg);border-left:1px solid var(--border);border-right:1px solid var(--border);pointer-events:none}
@@ -542,7 +543,7 @@ uk:{ROWS:[
 ]}};
 let currentLayout='us';
 
-let shift=false,capsLock=false,ctrl=false,alt=false,win=false,rshift=false,altgr=false;
+let shift=false,capsLock=false,ctrl=false,alt=false,win=false,rshift=false,altgr=false,shiftLock=false;
 const modBtns={shift:[],ctrl:[],alt:[],win:[],rshift:[],altgr:[]};
 const charKeys=[];
 let capsBtn=null;
@@ -577,6 +578,10 @@ function buildKeyboard(){
     const on=({shift,ctrl,alt,win,rshift,altgr})[m];
     if(on)modBtns[m].forEach(b=>b.classList.add('active'));
   });
+  if(shiftLock){
+    modBtns.shift.forEach(b=>b.classList.add('shift-lock'));
+    modBtns.rshift.forEach(b=>b.classList.add('shift-lock'));
+  }
   updateLabels();
   if(kbListenersBound)return;
   kbListenersBound=true;
@@ -589,18 +594,31 @@ function buildKeyboard(){
     else if(el.classList.contains('kb-l-bot'))partner=document.querySelector('#kb-rows .k.kb-l-top');
     if(partner)partner.classList.toggle('p',on);
   }
-  let sx,sy,ok,ab;
+  let sx,sy,ok,ab,sLockT=null,sLockFired=false;
+  function clrSLockT(){if(sLockT){clearTimeout(sLockT);sLockT=null}}
   kb.addEventListener('pointerdown',e=>{
     ab=e.target.closest('.k');if(!ab)return;
     sx=e.clientX;sy=e.clientY;ok=true;setKeyP(ab,true);
+    sLockFired=false;
+    const rows=(LAYOUTS[currentLayout]||LAYOUTS.us).ROWS;
+    const k=rows[+ab.dataset.r][+ab.dataset.k];
+    // Long-press (500 ms) on either Shift locks it sticky until tapped again.
+    if(k&&k.t==='m'&&(k.mod==='shift'||k.mod==='rshift')){
+      sLockT=setTimeout(()=>{
+        sLockT=null;sLockFired=true;shiftLock=true;
+        if(k.mod==='shift'){if(!shift)toggleMod('shift')}else{if(!rshift)toggleMod('rshift')}
+        modBtns.shift.forEach(b=>b.classList.add('shift-lock'));
+        modBtns.rshift.forEach(b=>b.classList.add('shift-lock'));
+      },500);
+    }
   });
-  kb.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;setKeyP(ab,false)}});
+  kb.addEventListener('pointermove',e=>{if(ok&&(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy))>10){ok=false;setKeyP(ab,false);clrSLockT()}});
   kb.addEventListener('pointerup',e=>{
-    setKeyP(ab,false);
-    if(ok&&ab){const rows=(LAYOUTS[currentLayout]||LAYOUTS.us).ROWS;const k=rows[+ab.dataset.r][+ab.dataset.k];onKey(k)}
-    ok=false;ab=null;
+    setKeyP(ab,false);clrSLockT();
+    if(ok&&ab&&!sLockFired){const rows=(LAYOUTS[currentLayout]||LAYOUTS.us).ROWS;const k=rows[+ab.dataset.r][+ab.dataset.k];onKey(k)}
+    ok=false;ab=null;sLockFired=false;
   });
-  kb.addEventListener('pointercancel',()=>{setKeyP(ab,false);ok=false;ab=null});
+  kb.addEventListener('pointercancel',()=>{setKeyP(ab,false);clrSLockT();ok=false;ab=null;sLockFired=false});
 }
 
 function toggleMod(mod){
@@ -619,7 +637,17 @@ function updateLabels(){
 }
 
 function onKey(k){
-  if(k.t==='m'){toggleMod(k.mod);return}
+  if(k.t==='m'){
+    if((k.mod==='shift'||k.mod==='rshift')&&shiftLock){
+      shiftLock=false;
+      modBtns.shift.forEach(b=>b.classList.remove('shift-lock'));
+      modBtns.rshift.forEach(b=>b.classList.remove('shift-lock'));
+      if(shift)toggleMod('shift');
+      if(rshift)toggleMod('rshift');
+      return;
+    }
+    toggleMod(k.mod);return;
+  }
   if(k.t==='caps'){
     capsLock=!capsLock;
     if(capsBtn)capsBtn.classList.toggle('caps',capsLock);
@@ -643,11 +671,11 @@ function onKey(k){
     if(shift)mb|=0x02;
     api('key',{modifier:mb,keycode:k.kc});
   }
-  if(shift)toggleMod('shift');
+  if(shift&&!shiftLock)toggleMod('shift');
   if(ctrl)toggleMod('ctrl');
   if(alt)toggleMod('alt');
   if(win)toggleMod('win');
-  if(rshift)toggleMod('rshift');
+  if(rshift&&!shiftLock)toggleMod('rshift');
   if(altgr)toggleMod('altgr');
 }
 
