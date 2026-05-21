@@ -773,6 +773,7 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             if ((param->write.handle == s_hid_output_report_handle || param->write.handle == s_boot_kb_output_handle) &&
                 param->write.len > 0) {
                 ESP_LOGD(TAG, "GATTS: Keyboard LED report 0x%02X", param->write.value[0]);
+                s_instance->queue_led_state(param->write.value[0]);
             }
             break;
         default:
@@ -1126,9 +1127,21 @@ void EspidfBleKeyboard::setup() {
 #endif
 }
 
+void EspidfBleKeyboard::update_led_state_(uint8_t led_byte) {
+    if (num_lock_binary_sensor_ != nullptr)
+        num_lock_binary_sensor_->publish_state(led_byte & 0x01);
+    if (caps_lock_binary_sensor_ != nullptr)
+        caps_lock_binary_sensor_->publish_state(led_byte & 0x02);
+    if (scroll_lock_binary_sensor_ != nullptr)
+        scroll_lock_binary_sensor_->publish_state(led_byte & 0x04);
+}
+
 void EspidfBleKeyboard::loop() {
     if (pending_paired_update_.exchange(false)) {
         set_paired(pending_paired_state_.load());
+    }
+    if (pending_led_update_.exchange(false)) {
+        update_led_state_(pending_led_value_.load());
     }
     if (pending_rssi_nan_.exchange(false)) {
         if (rssi_sensor_ != nullptr) rssi_sensor_->publish_state(NAN);

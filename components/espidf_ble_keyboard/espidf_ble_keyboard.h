@@ -158,6 +158,14 @@ class EspidfBleKeyboard : public Component {
     pending_paired_update_.store(true);
   }
 
+  void set_num_lock_binary_sensor(binary_sensor::BinarySensor *sensor) { num_lock_binary_sensor_ = sensor; }
+  void set_caps_lock_binary_sensor(binary_sensor::BinarySensor *sensor) { caps_lock_binary_sensor_ = sensor; }
+  void set_scroll_lock_binary_sensor(binary_sensor::BinarySensor *sensor) { scroll_lock_binary_sensor_ = sensor; }
+  void queue_led_state(uint8_t led_byte) {
+    pending_led_value_.store(led_byte);
+    pending_led_update_.store(true);
+  }
+
   void set_connected(bool connected, uint16_t conn_id) {
     is_connected_ = connected;
     conn_id_ = conn_id;
@@ -235,6 +243,11 @@ class EspidfBleKeyboard : public Component {
   std::atomic<bool> pending_paired_update_{false};
   std::atomic<bool> pending_paired_state_{false};
   binary_sensor::BinarySensor *paired_binary_sensor_{nullptr};
+  std::atomic<bool> pending_led_update_{false};
+  std::atomic<uint8_t> pending_led_value_{0};
+  binary_sensor::BinarySensor *num_lock_binary_sensor_{nullptr};
+  binary_sensor::BinarySensor *caps_lock_binary_sensor_{nullptr};
+  binary_sensor::BinarySensor *scroll_lock_binary_sensor_{nullptr};
   uint32_t passkey_{0};
   bool has_passkey_{false};
   bool passkey_secure_connections_{false};
@@ -277,6 +290,7 @@ class EspidfBleKeyboard : public Component {
   std::string yaml_layout_id_{"us"};
   void load_layout_();
   void save_layout_(const std::string &id);
+  void update_led_state_(uint8_t led_byte);
 
   // Non-blocking string typing state machine (driven from loop())
   // Keystrokes are pre-resolved (UTF-8 decoded + layout-mapped) at enqueue time,
