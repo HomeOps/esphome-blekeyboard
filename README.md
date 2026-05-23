@@ -17,6 +17,7 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 * **Mouse Control:** Left, right, and middle click, cursor movement, and scroll wheel via HID mouse reports.
 * **Custom Text Input:** Send any text typed in Home Assistant directly to the paired host device.
 * **RSSI Sensor:** Read the signal strength (dBm) of the connected host on a configurable interval. Supports proximity-based automations via `on_rssi_above` / `on_rssi_below`.
+* **Keyboard LED Feedback:** Expose host-side Num Lock, Caps Lock, and Scroll Lock LED state as ESPHome binary sensors. Updated whenever the host writes a HID output report.
 
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 
@@ -239,6 +240,11 @@ binary_sensor:
     keyboard_id: my_keyboard
     name: "BLE Keyboard Paired"
 
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    type: caps_lock
+    name: "BLE Keyboard Caps Lock"
+
   - platform: status
     name: ${friendly_name}
 ```
@@ -272,13 +278,53 @@ binary_sensor:
 
 ### `binary_sensor` (Platform: `espidf_ble_keyboard`)
 
+The binary_sensor platform supports four types via the `type` key:
+
+#### Paired Sensor (default)
+
+Reports whether the keyboard has completed BLE pairing with a host on the current connection.
+
 * **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **type** (Optional, string): `paired` (default).
 * **name** (Optional, string): Friendly entity name shown in Home Assistant.
 
 State behavior:
 
 * **ON** = a `GAP: Pairing Successful` event occurred on the current connection.
 * **OFF** = keyboard is disconnected (including host-side unpair) or not yet paired in this session.
+
+#### LED State Sensors (Num Lock / Caps Lock / Scroll Lock)
+
+Expose the host-side keyboard LED state, as reported by the connected host via the HID output report. Updates within one loop cycle of the host changing the lock state.
+
+* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **type** (Required, string): One of `num_lock`, `caps_lock`, `scroll_lock`.
+* **name** (Optional, string): Friendly entity name shown in Home Assistant.
+
+State behavior:
+
+* **ON** = the corresponding lock LED is currently lit on the host.
+* **OFF** = the lock is off, or no host has sent an LED report yet.
+
+```yaml
+binary_sensor:
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    type: num_lock
+    name: "BLE Keyboard Num Lock"
+
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    type: caps_lock
+    name: "BLE Keyboard Caps Lock"
+
+  - platform: espidf_ble_keyboard
+    keyboard_id: my_keyboard
+    type: scroll_lock
+    name: "BLE Keyboard Scroll Lock"
+```
+
+Note: LED state reflects what the *host* thinks the lock state is. After re-pairing or host switching, sensors may briefly show stale values until the host sends a fresh LED report.
 
 ### `sensor` (Platform: `espidf_ble_keyboard`)
 
