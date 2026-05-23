@@ -8,8 +8,8 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 * **Secure Pairing:** Supports a configurable 6-digit static passkey (PIN) for secure bonding on Windows and iOS. Android uses Just Works pairing (no PIN) due to HID compatibility limitations.
 * **Efficient Memory Usage:** Direct API implementation ensures stability even with complex ESPHome configurations.
 * **Key Combos:** Send any modifier + key combination using hex keycodes (e.g. Win+R, Ctrl+C).
-* **String Typing:** Type any string directly. The active **keyboard layout** (`us`, `uk`) controls how each character is mapped to HID keycodes. UK adds `£`, `¬`, `€` via UTF-8.
-* **Keyboard Layouts:** Choose `us` (default) or `uk` in YAML, or switch live from the web UI (persisted to NVS). Layout is fully extensible — see [Keyboard layouts](#keyboard-layouts).
+* **String Typing:** Type any string directly. The active **keyboard layout** (`us`, `uk`, `de`) controls how each character is mapped to HID keycodes. UK adds `£`, `¬`, `€`; DE adds `ä`, `ö`, `ü`, `ß`, `€`, `§`, `°` via UTF-8.
+* **Keyboard Layouts:** Choose `us` (default), `uk`, or `de` in YAML, or switch live from the web UI (persisted to NVS). Layout is fully extensible — see [Keyboard layouts](#keyboard-layouts).
 * **Pre-defined Actions:** Built-in helpers for `ctrl_alt_del`, `sleep`, `hibernate` and `shutdown`.
 * **Media Keys:** Control volume, playback, mute and more via HID consumer control.
 * **Power Button:** Native HID power/sleep signals — no Run dialog, clean OS-level control.
@@ -1082,6 +1082,7 @@ The component supports multiple keyboard layouts. The active layout affects how 
 |---|---|---|
 | `us` | English (US) | Default. ANSI shape. |
 | `uk` | English (UK) | ISO shape. Adds `£`, `¬`, `€` via UTF-8 (AltGr for `€`). |
+| `de` | German (QWERTZ) | ISO shape. Y/Z swapped. Adds `ä`, `ö`, `ü`, `ß`, `€`, `§`, `°`, `µ`, `²`, `³` via UTF-8. Dead keys (`^`, `` ` ``, `~`, `´`) auto-completed with a trailing space so they type as bare characters via `send_string`. |
 
 ### Setting the layout
 
@@ -1116,24 +1117,26 @@ The device layout only sets how the ESP turns characters into HID codes — the 
 - **Windows:** *Settings → Time & language → Language & region →* pick the language (e.g. *English (United Kingdom)*) *→ Options → Keyboards →* leave *United Kingdom*. Switch with `Win+Space`.
 - **Android:** *Settings → System → Languages & input → Physical keyboard →* tap the BLE keyboard's name *→ Set up keyboard layouts →* enable *English (UK)*. Android defaults every BLE keyboard to US until you do this. (Samsung / OneUI path: *Settings → General management → Physical keyboard*.)
 - **iOS / iPadOS:** *Settings → General → Keyboard → Hardware Keyboard →* tap the layout name *→* pick *British*.
-- **Linux (Wayland / GNOME):** *Settings → Keyboard → Input Sources →* add *English (UK)*, then move it to the top, or use `setxkbmap gb` on X11.
+- **Linux (Wayland / GNOME):** *Settings → Keyboard → Input Sources →* add *English (UK)*, then move it to the top, or use `setxkbmap gb` on X11. For German use *Deutsch* / `setxkbmap de`.
 
 ### Adding a new layout
 
-The layout system is intentionally small. Adding a new layout (e.g. German QWERTZ) touches just three places:
+The layout system is intentionally small. Adding a new layout (e.g. French AZERTY) touches just three places:
 
-1. **`components/espidf_ble_keyboard/keyboard_layouts.cpp`** — add `HID_ASCII_MAP_DE[128]` + `UNICODE_MAP_DE[]` and append one entry to the `LAYOUTS[]` registry array.
-2. **`components/espidf_ble_keyboard/__init__.py`** — append `"de"` to `SUPPORTED_LAYOUTS`.
-3. **`components/espidf_ble_keyboard/web_control.cpp`** — append a `de: { ROWS: [...] }` entry to the JS `LAYOUTS` object.
+1. **`components/espidf_ble_keyboard/keyboard_layouts.cpp`** — add `HID_ASCII_MAP_XX[128]` + (optionally) `UNICODE_MAP_XX[]` and append one entry to the `LAYOUTS[]` registry array.
+2. **`components/espidf_ble_keyboard/__init__.py`** — append `"xx"` to `SUPPORTED_LAYOUTS`.
+3. **`components/espidf_ble_keyboard/web_control.cpp`** — append an `xx: { ROWS: [...] }` entry to the JS `LAYOUTS` object. If you also ship the HA keyboard card, mirror the entry into `docs/keyboard-card.js`.
 
 No header changes, no `send_string` changes, no NVS code changes. The web UI dropdown, `/api/ble_keyboard/status` JSON, and YAML validation pick the new layout up automatically.
+
+**Dead keys** (characters that wait for a follow-up on the host, e.g. `^`, `` ` ``, `~`, `´` on German): set the optional third field `followup_keycode` in `HidKeyMapping`/`UnicodeKeyMapping` to the HID scan code for space (`0x2C`). `send_string` will emit the dead key followed by space, which composes to the bare character on the host.
 
 ### Notes
 
 - Characters with no mapping in the active layout are skipped silently (a debug log is emitted).
 - A layout switch in the middle of a typing operation can't corrupt in-flight text — keystrokes are pre-resolved at enqueue time using whatever layout was active then.
 - `combo:` actions (raw HID `(modifier, keycode)` pairs) are layout-independent by design. Macros built from `combo:` keep working unchanged after a layout change.
-- The web "Keyboard" card visual reflects the active layout (US shows ANSI, UK shows ISO with the extra `\|` key, `£` on Shift+3, etc.).
+- The web "Keyboard" card visual reflects the active layout (US shows ANSI, UK shows ISO with the extra `\|` key and `£` on Shift+3, DE shows QWERTZ with `ü/ö/ä/ß` keys and German modifier labels).
 
 ---
 

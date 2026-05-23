@@ -1296,16 +1296,17 @@ static uint32_t decode_utf8_(const std::string &bytes, size_t &i) {
 // Resolve a Unicode codepoint to a (modifier, keycode) pair using the active
 // layout. Returns {0,0} if unmapped.
 static HidKeyMapping resolve_codepoint_(const KeyboardLayout *layout, uint32_t cp) {
-    if (layout == nullptr) return {0, 0};
+    if (layout == nullptr) return {0, 0, 0};
     if (cp < 128) {
         return layout->ascii_map[cp];
     }
     for (size_t i = 0; i < layout->unicode_map_len; i++) {
         if (layout->unicode_map[i].codepoint == cp) {
-            return {layout->unicode_map[i].modifier, layout->unicode_map[i].keycode};
+            return {layout->unicode_map[i].modifier, layout->unicode_map[i].keycode,
+                    layout->unicode_map[i].followup_keycode};
         }
     }
-    return {0, 0};
+    return {0, 0, 0};
 }
 
 void EspidfBleKeyboard::send_string(const std::string &str) {
@@ -1331,6 +1332,12 @@ void EspidfBleKeyboard::send_string(const std::string &str) {
         HidKeyMapping m = resolve_codepoint_(active_layout_, cp);
         if (m.keycode != 0x00) {
             strokes.push_back(m);
+            // Dead-key compose: emit a bare space after the dead key so the host
+            // produces the literal character (e.g. bare ^ instead of waiting to
+            // combine with the next letter).
+            if (m.followup_keycode != 0x00) {
+                strokes.push_back({0x00, m.followup_keycode, 0x00});
+            }
         } else {
             ESP_LOGD(TAG, "send_string: skipped unmapped codepoint U+%04X", cp);
         }

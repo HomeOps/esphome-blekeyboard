@@ -18,7 +18,7 @@
  *   # Optional overrides:
  *   # name: My Keyboard            # card title (default "BLE Keyboard")
  *   # show_fkeys: true             # show F1-F12 row (default true)
- *   # layout: us                    # keyboard layout: us (default) or uk
+ *   # layout: us                    # keyboard layout: us (default), uk, or de
  *   #                                 NOTE: should match the ESP's keyboard_layout YAML option
  *   # host_slots: 4                # show host switcher bar (default 0 = hidden)
  *   # host_names:                   # custom names for each host slot (optional)
@@ -246,6 +246,104 @@ uk: { name: 'English (UK)', ROWS: [
     { label: '', type: 'char', char: ' ', shiftChar: ' ', flex: 6 },
     { label: 'Alt R', type: 'modifier', mod: 'altgr', bit: 0x40, flex: 1.2 },
     { label: 'Del', type: 'special', keycode: 0x4C, flex: 1.2 },
+    { label: '\u2190', type: 'special', keycode: 0x50 },
+    { label: '\u2191', type: 'special', keycode: 0x52 },
+    { label: '\u2193', type: 'special', keycode: 0x51 },
+    { label: '\u2192', type: 'special', keycode: 0x4F },
+  ],
+]},
+de: { name: 'German (QWERTZ)', ROWS: [
+  // F-key row
+  [
+    { label: 'Esc', type: 'special', keycode: 0x29, flex: 1.2 },
+    { label: 'F1', type: 'special', keycode: 0x3A },
+    { label: 'F2', type: 'special', keycode: 0x3B },
+    { label: 'F3', type: 'special', keycode: 0x3C },
+    { label: 'F4', type: 'special', keycode: 0x3D },
+    { label: 'F5', type: 'special', keycode: 0x3E },
+    { label: 'F6', type: 'special', keycode: 0x3F },
+    { label: 'F7', type: 'special', keycode: 0x40 },
+    { label: 'F8', type: 'special', keycode: 0x41 },
+    { label: 'F9', type: 'special', keycode: 0x42 },
+    { label: 'F10', type: 'special', keycode: 0x43 },
+    { label: 'F11', type: 'special', keycode: 0x44 },
+    { label: 'F12', type: 'special', keycode: 0x45 },
+  ],
+  // Number row \u2014 DE: ^/\u00b0, Shift+2=", Shift+3=\u00a7, Shift+6=&, Shift+7=/, ... \u00df/?, \u00b4/`
+  [
+    { label: '^', shiftLabel: '\u00b0', type: 'char', char: '^', shiftChar: '\u00b0' },
+    { label: '1', shiftLabel: '!', type: 'char', char: '1', shiftChar: '!' },
+    { label: '2', shiftLabel: '"', type: 'char', char: '2', shiftChar: '"' },
+    { label: '3', shiftLabel: '\u00a7', type: 'char', char: '3', shiftChar: '\u00a7' },
+    { label: '4', shiftLabel: '$', type: 'char', char: '4', shiftChar: '$' },
+    { label: '5', shiftLabel: '%', type: 'char', char: '5', shiftChar: '%' },
+    { label: '6', shiftLabel: '&', type: 'char', char: '6', shiftChar: '&' },
+    { label: '7', shiftLabel: '/', type: 'char', char: '7', shiftChar: '/' },
+    { label: '8', shiftLabel: '(', type: 'char', char: '8', shiftChar: '(' },
+    { label: '9', shiftLabel: ')', type: 'char', char: '9', shiftChar: ')' },
+    { label: '0', shiftLabel: '=', type: 'char', char: '0', shiftChar: '=' },
+    { label: '\u00df', shiftLabel: '?', type: 'char', char: '\u00df', shiftChar: '?' },
+    { label: '\u00b4', shiftLabel: '`', type: 'char', char: '\u00b4', shiftChar: '`' },
+    { label: 'Bksp', type: 'special', keycode: 0x2A, flex: 1.5 },
+  ],
+  // QWERTZ row \u2014 DE: z/y swapped, \u00fc/\u00dc, +/* at end
+  [
+    { label: 'Tab', type: 'special', keycode: 0x2B, flex: 1.5 },
+    { label: 'q', shiftLabel: 'Q', type: 'char', char: 'q', shiftChar: 'Q' },
+    { label: 'w', shiftLabel: 'W', type: 'char', char: 'w', shiftChar: 'W' },
+    { label: 'e', shiftLabel: 'E', type: 'char', char: 'e', shiftChar: 'E' },
+    { label: 'r', shiftLabel: 'R', type: 'char', char: 'r', shiftChar: 'R' },
+    { label: 't', shiftLabel: 'T', type: 'char', char: 't', shiftChar: 'T' },
+    { label: 'z', shiftLabel: 'Z', type: 'char', char: 'z', shiftChar: 'Z' },
+    { label: 'u', shiftLabel: 'U', type: 'char', char: 'u', shiftChar: 'U' },
+    { label: 'i', shiftLabel: 'I', type: 'char', char: 'i', shiftChar: 'I' },
+    { label: 'o', shiftLabel: 'O', type: 'char', char: 'o', shiftChar: 'O' },
+    { label: 'p', shiftLabel: 'P', type: 'char', char: 'p', shiftChar: 'P' },
+    { label: '\u00fc', shiftLabel: '\u00dc', type: 'char', char: '\u00fc', shiftChar: '\u00dc' },
+    { label: '+', shiftLabel: '*', type: 'char', char: '+', shiftChar: '*' },
+    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.25, cls: 'kb-l-top' },
+  ],
+  // Home row \u2014 DE: \u00f6, \u00e4, # at end
+  [
+    { label: 'Caps', type: 'caps', keycode: 0x39, flex: 1.5 },
+    { label: 'a', shiftLabel: 'A', type: 'char', char: 'a', shiftChar: 'A' },
+    { label: 's', shiftLabel: 'S', type: 'char', char: 's', shiftChar: 'S' },
+    { label: 'd', shiftLabel: 'D', type: 'char', char: 'd', shiftChar: 'D' },
+    { label: 'f', shiftLabel: 'F', type: 'char', char: 'f', shiftChar: 'F' },
+    { label: 'g', shiftLabel: 'G', type: 'char', char: 'g', shiftChar: 'G' },
+    { label: 'h', shiftLabel: 'H', type: 'char', char: 'h', shiftChar: 'H' },
+    { label: 'j', shiftLabel: 'J', type: 'char', char: 'j', shiftChar: 'J' },
+    { label: 'k', shiftLabel: 'K', type: 'char', char: 'k', shiftChar: 'K' },
+    { label: 'l', shiftLabel: 'L', type: 'char', char: 'l', shiftChar: 'L' },
+    { label: '\u00f6', shiftLabel: '\u00d6', type: 'char', char: '\u00f6', shiftChar: '\u00d6' },
+    { label: '\u00e4', shiftLabel: '\u00c4', type: 'char', char: '\u00e4', shiftChar: '\u00c4' },
+    { label: '#', shiftLabel: "'", type: 'char', char: '#', shiftChar: "'" },
+    { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.75, cls: 'kb-l-bot' },
+  ],
+  // Shift row \u2014 DE: ISO key <|>, y/z swapped (y here)
+  [
+    { label: 'Shift', type: 'modifier', mod: 'shift', bit: 0x02, flex: 1.25 },
+    { label: '<', shiftLabel: '>', type: 'char', char: '<', shiftChar: '>' },
+    { label: 'y', shiftLabel: 'Y', type: 'char', char: 'y', shiftChar: 'Y' },
+    { label: 'x', shiftLabel: 'X', type: 'char', char: 'x', shiftChar: 'X' },
+    { label: 'c', shiftLabel: 'C', type: 'char', char: 'c', shiftChar: 'C' },
+    { label: 'v', shiftLabel: 'V', type: 'char', char: 'v', shiftChar: 'V' },
+    { label: 'b', shiftLabel: 'B', type: 'char', char: 'b', shiftChar: 'B' },
+    { label: 'n', shiftLabel: 'N', type: 'char', char: 'n', shiftChar: 'N' },
+    { label: 'm', shiftLabel: 'M', type: 'char', char: 'm', shiftChar: 'M' },
+    { label: ',', shiftLabel: ';', type: 'char', char: ',', shiftChar: ';' },
+    { label: '.', shiftLabel: ':', type: 'char', char: '.', shiftChar: ':' },
+    { label: '-', shiftLabel: '_', type: 'char', char: '-', shiftChar: '_' },
+    { label: 'Shift R', type: 'modifier', mod: 'rshift', bit: 0x20, flex: 2.75 },
+  ],
+  // Bottom row \u2014 DE labels: Strg (Ctrl), AltGr, Entf (Del)
+  [
+    { label: 'Strg', type: 'modifier', mod: 'ctrl', bit: 0x01, flex: 1.2 },
+    { label: 'Win', type: 'modifier', mod: 'win', bit: 0x08, flex: 1.2 },
+    { label: 'Alt', type: 'modifier', mod: 'alt', bit: 0x04, flex: 1.2 },
+    { label: '', type: 'char', char: ' ', shiftChar: ' ', flex: 6 },
+    { label: 'AltGr', type: 'modifier', mod: 'altgr', bit: 0x40, flex: 1.2 },
+    { label: 'Entf', type: 'special', keycode: 0x4C, flex: 1.2 },
     { label: '\u2190', type: 'special', keycode: 0x50 },
     { label: '\u2191', type: 'special', keycode: 0x52 },
     { label: '\u2193', type: 'special', keycode: 0x51 },
