@@ -1,12 +1,12 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import binary_sensor
+from esphome.const import CONF_TYPE
 from . import EspidfBleKeyboard
 
 DEPENDENCIES = ["espidf_ble_keyboard"]
 
 CONF_KEYBOARD_ID = "keyboard_id"
-CONF_TYPE = "type"
 
 TYPE_PAIRED = "paired"
 TYPE_NUM_LOCK = "num_lock"
