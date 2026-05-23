@@ -1084,6 +1084,19 @@ The component supports multiple keyboard layouts. The active layout affects how 
 | `uk` | English (UK) | ISO shape. Adds `£`, `¬`, `€` via UTF-8 (AltGr for `€`). |
 | `de` | German (QWERTZ) | ISO shape. Y/Z swapped. Adds `ä`, `ö`, `ü`, `ß`, `€`, `§`, `°`, `µ`, `²`, `³` via UTF-8. Dead keys (`^`, `` ` ``, `~`, `´`) auto-completed with a trailing space so they type as bare characters via `send_string`. |
 
+#### German (DE) AltGr characters
+
+A standard German keyboard prints these characters in the lower-right corner of certain keys. The on-screen keyboards (both the device's web UI and the HA Lovelace card) render the same hint labels. To type them: toggle **AltGr** (right Alt) on the on-screen keyboard, then click the key. `send_string` resolves all of them directly via UTF-8 — no AltGr toggle needed.
+
+| Combo | Char | Combo | Char |
+|---|---|---|---|
+| AltGr+q | `@` | AltGr+8 | `[` |
+| AltGr+e | `€` | AltGr+9 | `]` |
+| AltGr+m | `µ` | AltGr+0 | `}` |
+| AltGr+2 | `²` | AltGr+ß | `\` |
+| AltGr+3 | `³` | AltGr++ | `~` |
+| AltGr+7 | `{` | AltGr+< | `\|` |
+
 ### Setting the layout
 
 **YAML (default at boot):**

@@ -273,25 +273,25 @@ de: { name: 'German (QWERTZ)', ROWS: [
   [
     { label: '^', shiftLabel: '\u00b0', type: 'char', char: '^', shiftChar: '\u00b0' },
     { label: '1', shiftLabel: '!', type: 'char', char: '1', shiftChar: '!' },
-    { label: '2', shiftLabel: '"', type: 'char', char: '2', shiftChar: '"' },
-    { label: '3', shiftLabel: '\u00a7', type: 'char', char: '3', shiftChar: '\u00a7' },
+    { label: '2', shiftLabel: '"', type: 'char', char: '2', shiftChar: '"', altgrLabel: '\u00b2' },
+    { label: '3', shiftLabel: '\u00a7', type: 'char', char: '3', shiftChar: '\u00a7', altgrLabel: '\u00b3' },
     { label: '4', shiftLabel: '$', type: 'char', char: '4', shiftChar: '$' },
     { label: '5', shiftLabel: '%', type: 'char', char: '5', shiftChar: '%' },
     { label: '6', shiftLabel: '&', type: 'char', char: '6', shiftChar: '&' },
-    { label: '7', shiftLabel: '/', type: 'char', char: '7', shiftChar: '/' },
-    { label: '8', shiftLabel: '(', type: 'char', char: '8', shiftChar: '(' },
-    { label: '9', shiftLabel: ')', type: 'char', char: '9', shiftChar: ')' },
-    { label: '0', shiftLabel: '=', type: 'char', char: '0', shiftChar: '=' },
-    { label: '\u00df', shiftLabel: '?', type: 'char', char: '\u00df', shiftChar: '?' },
+    { label: '7', shiftLabel: '/', type: 'char', char: '7', shiftChar: '/', altgrLabel: '{' },
+    { label: '8', shiftLabel: '(', type: 'char', char: '8', shiftChar: '(', altgrLabel: '[' },
+    { label: '9', shiftLabel: ')', type: 'char', char: '9', shiftChar: ')', altgrLabel: ']' },
+    { label: '0', shiftLabel: '=', type: 'char', char: '0', shiftChar: '=', altgrLabel: '}' },
+    { label: '\u00df', shiftLabel: '?', type: 'char', char: '\u00df', shiftChar: '?', altgrLabel: '\\' },
     { label: '\u00b4', shiftLabel: '`', type: 'char', char: '\u00b4', shiftChar: '`' },
     { label: 'Bksp', type: 'special', keycode: 0x2A, flex: 1.5 },
   ],
   // QWERTZ row \u2014 DE: z/y swapped, \u00fc/\u00dc, +/* at end
   [
     { label: 'Tab', type: 'special', keycode: 0x2B, flex: 1.5 },
-    { label: 'q', shiftLabel: 'Q', type: 'char', char: 'q', shiftChar: 'Q' },
+    { label: 'q', shiftLabel: 'Q', type: 'char', char: 'q', shiftChar: 'Q', altgrLabel: '@' },
     { label: 'w', shiftLabel: 'W', type: 'char', char: 'w', shiftChar: 'W' },
-    { label: 'e', shiftLabel: 'E', type: 'char', char: 'e', shiftChar: 'E' },
+    { label: 'e', shiftLabel: 'E', type: 'char', char: 'e', shiftChar: 'E', altgrLabel: '\u20ac' },
     { label: 'r', shiftLabel: 'R', type: 'char', char: 'r', shiftChar: 'R' },
     { label: 't', shiftLabel: 'T', type: 'char', char: 't', shiftChar: 'T' },
     { label: 'z', shiftLabel: 'Z', type: 'char', char: 'z', shiftChar: 'Z' },
@@ -300,7 +300,7 @@ de: { name: 'German (QWERTZ)', ROWS: [
     { label: 'o', shiftLabel: 'O', type: 'char', char: 'o', shiftChar: 'O' },
     { label: 'p', shiftLabel: 'P', type: 'char', char: 'p', shiftChar: 'P' },
     { label: '\u00fc', shiftLabel: '\u00dc', type: 'char', char: '\u00fc', shiftChar: '\u00dc' },
-    { label: '+', shiftLabel: '*', type: 'char', char: '+', shiftChar: '*' },
+    { label: '+', shiftLabel: '*', type: 'char', char: '+', shiftChar: '*', altgrLabel: '~' },
     { label: 'Enter', type: 'special', keycode: 0x28, flex: 1.25, cls: 'kb-l-top' },
   ],
   // Home row \u2014 DE: \u00f6, \u00e4, # at end
@@ -323,14 +323,14 @@ de: { name: 'German (QWERTZ)', ROWS: [
   // Shift row \u2014 DE: ISO key <|>, y/z swapped (y here)
   [
     { label: 'Shift', type: 'modifier', mod: 'shift', bit: 0x02, flex: 1.25 },
-    { label: '<', shiftLabel: '>', type: 'char', char: '<', shiftChar: '>' },
+    { label: '<', shiftLabel: '>', type: 'char', char: '<', shiftChar: '>', altgrLabel: '|' },
     { label: 'y', shiftLabel: 'Y', type: 'char', char: 'y', shiftChar: 'Y' },
     { label: 'x', shiftLabel: 'X', type: 'char', char: 'x', shiftChar: 'X' },
     { label: 'c', shiftLabel: 'C', type: 'char', char: 'c', shiftChar: 'C' },
     { label: 'v', shiftLabel: 'V', type: 'char', char: 'v', shiftChar: 'V' },
     { label: 'b', shiftLabel: 'B', type: 'char', char: 'b', shiftChar: 'B' },
     { label: 'n', shiftLabel: 'N', type: 'char', char: 'n', shiftChar: 'N' },
-    { label: 'm', shiftLabel: 'M', type: 'char', char: 'm', shiftChar: 'M' },
+    { label: 'm', shiftLabel: 'M', type: 'char', char: 'm', shiftChar: 'M', altgrLabel: 'µ' },
     { label: ',', shiftLabel: ';', type: 'char', char: ',', shiftChar: ';' },
     { label: '.', shiftLabel: ':', type: 'char', char: '.', shiftChar: ':' },
     { label: '-', shiftLabel: '_', type: 'char', char: '-', shiftChar: '_' },
@@ -459,6 +459,16 @@ class BleKeyboardCard extends HTMLElement {
         white-space: nowrap;
         outline: none;
         -webkit-tap-highlight-color: transparent;
+        position: relative;
+      }
+      .key[data-altgr-label]::after {
+        content: attr(data-altgr-label);
+        position: absolute;
+        bottom: 1px;
+        right: 4px;
+        font-size: 9px;
+        opacity: 0.55;
+        pointer-events: none;
       }
       .key:focus, .key:focus-visible { outline: none; }
       .key:active, .key.pressed {
@@ -645,6 +655,7 @@ class BleKeyboardCard extends HTMLElement {
         btn.textContent = keyDef.char === ' ' ? 'Space' : keyDef.label;
         btn.dataset.row = rowIdx;
         btn.dataset.key = keyIdx;
+        if (keyDef.altgrLabel) btn.dataset.altgrLabel = keyDef.altgrLabel;
 
         // Track char keys for label updates
         if (keyDef.type === 'char' && keyDef.shiftLabel) {
