@@ -988,6 +988,10 @@ class BleKbWebHandler : public AsyncWebHandler {
           200, "text/html",
           reinterpret_cast<const uint8_t *>(PAGE_HTML), sizeof(PAGE_HTML) - 1);
       response->addHeader("Connection", "close");
+      // Force the browser to revalidate PAGE_HTML on every load so a firmware
+      // flash always brings UI changes (new layouts, fixes, etc.) without
+      // needing a manual hard-reload.
+      response->addHeader("Cache-Control", "no-cache");
       request->send(response);
       return;
     }
