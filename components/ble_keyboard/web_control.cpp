@@ -2,7 +2,7 @@
 #ifdef USE_BLE_KEYBOARD_WEB_CONTROL
 
 #include "web_control.h"
-#include "espidf_ble_keyboard.h"
+#include "ble_keyboard.h"
 #include "esphome/core/log.h"
 #include <cstdlib>
 #include <cstring>
@@ -10,7 +10,7 @@
 #include <span>
 
 namespace esphome {
-namespace espidf_ble_keyboard {
+namespace ble_keyboard {
 
 static const char *const TAG = "ble_kb_web";
 
@@ -957,7 +957,7 @@ buildKeyboard();
 
 class BleKbWebHandler : public AsyncWebHandler {
  public:
-  BleKbWebHandler(EspidfBleKeyboard *kb) : kb_(kb) {}
+  BleKbWebHandler(BleKeyboard *kb) : kb_(kb) {}
 
   static std::string get_url(AsyncWebServerRequest *request) {
     char buf[513];
@@ -1236,7 +1236,7 @@ class BleKbWebHandler : public AsyncWebHandler {
   }
 
  protected:
-  EspidfBleKeyboard *kb_;
+  BleKeyboard *kb_;
 };
 
 // ── Setup ──────────────────────────────────────────────────────────
@@ -1247,7 +1247,7 @@ void BleKeyboardWebControl::setup() {
   ESP_LOGI(TAG, "Web control registered at /ble_keyboard");
 }
 
-}  // namespace espidf_ble_keyboard
+}  // namespace ble_keyboard
 }  // namespace esphome
 
 #endif  // USE_BLE_KEYBOARD_WEB_CONTROL

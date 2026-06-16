@@ -2,12 +2,12 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import button
 from esphome.const import CONF_ID
-from . import espidf_ble_keyboard_ns, EspidfBleKeyboard
+from . import ble_keyboard_ns, BleKeyboard
 
-DEPENDENCIES = ["espidf_ble_keyboard"]
+DEPENDENCIES = ["ble_keyboard"]
 
-EspidfBleKeyboardButton = espidf_ble_keyboard_ns.class_(
-    "EspidfBleKeyboardButton", button.Button, cg.Component
+BleKeyboardButton = ble_keyboard_ns.class_(
+    "BleKeyboardButton", button.Button, cg.Component
 )
 
 CONF_ACTION = "action"
@@ -55,8 +55,8 @@ def validate_action(value):
     raise cv.Invalid("Action must be a string or a mapping with 'type' key.")
 
 
-CONFIG_SCHEMA = button.button_schema(EspidfBleKeyboardButton).extend({
-    cv.Required(CONF_KEYBOARD_ID): cv.use_id(EspidfBleKeyboard),
+CONFIG_SCHEMA = button.button_schema(BleKeyboardButton).extend({
+    cv.Required(CONF_KEYBOARD_ID): cv.use_id(BleKeyboard),
     cv.Required(CONF_ACTION): validate_action,
 }).extend(cv.COMPONENT_SCHEMA)
 

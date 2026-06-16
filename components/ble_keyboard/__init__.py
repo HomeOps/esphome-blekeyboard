@@ -29,10 +29,10 @@ PASSKEY_MODE_SECURE_CONNECTIONS = "secure_connections"
 # web_control.cpp, then append the id here.
 SUPPORTED_LAYOUTS = ["us", "uk", "de", "be"]
 
-espidf_ble_keyboard_ns = cg.esphome_ns.namespace("espidf_ble_keyboard")
-EspidfBleKeyboard = espidf_ble_keyboard_ns.class_("EspidfBleKeyboard", cg.Component)
-RssiAboveTrigger = espidf_ble_keyboard_ns.class_("RssiAboveTrigger", automation.Trigger.template(cg.int_))
-RssiBelowTrigger = espidf_ble_keyboard_ns.class_("RssiBelowTrigger", automation.Trigger.template(cg.int_))
+ble_keyboard_ns = cg.esphome_ns.namespace("ble_keyboard")
+BleKeyboard = ble_keyboard_ns.class_("BleKeyboard", cg.Component)
+RssiAboveTrigger = ble_keyboard_ns.class_("RssiAboveTrigger", automation.Trigger.template(cg.int_))
+RssiBelowTrigger = ble_keyboard_ns.class_("RssiBelowTrigger", automation.Trigger.template(cg.int_))
 
 CONF_ON_RSSI_ABOVE = "on_rssi_above"
 CONF_ON_RSSI_BELOW = "on_rssi_below"
@@ -65,7 +65,7 @@ HOST_SCHEMA = cv.Schema({
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema({
-        cv.GenerateID(): cv.declare_id(EspidfBleKeyboard),
+        cv.GenerateID(): cv.declare_id(BleKeyboard),
         cv.Optional(CONF_DEVICE_NAME, default="ESP32 BLE KB"): cv.All(cv.string, cv.Length(max=29)),
         cv.Optional(CONF_KEY_DELAY_MS, default=80): cv.int_range(min=2, max=10000),
         cv.Optional(CONF_PASSKEY): cv.int_range(min=0, max=999999),

@@ -1,7 +1,7 @@
 /**
  * BLE HID Keyboard for ESPHome — Fixed Raw Advertising & YAML Passkey logic.
  */
-#include "espidf_ble_keyboard.h"
+#include "ble_keyboard.h"
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h"
 #include "freertos/FreeRTOS.h"
@@ -15,10 +15,10 @@
 #include <vector>
 
 namespace esphome {
-namespace espidf_ble_keyboard {
+namespace ble_keyboard {
 
-static const char *TAG = "espidf_ble_keyboard";
-static EspidfBleKeyboard *s_instance = nullptr;
+static const char *TAG = "ble_keyboard";
+static BleKeyboard *s_instance = nullptr;
 #define GATTS_APP_ID 0x55
 
 // Forward declarations
@@ -144,9 +144,9 @@ static void maybe_reset_bonds_after_security_config_change() {
     const uint8_t current_sc_mode = s_instance->passkey_secure_connections() ? 1 : 0;
 
     nvs_handle_t handle;
-    esp_err_t open_ret = nvs_open("espidf_ble_kb", NVS_READWRITE, &handle);
+    esp_err_t open_ret = nvs_open("ble_kb", NVS_READWRITE, &handle);
     if (open_ret != ESP_OK) {
-        ESP_LOGW(TAG, "NVS: Failed to open espidf_ble_kb namespace (%d)", open_ret);
+        ESP_LOGW(TAG, "NVS: Failed to open ble_kb namespace (%d)", open_ret);
         return;
     }
 
@@ -783,11 +783,11 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
 
 // ── Multi-Host Slot Management ──────────────────────────────────────────────
 
-void EspidfBleKeyboard::generate_slot_addrs_() {
+void BleKeyboard::generate_slot_addrs_() {
     // Generate random static BLE addresses for each slot and persist to NVS.
     // Random static addresses have the two MSBs set to 11.
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
 
     for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
         char key[16];
@@ -811,9 +811,9 @@ void EspidfBleKeyboard::generate_slot_addrs_() {
     nvs_close(handle);
 }
 
-void EspidfBleKeyboard::load_host_slots_() {
+void BleKeyboard::load_host_slots_() {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READONLY, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READONLY, &handle) != ESP_OK) return;
 
     uint8_t slot_count = 0;
     if (nvs_get_u8(handle, "host_cnt", &slot_count) == ESP_OK) {
@@ -843,9 +843,9 @@ void EspidfBleKeyboard::load_host_slots_() {
     nvs_close(handle);
 }
 
-void EspidfBleKeyboard::save_host_slots_() {
+void BleKeyboard::save_host_slots_() {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
 
     uint8_t count = 0;
     for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
@@ -872,9 +872,9 @@ void EspidfBleKeyboard::save_host_slots_() {
 
 // ── User-editable macros (NVS-persisted) ──────────────────────────
 
-void EspidfBleKeyboard::load_macros_() {
+void BleKeyboard::load_macros_() {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READONLY, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READONLY, &handle) != ESP_OK) return;
 
     uint8_t count = 0;
     if (nvs_get_u8(handle, "macro_cnt", &count) == ESP_OK) {
@@ -903,9 +903,9 @@ void EspidfBleKeyboard::load_macros_() {
     nvs_close(handle);
 }
 
-void EspidfBleKeyboard::save_macros_() {
+void BleKeyboard::save_macros_() {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
 
     uint8_t count = macros_.size();
     nvs_set_u8(handle, "macro_cnt", count);
@@ -929,7 +929,7 @@ void EspidfBleKeyboard::save_macros_() {
     nvs_close(handle);
 }
 
-bool EspidfBleKeyboard::add_macro(const std::string &name, const std::string &action) {
+bool BleKeyboard::add_macro(const std::string &name, const std::string &action) {
     if (macros_.size() >= MAX_MACROS) return false;
     macros_.push_back({name, action});
     save_macros_();
@@ -937,7 +937,7 @@ bool EspidfBleKeyboard::add_macro(const std::string &name, const std::string &ac
     return true;
 }
 
-bool EspidfBleKeyboard::update_macro(uint8_t index, const std::string &name, const std::string &action) {
+bool BleKeyboard::update_macro(uint8_t index, const std::string &name, const std::string &action) {
     if (index >= macros_.size()) return false;
     macros_[index].name = name;
     macros_[index].action = action;
@@ -946,7 +946,7 @@ bool EspidfBleKeyboard::update_macro(uint8_t index, const std::string &name, con
     return true;
 }
 
-bool EspidfBleKeyboard::delete_macro(uint8_t index) {
+bool BleKeyboard::delete_macro(uint8_t index) {
     if (index >= macros_.size()) return false;
     ESP_LOGI(TAG, "Deleted macro %u: %s", index, macros_[index].name.c_str());
     macros_.erase(macros_.begin() + index);
@@ -954,7 +954,7 @@ bool EspidfBleKeyboard::delete_macro(uint8_t index) {
     return true;
 }
 
-void EspidfBleKeyboard::assign_host_slot_(uint8_t slot, const esp_bd_addr_t addr, esp_ble_addr_type_t addr_type) {
+void BleKeyboard::assign_host_slot_(uint8_t slot, const esp_bd_addr_t addr, esp_ble_addr_type_t addr_type) {
     if (slot >= MAX_HOST_SLOTS) return;
     // Check if this address is already in another slot
     for (uint8_t i = 0; i < MAX_HOST_SLOTS; i++) {
@@ -972,7 +972,7 @@ void EspidfBleKeyboard::assign_host_slot_(uint8_t slot, const esp_bd_addr_t addr
              addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
-void EspidfBleKeyboard::switch_host(uint8_t slot) {
+void BleKeyboard::switch_host(uint8_t slot) {
     if (slot >= host_slots_) {
         ESP_LOGW(TAG, "Invalid host slot %u (max %u)", slot, host_slots_ - 1);
         return;
@@ -1020,7 +1020,7 @@ void EspidfBleKeyboard::switch_host(uint8_t slot) {
     }
 }
 
-void EspidfBleKeyboard::forget_host(uint8_t slot) {
+void BleKeyboard::forget_host(uint8_t slot) {
     if (slot >= MAX_HOST_SLOTS || !hosts_[slot].occupied) return;
 
     ESP_LOGI(TAG, "Forgetting host slot %u", slot);
@@ -1041,7 +1041,7 @@ void EspidfBleKeyboard::forget_host(uint8_t slot) {
     }
 }
 
-bool EspidfBleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const {
+bool BleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const {
     const auto &cfg = host_slot_configs_[active_slot_];
     if (cfg.has_passkey) {
         has_passkey = true;
@@ -1056,7 +1056,7 @@ bool EspidfBleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &pas
     return has_passkey_;
 }
 
-void EspidfBleKeyboard::update_rssi(int8_t rssi) {
+void BleKeyboard::update_rssi(int8_t rssi) {
     if (rssi_sensor_ != nullptr) {
         rssi_sensor_->publish_state(static_cast<float>(rssi));
     }
@@ -1065,7 +1065,7 @@ void EspidfBleKeyboard::update_rssi(int8_t rssi) {
 }
 
 // ── Component Setup ──────────────────────────────────────────────────────────
-void EspidfBleKeyboard::setup() {
+void BleKeyboard::setup() {
     s_instance = this;
     type_mutex_ = xSemaphoreCreateMutex();
     esp_err_t ret = nvs_flash_init();
@@ -1127,7 +1127,7 @@ void EspidfBleKeyboard::setup() {
 #endif
 }
 
-void EspidfBleKeyboard::update_led_state_(uint8_t led_byte) {
+void BleKeyboard::update_led_state_(uint8_t led_byte) {
     if (num_lock_binary_sensor_ != nullptr)
         num_lock_binary_sensor_->publish_state(led_byte & 0x01);
     if (caps_lock_binary_sensor_ != nullptr)
@@ -1136,7 +1136,7 @@ void EspidfBleKeyboard::update_led_state_(uint8_t led_byte) {
         scroll_lock_binary_sensor_->publish_state(led_byte & 0x04);
 }
 
-void EspidfBleKeyboard::loop() {
+void BleKeyboard::loop() {
     if (pending_paired_update_.exchange(false)) {
         set_paired(pending_paired_state_.load());
     }
@@ -1310,7 +1310,7 @@ static HidKeyMapping resolve_codepoint_(const KeyboardLayout *layout, uint32_t c
     return {0, 0, 0, 0};
 }
 
-void EspidfBleKeyboard::send_string(const std::string &str) {
+void BleKeyboard::send_string(const std::string &str) {
     // Dedup: ESPHome API can deliver the same service call twice within ~5ms
     uint32_t now = millis();
     if (str == last_send_string_ && (now - last_send_string_ms_) < 30) {
@@ -1356,14 +1356,14 @@ void EspidfBleKeyboard::send_string(const std::string &str) {
 
 // ── Keyboard layout: setters + NVS persistence ──────────────────────────────
 
-void EspidfBleKeyboard::set_keyboard_layout(const std::string &id) {
+void BleKeyboard::set_keyboard_layout(const std::string &id) {
     yaml_layout_id_ = id;
     const KeyboardLayout *lay = get_layout_by_id(id.c_str());
     active_layout_ = lay != nullptr ? lay : default_layout();
     ESP_LOGI(TAG, "Keyboard layout (YAML default): %s", active_layout_->id);
 }
 
-void EspidfBleKeyboard::set_runtime_layout(const std::string &id, bool persist) {
+void BleKeyboard::set_runtime_layout(const std::string &id, bool persist) {
     const KeyboardLayout *lay = get_layout_by_id(id.c_str());
     if (lay == nullptr) {
         ESP_LOGW(TAG, "Unknown keyboard layout '%s' — ignoring", id.c_str());
@@ -1374,9 +1374,9 @@ void EspidfBleKeyboard::set_runtime_layout(const std::string &id, bool persist) 
     ESP_LOGI(TAG, "Keyboard layout (runtime%s): %s", persist ? "" : ", ephemeral", active_layout_->id);
 }
 
-void EspidfBleKeyboard::load_layout_() {
+void BleKeyboard::load_layout_() {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
 
     // 1) Did the YAML keyboard_layout change since last boot?
     //    "yaml_layout" snapshots the last YAML default we saw. Same idiom as
@@ -1414,15 +1414,15 @@ void EspidfBleKeyboard::load_layout_() {
     nvs_close(handle);
 }
 
-void EspidfBleKeyboard::save_layout_(const std::string &id) {
+void BleKeyboard::save_layout_(const std::string &id) {
     nvs_handle_t handle;
-    if (nvs_open("espidf_ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
+    if (nvs_open("ble_kb", NVS_READWRITE, &handle) != ESP_OK) return;
     nvs_set_str(handle, "layout", id.c_str());
     nvs_commit(handle);
     nvs_close(handle);
 }
 
-void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
+void BleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
     // Dedup: ESPHome API can deliver the same service call twice within ~5ms
     uint32_t now = millis();
     uint16_t key_id = ((uint16_t) modifiers << 8) | keycode;
@@ -1445,7 +1445,7 @@ void EspidfBleKeyboard::send_key_combo(uint8_t modifiers, uint8_t keycode) {
     send_keyboard_input_report(conn_id_, report, 8);
 }
 
-void EspidfBleKeyboard::send_ctrl_alt_del() {
+void BleKeyboard::send_ctrl_alt_del() {
     if (!is_connected_) return;
     uint8_t report[8] = {0};
     report[0] = 0x05; report[2] = 0x4C;
@@ -1455,7 +1455,7 @@ void EspidfBleKeyboard::send_ctrl_alt_del() {
     send_keyboard_input_report(conn_id_, report, 8);
 }
 
-void EspidfBleKeyboard::send_sleep() {
+void BleKeyboard::send_sleep() {
     if (!is_connected_) return;
     uint8_t report[1] = {0x82};  // System Sleep
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_system_report_handle, 1, report, false);
@@ -1465,12 +1465,12 @@ void EspidfBleKeyboard::send_sleep() {
     ESP_LOGI(TAG, "System Sleep sent");
 }
 
-void EspidfBleKeyboard::send_shutdown() {
+void BleKeyboard::send_shutdown() {
     if (!is_connected_) return;
     send_power();
 }
 
-void EspidfBleKeyboard::send_consumer(uint16_t usage) {
+void BleKeyboard::send_consumer(uint16_t usage) {
     if (!is_connected_) return;
     uint32_t now = millis();
     if (usage == last_consumer_usage_ && (now - last_consumer_ms_) < 30) {
@@ -1487,7 +1487,7 @@ void EspidfBleKeyboard::send_consumer(uint16_t usage) {
     ESP_LOGI(TAG, "Consumer report sent: 0x%04X", usage);
 }
 
-void EspidfBleKeyboard::send_power() {
+void BleKeyboard::send_power() {
     if (!is_connected_) return;
     uint8_t report[1] = {0x81};  // System Power Down
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_system_report_handle, 1, report, false);
@@ -1497,15 +1497,15 @@ void EspidfBleKeyboard::send_power() {
     ESP_LOGI(TAG, "System Power Down sent");
 }
 
-void EspidfBleKeyboard::send_media_play_pause() { send_consumer(0x00CD); }
-void EspidfBleKeyboard::send_media_next()        { send_consumer(0x00B5); }
-void EspidfBleKeyboard::send_media_prev()        { send_consumer(0x00B6); }
-void EspidfBleKeyboard::send_media_stop()        { send_consumer(0x00B7); }
-void EspidfBleKeyboard::send_volume_up()         { send_consumer(0x00E9); }
-void EspidfBleKeyboard::send_volume_down()       { send_consumer(0x00EA); }
-void EspidfBleKeyboard::send_mute()              { send_consumer(0x00E2); }
+void BleKeyboard::send_media_play_pause() { send_consumer(0x00CD); }
+void BleKeyboard::send_media_next()        { send_consumer(0x00B5); }
+void BleKeyboard::send_media_prev()        { send_consumer(0x00B6); }
+void BleKeyboard::send_media_stop()        { send_consumer(0x00B7); }
+void BleKeyboard::send_volume_up()         { send_consumer(0x00E9); }
+void BleKeyboard::send_volume_down()       { send_consumer(0x00EA); }
+void BleKeyboard::send_mute()              { send_consumer(0x00E2); }
 
-void EspidfBleKeyboard::send_mouse_click(uint8_t buttons) {
+void BleKeyboard::send_mouse_click(uint8_t buttons) {
     if (!is_connected_) return;
     uint32_t now = millis();
     if (buttons == last_mouse_click_ && (now - last_mouse_click_ms_) < 30) {
@@ -1522,7 +1522,7 @@ void EspidfBleKeyboard::send_mouse_click(uint8_t buttons) {
     ESP_LOGI(TAG, "Mouse click sent: buttons=0x%02X", buttons);
 }
 
-void EspidfBleKeyboard::send_mouse_move(int8_t x, int8_t y) {
+void BleKeyboard::send_mouse_move(int8_t x, int8_t y) {
     if (!is_connected_) return;
     uint8_t report[4] = {0, static_cast<uint8_t>(x), static_cast<uint8_t>(y), 0};
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_mouse_report_handle, 4, report, false);
@@ -1532,7 +1532,7 @@ void EspidfBleKeyboard::send_mouse_move(int8_t x, int8_t y) {
     ESP_LOGD(TAG, "Mouse move sent: x=%d y=%d", x, y);
 }
 
-void EspidfBleKeyboard::send_mouse_scroll(int8_t wheel) {
+void BleKeyboard::send_mouse_scroll(int8_t wheel) {
     if (!is_connected_) return;
     uint8_t report[4] = {0, 0, 0, static_cast<uint8_t>(wheel)};
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_mouse_report_handle, 4, report, false);
@@ -1542,7 +1542,7 @@ void EspidfBleKeyboard::send_mouse_scroll(int8_t wheel) {
     ESP_LOGD(TAG, "Mouse scroll sent: wheel=%d", wheel);
 }
 
-void EspidfBleKeyboard::send_hibernate() {
+void BleKeyboard::send_hibernate() {
     if (!is_connected_) return;
     // Win+R is a single blocking key combo (no watchdog risk).
     send_key_combo(0x08, 0x15);
@@ -1553,7 +1553,7 @@ void EspidfBleKeyboard::send_hibernate() {
 
 // ── Centralized action executor ──────────────────────────────────
 
-void EspidfBleKeyboard::execute_action(const std::string &action) {
+void BleKeyboard::execute_action(const std::string &action) {
     // Multi-step actions: split on '|' and execute each step
     if (action.find('|') != std::string::npos) {
         size_t start = 0;
@@ -1653,18 +1653,18 @@ void EspidfBleKeyboard::execute_action(const std::string &action) {
     else send_string(action);  // Fallback: send as typed text
 }
 
-bool EspidfBleKeyboard::execute_macro(uint8_t index) {
+bool BleKeyboard::execute_macro(uint8_t index) {
     if (index >= macros_.size()) return false;
     execute_action(macros_[index].action);
     return true;
 }
 
-void EspidfBleKeyboardButton::press_action() {
+void BleKeyboardButton::press_action() {
     if (!parent_) return;
     parent_->execute_action(action_);
 }
 
-}  // namespace espidf_ble_keyboard
+}  // namespace ble_keyboard
 }  // namespace esphome
 
 

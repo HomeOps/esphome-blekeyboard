@@ -1,5 +1,23 @@
 # ESP32 BLE HID Keyboard for ESPHome
 
+> **HomeOps fork.** Forked from
+> [markusg1234/ESPHome-espidf_ble_keyboard](https://github.com/markusg1234/ESPHome-espidf_ble_keyboard)
+> (GPL-3.0) to add a quality layer the upstream lacks: a **CI compile gate**
+> (every PR builds for ESP32 + M5 Atom Lite on current ESPHome, so an upstream
+> ESPHome release breaking the component is caught here, not in production) and
+> **release-please** tags you can pin via `external_components: ref:`. Thanks to
+> the upstream author. Use a tagged release for stability:
+>
+> ```yaml
+> external_components:
+>   - source:
+>       type: git
+>       url: https://github.com/HomeOps/esphome-blekeyboard
+>       ref: v0.1.0          # pin a release
+>       path: components
+>     components: [ble_keyboard]
+> ```
+
 This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low Energy (BLE) HID Keyboard. This component currently targets **ESP-IDF Bluedroid GATTS** (rather than NimBLE), chosen for the HID behavior and host compatibility validated in this project.
 
 ## Features
@@ -79,9 +97,9 @@ external_components:
       url: https://github.com/markusg1234/ESPHome-espidf_ble_keyboard
       ref: main
       path: components
-    components: [ espidf_ble_keyboard ]
+    components: [ ble_keyboard ]
 
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   # Optional: BLE device name shown during pairing (max 29 chars, default: "ESP32 BLE KB")
   device_name: "ESP32 BLE KB"
@@ -124,12 +142,12 @@ espidf_ble_keyboard:
 
 button:
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Ctrl + F1"
     action: "combo:0x01:0x3A"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Win + R (Run Dialog)"
     # 0x08 = Windows Key, 0x15 = 'r'
@@ -141,84 +159,84 @@ button:
       - lambda: |-
           id(my_keyboard).send_string("Hello\n");
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Type Hello"
     action: "Hello\n"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Ctrl Alt Del"
     action: "ctrl_alt_del"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Sleep PC"
     action: "sleep"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Hibernate PC"
     action: "hibernate"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Shutdown PC"
     action: "shutdown"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Mute"
     action: "mute"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Volume Up"
     action: "volume_up"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Volume Down"
     action: "volume_down"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Play / Pause"
     action: "play_pause"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Open Calculator"
     action: "consumer:0x0192"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Left Click"
     action: "left_click"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Move Mouse Right"
     action: "mouse_move:50:0"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Scroll Down"
     action: "mouse_scroll:-3"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Send Custom Text"
     action: "send_custom_text"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 0"
     action:
       type: switch_host
       slot: 0
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 1"
     action:
@@ -236,11 +254,11 @@ text:
     optimistic: true
 
 binary_sensor:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "BLE Keyboard Paired"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     type: caps_lock
     name: "BLE Keyboard Caps Lock"
@@ -251,7 +269,7 @@ binary_sensor:
 
 ## Configuration Variables
 
-### `espidf_ble_keyboard`
+### `ble_keyboard`
 
 * **id** (Required, ID): The ID used to link buttons or automations to this keyboard.
 * **device_name** (Optional, string): The BLE device name advertised during pairing. Defaults to `ESP32 BLE KB`. Maximum 29 characters.
@@ -271,12 +289,12 @@ binary_sensor:
   * **passkey** (Optional, int): 6-digit PIN for this slot (000000–999999). If omitted, the slot uses the global `passkey` setting (or Just Works if no global passkey).
   * **passkey_mode** (Optional, string): `legacy` (default) or `secure_connections`. Overrides the global `passkey_mode` for this slot.
 
-### `button` (Platform: `espidf_ble_keyboard`)
+### `button` (Platform: `ble_keyboard`)
 
-* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **keyboard_id** (Required, ID): The ID of the `ble_keyboard` component.
 * **action** (Required, string or mapping): The action to perform when the button is pressed. Accepts either a string or a dict with `type` key (see below).
 
-### `binary_sensor` (Platform: `espidf_ble_keyboard`)
+### `binary_sensor` (Platform: `ble_keyboard`)
 
 The binary_sensor platform supports four types via the `type` key:
 
@@ -284,7 +302,7 @@ The binary_sensor platform supports four types via the `type` key:
 
 Reports whether the keyboard has completed BLE pairing with a host on the current connection.
 
-* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **keyboard_id** (Required, ID): The ID of the `ble_keyboard` component.
 * **type** (Optional, string): `paired` (default).
 * **name** (Optional, string): Friendly entity name shown in Home Assistant.
 
@@ -297,7 +315,7 @@ State behavior:
 
 Expose the host-side keyboard LED state, as reported by the connected host via the HID output report. Updates within one loop cycle of the host changing the lock state.
 
-* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **keyboard_id** (Required, ID): The ID of the `ble_keyboard` component.
 * **type** (Required, string): One of `num_lock`, `caps_lock`, `scroll_lock`.
 * **name** (Optional, string): Friendly entity name shown in Home Assistant.
 
@@ -308,17 +326,17 @@ State behavior:
 
 ```yaml
 binary_sensor:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     type: num_lock
     name: "BLE Keyboard Num Lock"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     type: caps_lock
     name: "BLE Keyboard Caps Lock"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     type: scroll_lock
     name: "BLE Keyboard Scroll Lock"
@@ -326,7 +344,7 @@ binary_sensor:
 
 Note: LED state reflects what the *host* thinks the lock state is. After re-pairing or host switching, sensors may briefly show stale values until the host sends a fresh LED report.
 
-### `sensor` (Platform: `espidf_ble_keyboard`)
+### `sensor` (Platform: `ble_keyboard`)
 
 The sensor platform supports two types via the `type` key:
 
@@ -334,7 +352,7 @@ The sensor platform supports two types via the `type` key:
 
 Exposes the RSSI (signal strength) of the currently connected host as an ESPHome sensor entity.
 
-* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **keyboard_id** (Required, ID): The ID of the `ble_keyboard` component.
 * **type** (Optional, string): `rssi` (default).
 * **name** (Optional, string): Friendly entity name shown in Home Assistant.
 * **update_interval** (Optional, duration): How often to read RSSI from the connected host. Default: `10s`.
@@ -346,7 +364,7 @@ State behavior:
 
 ```yaml
 sensor:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "BLE Host RSSI"
     update_interval: 15s
@@ -356,13 +374,13 @@ sensor:
 
 Publishes the currently active host slot number (0-based). Updates instantly when the host is switched from the webserver, HA card, or YAML automation. Required for the keyboard card's host display to stay in sync.
 
-* **keyboard_id** (Required, ID): The ID of the `espidf_ble_keyboard` component.
+* **keyboard_id** (Required, ID): The ID of the `ble_keyboard` component.
 * **type** (Required, string): `active_host`.
 * **name** (Optional, string): Friendly entity name shown in Home Assistant.
 
 ```yaml
 sensor:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     type: active_host
     name: "BLE Keyboard Active Host"
@@ -379,7 +397,7 @@ active_host_entity: sensor.bluetooth_keyboard_active_host
 
 #### Proximity Automations
 
-Use `on_rssi_above` and `on_rssi_below` on the main `espidf_ble_keyboard` component to trigger actions based on signal strength. Both fire on every RSSI sample that crosses the threshold — add your own debounce logic (e.g. a `script` or `globals` flag) if needed.
+Use `on_rssi_above` and `on_rssi_below` on the main `ble_keyboard` component to trigger actions based on signal strength. Both fire on every RSSI sample that crosses the threshold — add your own debounce logic (e.g. a `script` or `globals` flag) if needed.
 
 | Key | Description |
 |---|---|
@@ -388,7 +406,7 @@ Use `on_rssi_above` and `on_rssi_below` on the main `espidf_ble_keyboard` compon
 The automation receives a single `rssi` variable (int, dBm) you can use in lambdas.
 
 ```yaml
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   on_rssi_above:
     threshold: -65      # fires when host is close (strong signal)
@@ -518,58 +536,58 @@ Switching takes 1–3 seconds depending on the host OS.
 ### YAML Configuration
 
 ```yaml
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   host_slots: 4          # 1–10, default: 4
 
 button:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 0"
     action:
       type: switch_host
       slot: 0
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 1"
     action:
       type: switch_host
       slot: 1
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 2"
     action:
       type: switch_host
       slot: 2
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Host 3"
     action:
       type: switch_host
       slot: 3
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Forget Host 0"
     action:
       type: forget_host
       slot: 0
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Forget Host 1"
     action:
       type: forget_host
       slot: 1
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Forget Host 2"
     action:
       type: forget_host
       slot: 2
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Forget Host 3"
     action:
@@ -710,7 +728,7 @@ A built-in web page with full keyboard and mouse control, served directly from t
 web_server:
   port: 80
 
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   web_control: true
 ```
@@ -1026,7 +1044,7 @@ button:
 You can send arbitrary text from Home Assistant to the paired host device without hardcoding it in the YAML. Link text entities to the keyboard component with `custom_text_id`, then use the `send_custom_text` action:
 
 ```yaml
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   custom_text_id:
     - custom_text          # links the text entity below
@@ -1040,7 +1058,7 @@ text:
     optimistic: true
 
 button:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: my_keyboard
     name: "Send Custom Text"
     action: "send_custom_text"       # sends first text entity (index 0)
@@ -1103,7 +1121,7 @@ A standard German keyboard prints these characters in the lower-right corner of 
 **YAML (default at boot):**
 
 ```yaml
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   device_name: "ESP32 BLE KB"
   keyboard_layout: uk
@@ -1116,7 +1134,7 @@ espidf_ble_keyboard:
 **Per host slot (YAML, auto-applied on switch):** add `layout:` to any entry in the `hosts:` list to bind a layout to that slot. When you switch to that host (via service, button, or web UI), the device flips to its layout automatically. This is ephemeral — it does not overwrite a manual web-UI pick in NVS, and switching to a slot with no `layout:` keeps whatever was active.
 
 ```yaml
-espidf_ble_keyboard:
+ble_keyboard:
   id: my_keyboard
   host_slots: 4
   hosts:
@@ -1139,9 +1157,9 @@ The device layout only sets how the ESP turns characters into HID codes — the 
 
 The layout system is intentionally small. Adding a new layout (e.g. French AZERTY) touches just three places:
 
-1. **`components/espidf_ble_keyboard/keyboard_layouts.cpp`** — add `HID_ASCII_MAP_XX[128]` + (optionally) `UNICODE_MAP_XX[]` and append one entry to the `LAYOUTS[]` registry array.
-2. **`components/espidf_ble_keyboard/__init__.py`** — append `"xx"` to `SUPPORTED_LAYOUTS`.
-3. **`components/espidf_ble_keyboard/web_control.cpp`** — append an `xx: { ROWS: [...] }` entry to the JS `LAYOUTS` object. If you also ship the HA keyboard card, mirror the entry into `docs/keyboard-card.js`.
+1. **`components/ble_keyboard/keyboard_layouts.cpp`** — add `HID_ASCII_MAP_XX[128]` + (optionally) `UNICODE_MAP_XX[]` and append one entry to the `LAYOUTS[]` registry array.
+2. **`components/ble_keyboard/__init__.py`** — append `"xx"` to `SUPPORTED_LAYOUTS`.
+3. **`components/ble_keyboard/web_control.cpp`** — append an `xx: { ROWS: [...] }` entry to the JS `LAYOUTS` object. If you also ship the HA keyboard card, mirror the entry into `docs/keyboard-card.js`.
 
 No header changes, no `send_string` changes, no NVS code changes. The web UI dropdown, `/api/ble_keyboard/status` JSON, and YAML validation pick the new layout up automatically.
 
@@ -1172,7 +1190,7 @@ When you first flash the device or change the `passkey`:
 
 Android does not support passkey pairing with BLE HID keyboards. For reliable pairing:
 
-1. **Do not set a `passkey`** in `espidf_ble_keyboard` (omit the passkey option entirely).
+1. **Do not set a `passkey`** in `ble_keyboard` (omit the passkey option entirely).
 2. Use `passkey_mode: legacy` (the default).
 3. In Android Bluetooth settings, remove any previous entry for your device name (default: **ESP32 BLE KB**) before re-pairing.
 4. Start pairing - it should connect instantly without prompting for a PIN.
@@ -1185,7 +1203,7 @@ Android uses Just Works pairing for BLE HID devices. Attempting to use passkeys 
 
 For iOS using passkey pairing:
 
-1. Set `passkey` and `passkey_mode: secure_connections` in `espidf_ble_keyboard`.
+1. Set `passkey` and `passkey_mode: secure_connections` in `ble_keyboard`.
 2. Remove any previous bond for your device name (default: **ESP32 BLE KB**) from iOS Bluetooth settings.
 3. Reboot the ESP32 (or reflash), then pair again from iOS.
 4. Enter the configured passkey when prompted.

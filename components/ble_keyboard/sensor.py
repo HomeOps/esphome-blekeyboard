@@ -6,9 +6,9 @@ from esphome.const import (
     STATE_CLASS_MEASUREMENT,
     UNIT_DECIBEL_MILLIWATT,
 )
-from . import EspidfBleKeyboard, espidf_ble_keyboard_ns
+from . import BleKeyboard, ble_keyboard_ns
 
-DEPENDENCIES = ["espidf_ble_keyboard"]
+DEPENDENCIES = ["ble_keyboard"]
 
 CONF_KEYBOARD_ID = "keyboard_id"
 CONF_TYPE = "type"
@@ -27,7 +27,7 @@ def _sensor_schema(config):
             state_class=STATE_CLASS_MEASUREMENT,
         ).extend(
             {
-                cv.Required(CONF_KEYBOARD_ID): cv.use_id(EspidfBleKeyboard),
+                cv.Required(CONF_KEYBOARD_ID): cv.use_id(BleKeyboard),
                 cv.Optional(CONF_TYPE, default=TYPE_RSSI): cv.one_of(
                     TYPE_RSSI, TYPE_ACTIVE_HOST, lower=True
                 ),
@@ -40,7 +40,7 @@ def _sensor_schema(config):
             state_class=STATE_CLASS_MEASUREMENT,
         ).extend(
             {
-                cv.Required(CONF_KEYBOARD_ID): cv.use_id(EspidfBleKeyboard),
+                cv.Required(CONF_KEYBOARD_ID): cv.use_id(BleKeyboard),
                 cv.Optional(CONF_TYPE, default=TYPE_RSSI): cv.one_of(
                     TYPE_RSSI, TYPE_ACTIVE_HOST, lower=True
                 ),

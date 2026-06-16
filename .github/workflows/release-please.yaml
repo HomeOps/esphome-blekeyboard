@@ -1,0 +1,20 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # An ESPHome external component is consumed via `external_components:
+      # source: github://HomeOps/esphome-blekeyboard, ref: <tag>`. So a release
+      # is just a tag + changelog users can pin to — no artifact to publish.
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
