@@ -1,8 +1,8 @@
-#include "espidf_ble_keyboard.h"
+#include "ble_keyboard.h"
 #include <cstring>
 
 namespace esphome {
-namespace espidf_ble_keyboard {
+namespace ble_keyboard {
 
 // ── US ANSI ──────────────────────────────────────────────────────────────────
 static const HidKeyMapping HID_ASCII_MAP_US[128] = {
@@ -448,5 +448,5 @@ const KeyboardLayout *layout_at(size_t i) {
   return i < LAYOUT_COUNT ? &LAYOUTS[i] : nullptr;
 }
 
-}  // namespace espidf_ble_keyboard
+}  // namespace ble_keyboard
 }  // namespace esphome

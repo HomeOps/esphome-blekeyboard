@@ -284,7 +284,7 @@
 
 <header>
   <h1>⌨️ BLE Keyboard <span>Keycodes</span></h1>
-  <p class="subtitle">espidf_ble_keyboard · ESPHome Component Reference</p>
+  <p class="subtitle">ble_keyboard · ESPHome Component Reference</p>
 </header>
 
 <div class="note-box" style="max-width:720px;margin:0 auto 24px;background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.25);border-radius:8px;padding:12px 20px;font-family:'Syne',sans-serif;font-size:0.85rem;color:#6b7a99;text-align:center;">
@@ -547,27 +547,27 @@
 <div class="example-box">
   <div class="card-header"><div class="dot"></div><h2>YAML Button Example</h2></div>
   <pre><span class="yaml-key">button</span><span class="yaml-val">:</span>
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Open Run Dialog"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"combo:0x08:0x15"</span>     <span class="yaml-comment"># Win + R</span>
 
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Type Hello"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"Hello World"</span>           <span class="yaml-comment"># send a string directly</span>
 
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Left Click"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"left_click"</span>            <span class="yaml-comment"># mouse left click</span>
 
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Ctrl+Alt+Del"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"ctrl_alt_del"</span>          <span class="yaml-comment"># built-in action</span>
 
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Ctrl+Shift+A"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"combo:0x03:0x04"</span>     <span class="yaml-comment"># 0x01+0x02=0x03 (Ctrl+Shift), 0x04=A</span></pre>

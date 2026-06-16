@@ -387,9 +387,9 @@
       <span class="yaml-key">type</span><span class="yaml-val">:</span> <span class="yaml-str">git</span>
       <span class="yaml-key">url</span><span class="yaml-val">:</span> <span class="yaml-str">https://github.com/markusg1234/ESPHome-espidf_ble_keyboard</span>
       <span class="yaml-key">ref</span><span class="yaml-val">:</span> <span class="yaml-str">main</span>
-    <span class="yaml-key">components</span><span class="yaml-val">: [</span> <span class="yaml-str">espidf_ble_keyboard</span> <span class="yaml-val">]</span>
+    <span class="yaml-key">components</span><span class="yaml-val">: [</span> <span class="yaml-str">ble_keyboard</span> <span class="yaml-val">]</span>
 
-<span class="yaml-key">espidf_ble_keyboard</span><span class="yaml-val">:</span>
+<span class="yaml-key">ble_keyboard</span><span class="yaml-val">:</span>
   <span class="yaml-key">id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
   <span class="yaml-key">device_name</span><span class="yaml-val">:</span> <span class="yaml-str">"ESP32 BLE KB"</span>  <span class="yaml-comment"># optional, max 29 chars</span>
   <span class="yaml-key">key_delay_ms</span><span class="yaml-val">:</span> <span class="yaml-str">80</span>  <span class="yaml-comment"># optional, increase if characters drop</span>
@@ -406,12 +406,12 @@
     <span class="yaml-val">-</span> <span class="yaml-str">custom_text</span>
 
 <span class="yaml-key">button</span><span class="yaml-val">:</span>
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Win + R"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"combo:0x08:0x15"</span>
 
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"Shutdown PC"</span>
     <span class="yaml-key">action</span><span class="yaml-val">:</span> <span class="yaml-str">"shutdown"</span></pre>
@@ -421,7 +421,7 @@
   <div class="code-section">
     <div class="code-header"><div class="dot"></div><span>binary_sensor</span></div>
     <pre><span class="yaml-key">binary_sensor</span><span class="yaml-val">:</span>
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"BLE Keyboard Paired"</span>
 
@@ -434,13 +434,13 @@
     <div class="code-header"><div class="dot"></div><span>sensor — RSSI &amp; Active Host</span></div>
     <pre><span class="yaml-key">sensor</span><span class="yaml-val">:</span>
   <span class="yaml-comment"># RSSI — signal strength of connected host</span>
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"BLE Host RSSI"</span>
     <span class="yaml-key">update_interval</span><span class="yaml-val">:</span> <span class="yaml-str">10s</span>
   <span class="yaml-comment"># Active Host — publishes current host slot (0-based)</span>
   <span class="yaml-comment"># Required for keyboard card host switcher to stay in sync</span>
-  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">espidf_ble_keyboard</span>
+  <span class="yaml-val">- </span><span class="yaml-key">platform</span><span class="yaml-val">:</span> <span class="yaml-str">ble_keyboard</span>
     <span class="yaml-key">keyboard_id</span><span class="yaml-val">:</span> <span class="yaml-str">my_keyboard</span>
     <span class="yaml-key">type</span><span class="yaml-val">:</span> <span class="yaml-str">active_host</span>
     <span class="yaml-key">name</span><span class="yaml-val">:</span> <span class="yaml-str">"BLE Keyboard Active Host"</span></pre>

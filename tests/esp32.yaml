@@ -1,0 +1,74 @@
+# CI compile target — generic ESP32 dev board, fuller feature surface
+# (mouse, RSSI, web control, layouts) so CI exercises more of the component.
+esphome:
+  name: blekb-esp32
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_BT_ENABLED: y
+      CONFIG_BT_CONTROLLER_ENABLED: y
+      CONFIG_BT_BLUEDROID_ENABLED: y
+      CONFIG_BT_NIMBLE_ENABLED: n
+      CONFIG_BT_BLE_ENABLED: y
+      CONFIG_BT_GATTS_ENABLE: y
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: n
+      CONFIG_BT_BLE_42_ADV_EN: y
+      CONFIG_BT_BLE_42_SCAN_EN: y
+      CONFIG_BT_BLE_SMP_ENABLE: y
+      CONFIG_BT_ACL_CONNECTIONS: "4"
+
+logger:
+
+# Placeholder creds — only needed so web_server/web_control can compile in CI.
+wifi:
+  ssid: "ci-test-ssid"
+  password: "ci-test-password"
+
+web_server:
+  port: 80
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [ble_keyboard]
+
+ble_keyboard:
+  id: kb
+  device_name: "ESP32 BLE KB"
+  host_slots: 4
+  keyboard_layout: us
+  web_control: true
+  passkey: 123456
+  passkey_mode: legacy
+  on_rssi_below:
+    - threshold: -80
+      then:
+        - logger.log: "host moving away"
+
+button:
+  - platform: ble_keyboard
+    keyboard_id: kb
+    name: "Volume Up"
+    action: "volume_up"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    name: "Type Hello"
+    action: "Hello\n"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    name: "Left Click"
+    action: "left_click"
+
+binary_sensor:
+  - platform: ble_keyboard
+    keyboard_id: kb
+    name: "Paired"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    type: caps_lock
+    name: "Caps Lock"

@@ -24,7 +24,7 @@
 #endif
 
 namespace esphome {
-namespace espidf_ble_keyboard {
+namespace ble_keyboard {
 
 // Maximum number of host slots for multi-host switching
 static const uint8_t MAX_HOST_SLOTS = 10;
@@ -58,7 +58,7 @@ const KeyboardLayout *default_layout();
 size_t layout_count();
 const KeyboardLayout *layout_at(size_t i);
 
-class EspidfBleKeyboard : public Component {
+class BleKeyboard : public Component {
  public:
   void setup() override;
   void loop() override;
@@ -319,16 +319,16 @@ class EspidfBleKeyboard : public Component {
 #endif
 };
 
-class EspidfBleKeyboardButton : public button::Button, public Component {
+class BleKeyboardButton : public button::Button, public Component {
  public:
-  void set_parent(EspidfBleKeyboard *parent) { parent_ = parent; }
+  void set_parent(BleKeyboard *parent) { parent_ = parent; }
   void press_action() override;
   void set_action(const std::string &action) { action_ = action; }
   float get_setup_priority() const override { return -200.0f; }
  protected:
-  EspidfBleKeyboard *parent_{nullptr};
+  BleKeyboard *parent_{nullptr};
   std::string action_;
 };
 
-}  // namespace espidf_ble_keyboard
+}  // namespace ble_keyboard
 }  // namespace esphome

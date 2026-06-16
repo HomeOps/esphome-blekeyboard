@@ -226,27 +226,27 @@ action:
 
 ```yaml
 button:
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: ble_keyboard
     name: "Open Run Dialog"
     action: "combo:0x08:0x15"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: ble_keyboard
     name: "Type Hello"
     action: "Hello World"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: ble_keyboard
     name: "Ctrl+Alt+Del"
     action: "ctrl_alt_del"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: ble_keyboard
     name: "Left Click"
     action: "left_click"
 
-  - platform: espidf_ble_keyboard
+  - platform: ble_keyboard
     keyboard_id: ble_keyboard
     name: "Move Mouse Right"
     action: "mouse_move:50:0"

@@ -55,7 +55,7 @@ const CHAR_TO_KEYCODE = {
 
 // Keyboard layouts — each key: { label, shiftLabel?, type, char?, shiftChar?, keycode?, mod?, flex? }
 // To add a layout: append an entry below. The matching ASCII/Unicode tables on
-// the ESP side (components/espidf_ble_keyboard/keyboard_layouts.cpp) translate
+// the ESP side (components/ble_keyboard/keyboard_layouts.cpp) translate
 // what the card sends via send_string into the correct HID keycodes for the host.
 const LAYOUTS = {
 us: { name: 'English (US)', ROWS: [

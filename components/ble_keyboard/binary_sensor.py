@@ -2,9 +2,9 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import binary_sensor
 from esphome.const import CONF_TYPE
-from . import EspidfBleKeyboard
+from . import BleKeyboard
 
-DEPENDENCIES = ["espidf_ble_keyboard"]
+DEPENDENCIES = ["ble_keyboard"]
 
 CONF_KEYBOARD_ID = "keyboard_id"
 
@@ -15,7 +15,7 @@ TYPE_SCROLL_LOCK = "scroll_lock"
 
 CONFIG_SCHEMA = binary_sensor.binary_sensor_schema().extend(
     {
-        cv.Required(CONF_KEYBOARD_ID): cv.use_id(EspidfBleKeyboard),
+        cv.Required(CONF_KEYBOARD_ID): cv.use_id(BleKeyboard),
         cv.Optional(CONF_TYPE, default=TYPE_PAIRED): cv.one_of(
             TYPE_PAIRED, TYPE_NUM_LOCK, TYPE_CAPS_LOCK, TYPE_SCROLL_LOCK, lower=True
         ),
