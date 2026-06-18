@@ -103,8 +103,19 @@ a single `action` string. The grammar (handled by the component) is:
 | named | `volume_up`, `mute`, `power`, `play_pause`, `ctrl_alt_del` | a built-in action |
 | `consumer:` | `consumer:0x40` | a raw HID Consumer-page usage (hex/decimal) |
 | `combo:` | `combo:0x01:0x4F` | `modifier:keycode` on the Keyboard page |
+| `button:` | `button:11` | gamepad button 1–32 → an Android gamepad keycode |
 | text | `string:hello` or just `hello` | typed as keystrokes |
 | macro | `menu\|delay:200\|down\|down\|select` | `\|`-separated steps, optional `delay:ms` |
+
+> **Android TV menu:** Google/Android TV decodes its remote's Menu button as
+> `KEYCODE_BUTTON_11` (Android keycode **198** — the numbered button keycodes are
+> sequential from `BUTTON_1` = 188, so `BUTTON_N` = `187 + N`). That's a *gamepad*
+> button, not a keyboard/consumer usage, so send `button:11`. Note the HID button
+> *index* isn't 1:1 with the keycode — Linux remaps the named A/B/X/Y/… range
+> first, so the keycode you want may sit at a higher index. If `button:11`
+> doesn't open the menu, **sweep `button:1`…`button:32`** and use whichever fires
+> it. (Adding the gamepad collection changes the HID descriptor, so already-paired
+> hosts must re-pair once to see it.)
 
 ```yaml
 # Home Assistant automation / Developer Tools → Actions

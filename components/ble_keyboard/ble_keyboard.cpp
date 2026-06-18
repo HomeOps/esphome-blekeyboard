@@ -29,6 +29,9 @@ static esp_err_t send_keyboard_input_report(uint16_t conn_id, const uint8_t *rep
 // Report ID 2: Consumer control — media keys (2 bytes)
 // Report ID 3: System control — power/sleep (1 byte)
 // Report ID 4: Mouse — buttons + X/Y + scroll (4 bytes)
+// Report ID 5: Gamepad — 32 buttons (4 bytes); Android maps these Button-page
+//              usages to gamepad keycodes (named BUTTON_A.. plus numbered
+//              KEYCODE_BUTTON_1..16). A Google TV Menu decodes as BUTTON_11.
 static const uint8_t hid_report_map[] = {
     // ---- Keyboard (Report ID 1) ----
     0x05, 0x01, 0x09, 0x06, 0xA1, 0x01,
@@ -95,7 +98,21 @@ static const uint8_t hid_report_map[] = {
     0x95, 0x03,        //     Report Count (3)
     0x81, 0x06,        //     Input (Data, Variable, Relative)
     0xC0,              //   End Collection (Physical)
-    0xC0               // End Collection (Application)
+    0xC0,              // End Collection (Application)
+    // ---- Gamepad (Report ID 5) — 32 buttons -> Android gamepad keycodes ----
+    0x05, 0x01,        // Usage Page (Generic Desktop)
+    0x09, 0x05,        // Usage (Game Pad)
+    0xA1, 0x01,        // Collection (Application)
+    0x85, 0x05,        //   Report ID (5)
+    0x05, 0x09,        //   Usage Page (Button)
+    0x19, 0x01,        //   Usage Minimum (Button 1)
+    0x29, 0x20,        //   Usage Maximum (Button 32)
+    0x15, 0x00,        //   Logical Minimum (0)
+    0x25, 0x01,        //   Logical Maximum (1)
+    0x75, 0x01,        //   Report Size (1)
+    0x95, 0x20,        //   Report Count (32)
+    0x81, 0x02,        //   Input (Data, Variable, Absolute)
+    0xC0               // End Collection
 };
 
 // Keyboard layout ASCII/Unicode tables live in keyboard_layouts.cpp.
@@ -535,6 +552,9 @@ static uint8_t  system_ref_val[2]     = {0x03, 0x01};
 static uint8_t  mouse_val[4]          = {0};  // buttons, X, Y, wheel
 static uint16_t mouse_ccc_val         = 0;
 static uint8_t  mouse_ref_val[2]      = {0x04, 0x01};
+static uint8_t  gamepad_val[4]        = {0};  // 32-button bitmap
+static uint16_t gamepad_ccc_val       = 0;
+static uint8_t  gamepad_ref_val[2]    = {0x05, 0x01};
 
 enum {
     IDX_SVC,
@@ -559,6 +579,9 @@ enum {
     IDX_CHAR_MOUSE,        IDX_CHAR_MOUSE_VAL,
     IDX_CHAR_MOUSE_CCC,
     IDX_CHAR_MOUSE_REF,
+    IDX_CHAR_GAMEPAD,      IDX_CHAR_GAMEPAD_VAL,
+    IDX_CHAR_GAMEPAD_CCC,
+    IDX_CHAR_GAMEPAD_REF,
     HID_IDX_NB,
 };
 
@@ -577,6 +600,8 @@ static uint16_t s_system_report_handle = 0;
 static uint16_t s_system_ccc_handle = 0;
 static uint16_t s_mouse_report_handle = 0;
 static uint16_t s_mouse_ccc_handle = 0;
+static uint16_t s_gamepad_report_handle = 0;
+static uint16_t s_gamepad_ccc_handle = 0;
 
 static const esp_gatts_attr_db_t hid_attr_db[HID_IDX_NB] = {
     [IDX_SVC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_PRI_SERVICE, PERM_R, sizeof(uint16_t), sizeof(uint16_t), (uint8_t *)&UUID_HID_SVC}},
@@ -617,6 +642,11 @@ static const esp_gatts_attr_db_t hid_attr_db[HID_IDX_NB] = {
     [IDX_CHAR_MOUSE_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_REPORT, PERM_R_ENC, sizeof(mouse_val), sizeof(mouse_val), mouse_val}},
     [IDX_CHAR_MOUSE_CCC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, PERM_RW_ENC, sizeof(mouse_ccc_val), sizeof(mouse_ccc_val), (uint8_t *)&mouse_ccc_val}},
     [IDX_CHAR_MOUSE_REF] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_RPT_REF_DESCR, PERM_R_ENC, sizeof(mouse_ref_val), sizeof(mouse_ref_val), mouse_ref_val}},
+    // Gamepad report (Report ID 5)
+    [IDX_CHAR_GAMEPAD] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_DECLARE, PERM_R, 1, 1, (uint8_t *)&PROP_READ_NOTIFY}},
+    [IDX_CHAR_GAMEPAD_VAL] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_HID_REPORT, PERM_R_ENC, sizeof(gamepad_val), sizeof(gamepad_val), gamepad_val}},
+    [IDX_CHAR_GAMEPAD_CCC] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_CHAR_CLIENT_CONFIG, PERM_RW_ENC, sizeof(gamepad_ccc_val), sizeof(gamepad_ccc_val), (uint8_t *)&gamepad_ccc_val}},
+    [IDX_CHAR_GAMEPAD_REF] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&UUID_RPT_REF_DESCR, PERM_R_ENC, sizeof(gamepad_ref_val), sizeof(gamepad_ref_val), gamepad_ref_val}},
 };
 
 // Service instance IDs for create_attr_tab
@@ -665,6 +695,8 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
                 s_system_ccc_handle = hid_handle_table[IDX_CHAR_SYSTEM_CCC];
                 s_mouse_report_handle = hid_handle_table[IDX_CHAR_MOUSE_VAL];
                 s_mouse_ccc_handle = hid_handle_table[IDX_CHAR_MOUSE_CCC];
+                s_gamepad_report_handle = hid_handle_table[IDX_CHAR_GAMEPAD_VAL];
+                s_gamepad_ccc_handle = hid_handle_table[IDX_CHAR_GAMEPAD_CCC];
                 esp_ble_gatts_start_service(hid_handle_table[IDX_SVC]);
             }
             break;
@@ -769,6 +801,11 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
                 mouse_ccc_val = static_cast<uint16_t>(param->write.value[0]) |
                                 (static_cast<uint16_t>(param->write.value[1]) << 8);
                 ESP_LOGI(TAG, "GATTS: Mouse CCC=0x%04X", mouse_ccc_val);
+            }
+            if (param->write.handle == s_gamepad_ccc_handle && param->write.len >= 2) {
+                gamepad_ccc_val = static_cast<uint16_t>(param->write.value[0]) |
+                                  (static_cast<uint16_t>(param->write.value[1]) << 8);
+                ESP_LOGI(TAG, "GATTS: Gamepad CCC=0x%04X", gamepad_ccc_val);
             }
             if ((param->write.handle == s_hid_output_report_handle || param->write.handle == s_boot_kb_output_handle) &&
                 param->write.len > 0) {
@@ -1487,6 +1524,25 @@ void BleKeyboard::send_consumer(uint16_t usage) {
     ESP_LOGI(TAG, "Consumer report sent: 0x%04X", usage);
 }
 
+// Press+release one of the 16 gamepad buttons (1..16). Android maps the HID
+// Button-page usage to KEYCODE_BUTTON_<n>; on Google TV the remote's Menu is
+// BUTTON_11. The exact index<->keycode mapping is host-specific, so callers
+// discover the right button empirically.
+void BleKeyboard::send_gamepad_button(uint8_t button) {
+    if (!is_connected_) return;
+    if (button < 1 || button > 32) {
+        ESP_LOGW(TAG, "gamepad button out of range: %u (expected 1-32)", button);
+        return;
+    }
+    uint8_t report[4] = {0, 0, 0, 0};
+    report[(button - 1) / 8] = (uint8_t)(1 << ((button - 1) % 8));
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_gamepad_report_handle, 4, report, false);
+    vTaskDelay(pdMS_TO_TICKS(50));
+    uint8_t release[4] = {0, 0, 0, 0};
+    esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_gamepad_report_handle, 4, release, false);
+    ESP_LOGI(TAG, "Gamepad button %u sent", button);
+}
+
 void BleKeyboard::send_power() {
     if (!is_connected_) return;
     uint8_t report[1] = {0x81};  // System Power Down
@@ -1591,6 +1647,12 @@ void BleKeyboard::execute_action(const std::string &action) {
         int usage = 0;
         if (sscanf(action.c_str(), "consumer:%i", &usage) == 1)
             send_consumer((uint16_t) usage);
+        return;
+    }
+    if (action.find("button:") == 0) {
+        int n = 0;
+        if (sscanf(action.c_str(), "button:%i", &n) == 1)
+            send_gamepad_button((uint8_t) n);
         return;
     }
     if (action.find("mouse_click:") == 0) {
