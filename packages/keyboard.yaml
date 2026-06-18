@@ -55,3 +55,12 @@ api:
         action: string
       then:
         - lambda: 'id(kb)->execute_action(action);'
+        # Force the owning std::string arg type instead of the zero-copy
+        # StringRef that ESPHome 2026.5+ picks for fully-synchronous chains.
+        # StringRef's api instantiation is newer than std::string's, so after an
+        # esphome upgrade a stale cached `user_services.cpp.o` can miss the
+        # StringRef symbol -> "undefined reference to get_execute_arg_value
+        # <StringRef>" at link. A non-synchronous action (this 0 ms delay) flips
+        # codegen to the long-standing std::string type, which every api object
+        # file provides. Harmless at runtime. (A clean build also fixes it.)
+        - delay: 0ms
