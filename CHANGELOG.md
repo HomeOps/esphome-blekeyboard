@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.2.0...v0.3.0) (2026-06-18)
+
+
+### Features
+
+* add send_keys Home Assistant service to keyboard.yaml ([#10](https://github.com/HomeOps/esphome-blekeyboard/issues/10)) ([e5e920a](https://github.com/HomeOps/esphome-blekeyboard/commit/e5e920a7b5a1a91ae920c08712df8e3770a0c593))
+
 ## [0.2.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.1.0...v0.2.0) (2026-06-18)
 
 
