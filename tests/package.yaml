@@ -1,6 +1,6 @@
-# CI compile target — imports packages/ble.yaml (BLE enablement) once and
-# packages/canonical.yaml twice (two remotes), proving both packages compile and
-# that multiple canonical includes merge into distinct sub-devices.
+# CI compile target — imports packages/keyboard.yaml (BLE enablement) once and
+# packages/media_keys.yaml twice (two remotes), proving both packages compile and
+# that multiple media_keys includes merge into distinct sub-devices.
 esphome:
   name: blekb-pkg
 
@@ -16,17 +16,12 @@ external_components:
     components: [ble_keyboard]
 
 packages:
-  ble: !include
-    file: ../packages/ble.yaml
-    vars:
-      device_name: Pkg Test
+  keyboard: !include ../packages/keyboard.yaml
   living_tv: !include
-    file: ../packages/canonical.yaml
+    file: ../packages/media_keys.yaml
     vars:
-      device_id: living_tv
-      device_name: Living TV
+      ble_device_id: living_tv
   bedroom_tv: !include
-    file: ../packages/canonical.yaml
+    file: ../packages/media_keys.yaml
     vars:
-      device_id: bedroom_tv
-      device_name: Bedroom TV
+      ble_device_id: bedroom_tv
