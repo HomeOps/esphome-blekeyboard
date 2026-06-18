@@ -62,27 +62,26 @@ esp32:
   board: m5stack-atom          # your ESP32 board
 
 substitutions:
-  ble_name: Living Room Remote # the name the TV/host sees when pairing
-  device_id: living_tv         # the HA sub-device + button-id prefix
-  device_name: Living TV
-  ble_keyboard_id: kb
+  device_id: living_tv         # HA sub-device + button-id prefix
+  device_name: Living TV       # shown in HA, and the name the TV sees when pairing
+
+.repo: &repo                   # repo + ref written once, reused below
+  url: https://github.com/HomeOps/esphome-blekeyboard
+  ref: v0.1.0                  # pin a release
 
 external_components:
-  - source:
-      type: git
-      url: https://github.com/HomeOps/esphome-blekeyboard
-      ref: v0.1.0              # pin a release
-      path: components
+  - source: { type: git, <<: *repo, path: components }
     components: [ble_keyboard]
 
 packages:
-  ble:    github://HomeOps/esphome-blekeyboard/packages/ble.yaml@v0.1.0
-  remote: github://HomeOps/esphome-blekeyboard/packages/canonical.yaml@v0.1.0
+  ble:    { <<: *repo, files: [packages/ble.yaml] }
+  remote: { <<: *repo, files: [packages/canonical.yaml] }
 ```
 
-Flash it, pair with the TV, and Home Assistant gets a **Living TV** device with
-Power, Volume, Mute, Play/Pause, channel and navigation buttons — all canonically
-named. (One remote per node via `substitutions:`; for several remotes on one node,
+Two substitutions, the repo pinned once. Flash it, pair with the TV, and Home
+Assistant gets a **Living TV** device with Power, Volume, Mute, Play/Pause, channel
+and navigation buttons — all canonically named. (`ble_keyboard` id defaults to
+`kb`. One remote per node via `substitutions:`; for several remotes on one node,
 `!include packages/canonical.yaml` with per-remote `vars:` instead.) **Validity ≠
 correctness**: a green compile proves the YAML; verify the keys on the real host.
 

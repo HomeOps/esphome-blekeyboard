@@ -6,16 +6,10 @@
 # (esphome-ir-codegen), so Concerto targets one canonical control across both
 # transports.
 #
-# Import it once per remote, passing the sub-device id, its name, and your
-# ble_keyboard id:
-#
-#   packages:
-#     living_tv: !include
-#       file: packages/canonical.yaml          # or a github:// remote package
-#       vars:
-#         device_id: living_tv
-#         device_name: Living TV
-#         ble_keyboard_id: kb
+# Import it once per remote. It targets a `ble_keyboard:` with id `kb` (what
+# packages/ble.yaml creates). For a single remote per node set `device_id` /
+# `device_name` as substitutions and pull it as a git package; for several remotes
+# on one node use `!include` with per-remote `vars:`.
 #
 # Named actions (volume_up, mute, play_pause, next_track, prev_track, stop, power)
 # are built into the component; the rest use raw HID usages — `consumer:` codes
@@ -31,7 +25,7 @@ esphome:
 button:
   # --- power ---
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_power_toggle
     name: "Power"
@@ -39,19 +33,19 @@ button:
 
   # --- volume ---
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_volume_up
     name: "Volume Up"
     action: "volume_up"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_volume_down
     name: "Volume Down"
     action: "volume_down"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_mute
     name: "Mute"
@@ -59,13 +53,13 @@ button:
 
   # --- channel (HID Consumer: Channel Increment/Decrement) ---
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_channel_up
     name: "Channel Up"
     action: { type: consumer, code: 0x9C }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_channel_down
     name: "Channel Down"
@@ -73,61 +67,61 @@ button:
 
   # --- transport ---
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_play_pause
     name: "Play Pause"
     action: "play_pause"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_play
     name: "Play"
     action: { type: consumer, code: 0xB0 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_pause
     name: "Pause"
     action: { type: consumer, code: 0xB1 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_stop
     name: "Stop"
     action: "stop"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_record
     name: "Record"
     action: { type: consumer, code: 0xB2 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_rewind
     name: "Rewind"
     action: { type: consumer, code: 0xB4 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_fast_forward
     name: "Fast Forward"
     action: { type: consumer, code: 0xB3 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_next
     name: "Next"
     action: "next_track"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_previous
     name: "Previous"
     action: "prev_track"
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_eject
     name: "Eject"
@@ -135,49 +129,49 @@ button:
 
   # --- navigation (HID Consumer: Menu usages 0x40-0x46, AC Home 0x223) ---
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_menu
     name: "Menu"
     action: { type: consumer, code: 0x40 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_select
     name: "Select"
     action: { type: consumer, code: 0x41 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_up
     name: "Up"
     action: { type: consumer, code: 0x42 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_down
     name: "Down"
     action: { type: consumer, code: 0x43 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_left
     name: "Left"
     action: { type: consumer, code: 0x44 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_right
     name: "Right"
     action: { type: consumer, code: 0x45 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_back
     name: "Back"
     action: { type: consumer, code: 0x46 }
   - platform: ble_keyboard
-    keyboard_id: ${ble_keyboard_id}
+    keyboard_id: kb
     device_id: ${device_id}
     id: ${device_id}_home
     name: "Home"

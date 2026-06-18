@@ -2,11 +2,12 @@
 #
 # Add your `esp32: board:` and an `external_components:` (where you pin the
 # release); this package supplies the ESP-IDF Bluetooth sdkconfig (the part that's
-# easy to get wrong) and the keyboard component. Pair it with canonical.yaml:
+# easy to get wrong) and the keyboard component (id `kb`). The BLE name the host
+# sees is `${device_name}` — the same name as the HA sub-device. Pair with
+# canonical.yaml:
 #
 #   substitutions:
-#     ble_name: Living Room Remote     # the name the TV sees when pairing
-#     ble_keyboard_id: kb
+#     device_name: Living TV
 #   packages:
 #     ble: github://HomeOps/esphome-blekeyboard/packages/ble.yaml@<ref>
 
@@ -28,6 +29,6 @@ esp32:
       CONFIG_BT_ACL_CONNECTIONS: "4"
 
 ble_keyboard:
-  id: ${ble_keyboard_id}
-  device_name: "${ble_name}"
+  id: kb
+  device_name: "${device_name}"
   host_slots: 4

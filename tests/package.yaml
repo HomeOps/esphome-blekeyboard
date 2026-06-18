@@ -19,17 +19,14 @@ packages:
   ble: !include
     file: ../packages/ble.yaml
     vars:
-      ble_name: Pkg Test
-      ble_keyboard_id: kb
+      device_name: Pkg Test
   living_tv: !include
     file: ../packages/canonical.yaml
     vars:
       device_id: living_tv
       device_name: Living TV
-      ble_keyboard_id: kb
   bedroom_tv: !include
     file: ../packages/canonical.yaml
     vars:
       device_id: bedroom_tv
       device_name: Bedroom TV
-      ble_keyboard_id: kb
