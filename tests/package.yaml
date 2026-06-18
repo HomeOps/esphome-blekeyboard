@@ -21,7 +21,9 @@ packages:
     file: ../packages/media_keys.yaml
     vars:
       ble_device_id: living_tv
+      ble_device_name: "Living TV Remote"
   bedroom_tv: !include
     file: ../packages/media_keys.yaml
     vars:
       ble_device_id: bedroom_tv
+      ble_device_name: "Bedroom TV Remote"

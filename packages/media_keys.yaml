@@ -7,9 +7,11 @@
 # transports.
 #
 # Import it once per remote. It targets a `ble_keyboard:` with id `kb` (what
-# packages/keyboard.yaml creates). The only knob is `ble_device_id`: set it as a
-# substitution (single remote, git package) or pass it per remote via `!include`
-# `vars:` (several remotes on one node).
+# packages/keyboard.yaml creates). Two knobs: `ble_device_id` (the id +
+# button-id prefix, e.g. master_room_tv) and `ble_device_name` (the pretty HA
+# display name, e.g. "Master Room TV Remote"). Set them as substitutions (single
+# remote, git package) or pass them per remote via `!include` `vars:` (several
+# remotes on one node).
 #
 # Named actions (volume_up, mute, play_pause, next_track, prev_track, stop, power)
 # are built into the component; the rest use raw HID usages — `consumer:` codes
@@ -20,7 +22,7 @@
 esphome:
   devices:
     - id: ${ble_device_id}
-      name: "${ble_device_id}"
+      name: "${ble_device_name}"
 
 button:
   # --- power ---

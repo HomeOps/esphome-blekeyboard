@@ -63,7 +63,8 @@ esp32:
   board: m5stack-atom          # your ESP32 board
 
 substitutions:
-  ble_device_id: living_tv     # the HA sub-device + button-id prefix
+  ble_device_id: living_tv          # the HA sub-device id + button-id prefix
+  ble_device_name: "Living TV"      # the pretty HA display name
 
 .repo: &repo                   # repo + ref written once, reused below
   url: https://github.com/HomeOps/esphome-blekeyboard
@@ -78,13 +79,13 @@ packages:
   media_keys: { <<: *repo, files: [packages/media_keys.yaml] }
 ```
 
-One substitution, the repo pinned once. Flash it, pair with the TV, and Home
-Assistant gets a **living_tv** device with Power, Volume, Mute, Play/Pause, channel
-and navigation buttons — all canonically named (rename the device in HA if you
-like). (`ble_keyboard` id defaults to `kb`. One remote per node via
-`substitutions:`; for several remotes on one node, `!include packages/media_keys.yaml`
-with per-remote `vars: { ble_device_id: … }` instead.) **Validity ≠ correctness**:
-a green compile proves the YAML; verify the keys on the real host.
+Two substitutions, the repo pinned once. Flash it, pair with the TV, and Home
+Assistant gets a **Living TV** device with Power, Volume, Mute, Play/Pause, channel
+and navigation buttons — all canonically named. (`ble_keyboard` id defaults to
+`kb`. One remote per node via `substitutions:`; for several remotes on one node,
+`!include packages/media_keys.yaml` with per-remote
+`vars: { ble_device_id: …, ble_device_name: … }` instead.) **Validity ≠
+correctness**: a green compile proves the YAML; verify the keys on the real host.
 
 It maps power, volume/mute, channel, transport (play/pause/stop/record/rewind/
 fast-forward/next/previous/eject) and navigation (menu/select/arrows/back/home) —
