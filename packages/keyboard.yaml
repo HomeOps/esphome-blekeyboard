@@ -1,0 +1,38 @@
+# Importable package: enable BLE on the ESP32 + instantiate the ble_keyboard.
+#
+# Add your `esp32: board:` and an `external_components:` (where you pin the
+# release); this package supplies the ESP-IDF Bluetooth sdkconfig (the part that's
+# easy to get wrong), the keyboard component (id `kb`) and a BLE-link sensor. Pair
+# it with media_keys.yaml. No substitutions of its own — the host sees the
+# component's default BLE name (override with your own `ble_keyboard: device_name:`
+# if you like).
+
+esp32:
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_BT_ENABLED: y
+      CONFIG_BT_CONTROLLER_ENABLED: y
+      CONFIG_BT_BLUEDROID_ENABLED: y
+      CONFIG_BT_NIMBLE_ENABLED: n
+      CONFIG_BT_BLE_ENABLED: y
+      CONFIG_BT_GATTS_ENABLE: y
+      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
+      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: n
+      CONFIG_BT_BLE_42_ADV_EN: y
+      CONFIG_BT_BLE_42_SCAN_EN: y
+      CONFIG_BT_BLE_SMP_ENABLE: y
+      CONFIG_BT_ACL_CONNECTIONS: "4"
+
+ble_keyboard:
+  id: kb
+  host_slots: 4
+
+# BLE link status — so HA (and Concerto) know whether the host is connected before
+# sending a key.
+binary_sensor:
+  - platform: ble_keyboard
+    keyboard_id: kb
+    type: paired
+    name: "BLE Paired"
+    device_class: connectivity

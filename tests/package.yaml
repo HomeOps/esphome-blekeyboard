@@ -1,0 +1,29 @@
+# CI compile target — imports packages/keyboard.yaml (BLE enablement) once and
+# packages/media_keys.yaml twice (two remotes), proving both packages compile and
+# that multiple media_keys includes merge into distinct sub-devices.
+esphome:
+  name: blekb-pkg
+
+esp32:
+  board: m5stack-atom
+
+logger:
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [ble_keyboard]
+
+packages:
+  keyboard: !include ../packages/keyboard.yaml
+  living_tv: !include
+    file: ../packages/media_keys.yaml
+    vars:
+      ble_device_id: living_tv
+      ble_device_name: "Living TV Remote"
+  bedroom_tv: !include
+    file: ../packages/media_keys.yaml
+    vars:
+      ble_device_id: bedroom_tv
+      ble_device_name: "Bedroom TV Remote"

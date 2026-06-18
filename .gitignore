@@ -1,2 +1,4 @@
 CLAUDE.md
 To_do.txt
+__pycache__/
+*.pyc
