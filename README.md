@@ -128,6 +128,36 @@ Because it's the same `execute_action` engine the buttons use, anything a button
 can do, the service can do — plus macros and typed text. (It needs the native
 API, so a network component is required.)
 
+### Device identity (PnP ID) — Android TV by default
+
+A TV decides which **key layout** to apply to a remote by its **vendor ID**. So
+by default this component advertises **Google's Reference Remote** identity
+(vendor `0x0957`), which makes an Android/Google TV treat it like a known remote
+— that's what lets app-launch usages work:
+
+| App | `action:` | via Google's layout |
+|-----|-----------|---------------------|
+| YouTube | `consumer:0x77` | launches YouTube |
+| Netflix | `consumer:0x78` | launches Netflix |
+| Featured app | `consumer:0x187` | `FEATURED_APP_1` |
+
+It's fully overridable — for a plain keyboard on a PC/phone, advertise a generic
+identity instead:
+
+```yaml
+ble_keyboard:
+  id: kb
+  vendor_id_source: 1      # Bluetooth SIG
+  vendor_id: 0x02E5        # Espressif (generic keyboard identity)
+  product_id: 0xA1B2
+```
+
+Two things in the open: the PnP ID is read at bond time, so **changing it means
+re-pairing once**; and `VIDEO_APP_1`–`8` / `FEATURED_APP_2`–`4` have **no
+published HID usage** — each TV vendor wires those in a private layout, so they
+can't be reproduced without capturing your own remote's raw usages
+(`adb shell getevent -lt`, read the `MSC_SCANCODE` line).
+
 
 ## Usage Example
 
