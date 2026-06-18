@@ -40,6 +40,38 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 
 
+## Canonical media controls — `packages/canonical.yaml`
+
+A ready-made importable package exposes **every known canonical control** (the
+[homeops-ir-canonical](https://github.com/HomeOps/ir-canonical) vocabulary that has
+a BLE HID equivalent) as buttons, grouped under a Home Assistant **sub-device**.
+Button ids are `<device_id>_<canonical>` — the *same id a control gets on the IR
+side* (esphome-ir-codegen), so [Concerto](https://github.com/HomeOps/concerto)
+drives one canonical control across IR and BLE alike.
+
+Import it once per remote with `!include` + `vars` (include it again with a
+different `device_id` for each remote):
+
+```yaml
+ble_keyboard:
+  id: kb
+
+packages:
+  living_tv: !include
+    file: packages/canonical.yaml     # this repo's file (vendor it, or pin via the component ref)
+    vars:
+      device_id: living_tv
+      device_name: Living TV
+      ble_keyboard_id: kb
+```
+
+It maps power, volume/mute, channel, transport (play/pause/stop/record/rewind/
+fast-forward/next/previous/eject) and navigation (menu/select/arrows/back/home) —
+the component's named actions where they exist, standard HID consumer/keyboard
+usages otherwise. **Validity ≠ correctness**: a green compile proves the YAML;
+verify the keys against the real BLE host.
+
+
 ## Usage Example
 
 Add the following to your ESPHome YAML configuration:
