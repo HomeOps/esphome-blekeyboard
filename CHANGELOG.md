@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.4.0...v0.5.0) (2026-06-18)
+
+
+### Features
+
+* configurable PnP vendor/product ID, default to Google TV remote ([#14](https://github.com/HomeOps/esphome-blekeyboard/issues/14)) ([4e12d11](https://github.com/HomeOps/esphome-blekeyboard/commit/4e12d112593766eb6ad03a9bc211a5782ac15e11))
+
 ## [0.4.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.3.0...v0.4.0) (2026-06-18)
 
 
