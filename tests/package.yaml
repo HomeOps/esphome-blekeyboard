@@ -1,26 +1,11 @@
-# CI compile target — imports packages/canonical.yaml twice (two remotes) to prove
-# the importable canonical-controls package compiles and that multiple includes
-# with different device_ids merge into distinct sub-devices.
+# CI compile target — imports packages/ble.yaml (BLE enablement) once and
+# packages/canonical.yaml twice (two remotes), proving both packages compile and
+# that multiple canonical includes merge into distinct sub-devices.
 esphome:
   name: blekb-pkg
 
 esp32:
   board: m5stack-atom
-  framework:
-    type: esp-idf
-    sdkconfig_options:
-      CONFIG_BT_ENABLED: y
-      CONFIG_BT_CONTROLLER_ENABLED: y
-      CONFIG_BT_BLUEDROID_ENABLED: y
-      CONFIG_BT_NIMBLE_ENABLED: n
-      CONFIG_BT_BLE_ENABLED: y
-      CONFIG_BT_GATTS_ENABLE: y
-      CONFIG_BT_BLE_42_FEATURES_SUPPORTED: y
-      CONFIG_BT_BLE_50_FEATURES_SUPPORTED: n
-      CONFIG_BT_BLE_42_ADV_EN: y
-      CONFIG_BT_BLE_42_SCAN_EN: y
-      CONFIG_BT_BLE_SMP_ENABLE: y
-      CONFIG_BT_ACL_CONNECTIONS: "4"
 
 logger:
 
@@ -30,11 +15,12 @@ external_components:
       path: ../components
     components: [ble_keyboard]
 
-ble_keyboard:
-  id: kb
-  device_name: "Pkg Test"
-
 packages:
+  ble: !include
+    file: ../packages/ble.yaml
+    vars:
+      ble_name: Pkg Test
+      ble_keyboard_id: kb
   living_tv: !include
     file: ../packages/canonical.yaml
     vars:

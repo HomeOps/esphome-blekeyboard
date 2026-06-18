@@ -40,36 +40,56 @@ This is a custom ESPHome component that transforms an ESP32 into a Bluetooth Low
 📖 [Keycode Reference](docs/keycodes.md) · [🌐 View Web Page](https://markusg1234.github.io/ESPHome-espidf_ble_keyboard)
 
 
-## Canonical media controls — `packages/canonical.yaml`
+## Showcase: a BLE media remote in one file
 
-A ready-made importable package exposes **every known canonical control** (the
-[homeops-ir-canonical](https://github.com/HomeOps/ir-canonical) vocabulary that has
-a BLE HID equivalent) as buttons, grouped under a Home Assistant **sub-device**.
-Button ids are `<device_id>_<canonical>` — the *same id a control gets on the IR
-side* (esphome-ir-codegen), so [Concerto](https://github.com/HomeOps/concerto)
-drives one canonical control across IR and BLE alike.
+Two importable packages turn any ESP32 into a Home-Assistant-controlled BLE media
+remote — **nothing to copy, nothing to hand-wire**:
 
-Import it once per remote with `!include` + `vars` (include it again with a
-different `device_id` for each remote):
+- **`packages/ble.yaml`** — enables BLE (the ESP-IDF Bluetooth `sdkconfig` that's
+  easy to get wrong) and instantiates the `ble_keyboard`.
+- **`packages/canonical.yaml`** — one button per **canonical control** (the
+  [homeops-ir-canonical](https://github.com/HomeOps/ir-canonical) vocabulary that
+  has a BLE HID equivalent), grouped under a Home Assistant **sub-device**. Button
+  ids are `<device_id>_<canonical>` — the *same id a control gets on the IR side*
+  ([esphome-ir-codegen](https://github.com/HomeOps/esphome-ir-codegen)) — so
+  [Concerto](https://github.com/HomeOps/concerto) drives one canonical control over
+  IR or BLE alike.
 
 ```yaml
-ble_keyboard:
-  id: kb
+esphome:
+  name: media-remote
+esp32:
+  board: m5stack-atom          # your ESP32 board
+
+substitutions:
+  ble_name: Living Room Remote # the name the TV/host sees when pairing
+  device_id: living_tv         # the HA sub-device + button-id prefix
+  device_name: Living TV
+  ble_keyboard_id: kb
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/HomeOps/esphome-blekeyboard
+      ref: v0.1.0              # pin a release
+      path: components
+    components: [ble_keyboard]
 
 packages:
-  living_tv: !include
-    file: packages/canonical.yaml     # this repo's file (vendor it, or pin via the component ref)
-    vars:
-      device_id: living_tv
-      device_name: Living TV
-      ble_keyboard_id: kb
+  ble:    github://HomeOps/esphome-blekeyboard/packages/ble.yaml@v0.1.0
+  remote: github://HomeOps/esphome-blekeyboard/packages/canonical.yaml@v0.1.0
 ```
+
+Flash it, pair with the TV, and Home Assistant gets a **Living TV** device with
+Power, Volume, Mute, Play/Pause, channel and navigation buttons — all canonically
+named. (One remote per node via `substitutions:`; for several remotes on one node,
+`!include packages/canonical.yaml` with per-remote `vars:` instead.) **Validity ≠
+correctness**: a green compile proves the YAML; verify the keys on the real host.
 
 It maps power, volume/mute, channel, transport (play/pause/stop/record/rewind/
 fast-forward/next/previous/eject) and navigation (menu/select/arrows/back/home) —
 the component's named actions where they exist, standard HID consumer/keyboard
-usages otherwise. **Validity ≠ correctness**: a green compile proves the YAML;
-verify the keys against the real BLE host.
+usages otherwise.
 
 
 ## Usage Example
