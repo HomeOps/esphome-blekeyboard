@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.1.0...v0.2.0) (2026-06-18)
+
+
+### Features
+
+* importable canonical-controls package for BLE ([#8](https://github.com/HomeOps/esphome-blekeyboard/issues/8)) ([3c77c4b](https://github.com/HomeOps/esphome-blekeyboard/commit/3c77c4b8a902ffffeb649a9c43ff59707d5d69c7))
+
 ## [0.1.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.0.0...v0.1.0) (2026-06-16)
 
 
