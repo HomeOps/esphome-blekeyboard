@@ -1,11 +1,13 @@
 # Importable package: enable BLE on the ESP32 + instantiate the ble_keyboard.
 #
-# Add your `esp32: board:` and an `external_components:` (where you pin the
-# release); this package supplies the ESP-IDF Bluetooth sdkconfig (the part that's
-# easy to get wrong), the keyboard component (id `kb`) and a BLE-link sensor. Pair
-# it with media_keys.yaml. No substitutions of its own — the host sees the
+# Add your `esp32: board:`, a network (`wifi:`/`ethernet:`) and an
+# `external_components:` (where you pin the release); this package supplies the
+# ESP-IDF Bluetooth sdkconfig (the part that's easy to get wrong), the keyboard
+# component (id `kb`), a BLE-link sensor and a `send_keys` HA service. Pair it
+# with media_keys.yaml. No substitutions of its own — the host sees the
 # component's default BLE name (override with your own `ble_keyboard: device_name:`
-# if you like).
+# if you like). The `send_keys` service needs the native API, so a network
+# component is required.
 
 esp32:
   framework:
@@ -36,3 +38,29 @@ binary_sensor:
     type: paired
     name: "BLE Paired"
     device_class: connectivity
+
+# Home Assistant service to send ANY key, HID usage, or macro on demand — beyond
+# the fixed media_keys buttons. Call it from HA as `esphome.<node>_send_keys`
+# with an `action` string, using the component's action grammar:
+#   named     volume_up | mute | power | play_pause | next_track | ctrl_alt_del | …
+#   consumer  "consumer:0x40"     (raw HID Consumer-page usage, hex or decimal)
+#   combo     "combo:0x01:0x4F"   (modifier:keycode on the Keyboard page)
+#   text      "string:hello"  or just  "hello"   (typed as keystrokes)
+#   macro     "menu|delay:200|down|down|select"  ('|'-separated steps, optional delay:ms)
+# Merges with your own `api:` block (encryption, etc.); `services:` lists concatenate.
+api:
+  services:
+    - service: send_keys
+      variables:
+        action: string
+      then:
+        - lambda: 'id(kb)->execute_action(action);'
+        # Force the owning std::string arg type instead of the zero-copy
+        # StringRef that ESPHome 2026.5+ picks for fully-synchronous chains.
+        # StringRef's api instantiation is newer than std::string's, so after an
+        # esphome upgrade a stale cached `user_services.cpp.o` can miss the
+        # StringRef symbol -> "undefined reference to get_execute_arg_value
+        # <StringRef>" at link. A non-synchronous action (this 0 ms delay) flips
+        # codegen to the long-standing std::string type, which every api object
+        # file provides. Harmless at runtime. (A clean build also fixes it.)
+        - delay: 0ms

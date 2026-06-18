@@ -2,3 +2,11 @@ CLAUDE.md
 To_do.txt
 __pycache__/
 *.pyc
+
+# ESPHome build artifacts (created by `esphome compile` in tests/, etc.)
+.esphome/
+secrets.yaml
+
+# Local throwaway esphome venvs / compile logs (version-repro work)
+.venv*/
+.compile*.log

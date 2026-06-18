@@ -92,6 +92,31 @@ fast-forward/next/previous/eject) and navigation (menu/select/arrows/back/home) 
 the component's named actions where they exist, standard HID consumer/keyboard
 usages otherwise.
 
+### Sending arbitrary keys — the `send_keys` service
+
+The fixed buttons cover the common controls. For anything else, `keyboard.yaml`
+also exposes a Home Assistant service, **`esphome.<node>_send_keys`**, that takes
+a single `action` string. The grammar (handled by the component) is:
+
+| Form | Example | Sends |
+|------|---------|-------|
+| named | `volume_up`, `mute`, `power`, `play_pause`, `ctrl_alt_del` | a built-in action |
+| `consumer:` | `consumer:0x40` | a raw HID Consumer-page usage (hex/decimal) |
+| `combo:` | `combo:0x01:0x4F` | `modifier:keycode` on the Keyboard page |
+| text | `string:hello` or just `hello` | typed as keystrokes |
+| macro | `menu\|delay:200\|down\|down\|select` | `\|`-separated steps, optional `delay:ms` |
+
+```yaml
+# Home Assistant automation / Developer Tools → Actions
+action: esphome.media_remote_send_keys
+data:
+  action: "menu|delay:300|down|select"
+```
+
+Because it's the same `execute_action` engine the buttons use, anything a button
+can do, the service can do — plus macros and typed text. (It needs the native
+API, so a network component is required.)
+
 
 ## Usage Example
 
