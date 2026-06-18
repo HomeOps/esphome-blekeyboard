@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.3.0...v0.4.0) (2026-06-18)
+
+
+### Features
+
+* add gamepad button report for Android TV keycodes (BUTTON_n) ([#13](https://github.com/HomeOps/esphome-blekeyboard/issues/13)) ([46e690c](https://github.com/HomeOps/esphome-blekeyboard/commit/46e690cb496f56f797c1555c6e8988acc4c372fe))
+
 ## [0.3.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.2.0...v0.3.0) (2026-06-18)
 
 
