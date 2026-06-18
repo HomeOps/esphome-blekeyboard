@@ -32,3 +32,12 @@ ble_keyboard:
   id: kb
   device_name: "${device_name}"
   host_slots: 4
+
+# BLE link status — so HA (and Concerto) know whether the host is connected before
+# sending a key.
+binary_sensor:
+  - platform: ble_keyboard
+    keyboard_id: kb
+    type: paired
+    name: "${device_name} BLE"
+    device_class: connectivity
