@@ -1,6 +1,8 @@
-# CI compile target — imports packages/keyboard.yaml (BLE enablement) once and
-# packages/media_keys.yaml twice (two remotes), proving both packages compile and
-# that multiple media_keys includes merge into distinct sub-devices.
+# CI compile target — imports packages/keyboard.yaml (BLE enablement + send_keys
+# service) once and packages/media_keys.yaml twice (two remotes), proving both
+# packages compile, that multiple media_keys includes merge into distinct
+# sub-devices, and that keyboard.yaml's `api: services:` merges with a user's own
+# `api:` block.
 esphome:
   name: blekb-pkg
 
@@ -8,6 +10,13 @@ esp32:
   board: m5stack-atom
 
 logger:
+
+wifi:
+  ssid: "test-ssid"
+  password: "test-password"
+
+# A user's own api: block — keyboard.yaml's `api: services:` merges into it.
+api:
 
 external_components:
   - source:
