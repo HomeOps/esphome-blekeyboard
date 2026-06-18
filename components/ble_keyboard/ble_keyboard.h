@@ -81,6 +81,7 @@ class BleKeyboard : public Component {
   void send_mouse_click(uint8_t buttons);
   void send_mouse_move(int8_t x, int8_t y);
   void send_mouse_scroll(int8_t wheel);
+  void send_gamepad_button(uint8_t button);
 
   void set_passkey(uint32_t passkey) {
     passkey_ = passkey;
