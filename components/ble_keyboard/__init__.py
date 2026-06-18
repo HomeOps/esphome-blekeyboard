@@ -19,6 +19,10 @@ CONF_MOUSE_MAX_SPEED = "mouse_max_speed"
 CONF_SCROLL_SENSITIVITY = "scroll_sensitivity"
 CONF_HOSTS = "hosts"
 CONF_SLOT = "slot"
+CONF_VENDOR_ID_SOURCE = "vendor_id_source"
+CONF_VENDOR_ID = "vendor_id"
+CONF_PRODUCT_ID = "product_id"
+CONF_PRODUCT_VERSION = "product_version"
 CONF_CUSTOM_TEXT_ID = "custom_text_id"
 CONF_KEYBOARD_LAYOUT = "keyboard_layout"
 CONF_LAYOUT = "layout"
@@ -82,6 +86,15 @@ CONFIG_SCHEMA = cv.All(
         cv.Optional(CONF_KEYBOARD_LAYOUT, default="us"): cv.one_of(*SUPPORTED_LAYOUTS, lower=True),
         cv.Optional(CONF_CUSTOM_TEXT_ID): cv.ensure_list(cv.use_id(cg.EntityBase)),
         cv.Optional(CONF_HOST_SLOTS, default=4): cv.int_range(min=1, max=10),
+        # PnP ID (Device Information Service). Defaults advertise Google's
+        # Reference Remote (vendor 0x0957) so an Android/Google TV applies that
+        # remote's key layout — which is what makes app-launch usages work. For a
+        # plain keyboard on a PC/phone, override these (e.g. vendor_id_source: 1,
+        # vendor_id: 0x02E5 for the Espressif identity).
+        cv.Optional(CONF_VENDOR_ID_SOURCE, default=2): cv.int_range(min=1, max=2),
+        cv.Optional(CONF_VENDOR_ID, default=0x0957): cv.int_range(min=0, max=0xFFFF),
+        cv.Optional(CONF_PRODUCT_ID, default=0x0001): cv.int_range(min=0, max=0xFFFF),
+        cv.Optional(CONF_PRODUCT_VERSION, default=0x0001): cv.int_range(min=0, max=0xFFFF),
         cv.Optional(CONF_HOSTS): cv.All(cv.ensure_list(HOST_SCHEMA)),
         cv.Optional(CONF_ON_RSSI_ABOVE): automation.validate_automation({
             cv.GenerateID(automation.CONF_TRIGGER_ID): cv.declare_id(RssiAboveTrigger),
@@ -111,6 +124,12 @@ async def to_code(config):
     ))
 
     cg.add(var.set_host_slots(config[CONF_HOST_SLOTS]))
+    cg.add(var.set_pnp_id(
+        config[CONF_VENDOR_ID_SOURCE],
+        config[CONF_VENDOR_ID],
+        config[CONF_PRODUCT_ID],
+        config[CONF_PRODUCT_VERSION],
+    ))
     cg.add(var.set_mouse_sensitivity(config[CONF_MOUSE_SENSITIVITY]))
     cg.add(var.set_mouse_accel(config[CONF_MOUSE_ACCEL]))
     cg.add(var.set_mouse_max_speed(config[CONF_MOUSE_MAX_SPEED]))

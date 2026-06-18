@@ -1524,7 +1524,7 @@ void BleKeyboard::send_consumer(uint16_t usage) {
     ESP_LOGI(TAG, "Consumer report sent: 0x%04X", usage);
 }
 
-// Press+release one of the 16 gamepad buttons (1..16). Android maps the HID
+// Press+release one of the gamepad buttons (1..32). Android maps the HID
 // Button-page usage to KEYCODE_BUTTON_<n>; on Google TV the remote's Menu is
 // BUTTON_11. The exact index<->keycode mapping is host-specific, so callers
 // discover the right button empirically.
@@ -1541,6 +1541,21 @@ void BleKeyboard::send_gamepad_button(uint8_t button) {
     uint8_t release[4] = {0, 0, 0, 0};
     esp_ble_gatts_send_indicate(s_gatts_if, conn_id_, s_gamepad_report_handle, 4, release, false);
     ESP_LOGI(TAG, "Gamepad button %u sent", button);
+}
+
+// Override the DIS PnP ID (vendor-id source + VID/PID/version, all little-endian
+// in the characteristic). Called from codegen before GATT registration, so it
+// lands in the static pnp_id_val the DIS attribute table points at.
+void BleKeyboard::set_pnp_id(uint8_t source, uint16_t vendor_id, uint16_t product_id, uint16_t version) {
+    pnp_id_val[0] = source;
+    pnp_id_val[1] = (uint8_t)(vendor_id & 0xFF);
+    pnp_id_val[2] = (uint8_t)(vendor_id >> 8);
+    pnp_id_val[3] = (uint8_t)(product_id & 0xFF);
+    pnp_id_val[4] = (uint8_t)(product_id >> 8);
+    pnp_id_val[5] = (uint8_t)(version & 0xFF);
+    pnp_id_val[6] = (uint8_t)(version >> 8);
+    ESP_LOGD(TAG, "PnP ID set: src=%u vid=0x%04X pid=0x%04X ver=0x%04X",
+             source, vendor_id, product_id, version);
 }
 
 void BleKeyboard::send_power() {

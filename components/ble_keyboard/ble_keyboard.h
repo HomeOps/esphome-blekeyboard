@@ -100,6 +100,9 @@ class BleKeyboard : public Component {
 
   void set_web_control(bool enabled) { web_control_enabled_ = enabled; }
   void set_host_slots(uint8_t slots) { host_slots_ = slots > MAX_HOST_SLOTS ? MAX_HOST_SLOTS : slots; }
+  // PnP ID (DIS). Must run before GATT registration; codegen setters do. Writing
+  // a TV's expected vendor id makes it apply that remote's key layout.
+  void set_pnp_id(uint8_t source, uint16_t vendor_id, uint16_t product_id, uint16_t version);
 
   // Keyboard layout
   void set_keyboard_layout(const std::string &id);      // YAML default
