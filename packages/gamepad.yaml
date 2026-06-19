@@ -1,0 +1,127 @@
+# Importable package: gamepad-control buttons -> BLE keyboard HID.
+#
+# Creates one button per canonical gamepad control (homeops-ir-canonical pad_*
+# vocabulary) that has a BLE HID equivalent, grouped under a Home Assistant
+# sub-device. Button ids are `${ble_device_id}_<canonical>` — the SAME id the
+# control gets on the IR side (esphome-ir-codegen), so Concerto targets one
+# canonical control across both transports.
+#
+# Import it like media_keys.yaml: targets a `ble_keyboard:` with id `kb` (what
+# packages/keyboard.yaml creates), and takes `ble_device_id` + `ble_device_name`
+# via the include's `vars:`.
+#
+# HOST-AGNOSTIC mapping. Each pad_* control maps to its STANDARD HID Button-page
+# index — the deterministic Linux `BTN_*` / Android `KEYCODE_BUTTON_*` decoding
+# that every compliant host shares (button 1 -> BTN_A, 11 -> BTN_SELECT,
+# 12 -> BTN_START, …). We deliberately do NOT encode any one host's
+# re-interpretation (e.g. Google TV decoding its Menu as BUTTON_11): a host maps
+# standard gamepad buttons to its own functions, which is the host's concern, not
+# ours. The component primitive is `button:N` (1-32); see send_gamepad_button.
+#
+# D-pad (pad_up/down/left/right) is intentionally absent: this HID descriptor has
+# no hat, so directional input isn't a gamepad button. Use the navigation buttons
+# in media_keys.yaml (HID Consumer 0x42-0x45) for up/down/left/right instead.
+
+esphome:
+  devices:
+    - id: ${ble_device_id}
+      name: "${ble_device_name}"
+
+button:
+  # --- face buttons ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_a
+    name: "Pad A"
+    action: "button:1"          # BTN_A
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_b
+    name: "Pad B"
+    action: "button:2"          # BTN_B
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_x
+    name: "Pad X"
+    action: "button:4"          # BTN_X
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_y
+    name: "Pad Y"
+    action: "button:5"          # BTN_Y
+
+  # --- shoulders / triggers ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_l1
+    name: "Pad L1"
+    action: "button:7"          # BTN_TL
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_r1
+    name: "Pad R1"
+    action: "button:8"          # BTN_TR
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_l2
+    name: "Pad L2"
+    action: "button:9"          # BTN_TL2
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_r2
+    name: "Pad R2"
+    action: "button:10"         # BTN_TR2
+
+  # --- stick clicks ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_l3
+    name: "Pad L3"
+    action: "button:14"         # BTN_THUMBL
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_r3
+    name: "Pad R3"
+    action: "button:15"         # BTN_THUMBR
+
+  # --- system buttons (standard names; "view"=select, "menu"=start) ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_select
+    name: "Pad Select"
+    action: "button:11"         # BTN_SELECT
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_view
+    name: "Pad View"
+    action: "button:11"         # BTN_SELECT (View == Select)
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_start
+    name: "Pad Start"
+    action: "button:12"         # BTN_START
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_menu
+    name: "Pad Menu"
+    action: "button:12"         # BTN_START (Menu == Start)
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_pad_home
+    name: "Pad Home"
+    action: "button:13"         # BTN_MODE (Guide / Home)
