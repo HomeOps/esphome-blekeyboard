@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.7.0...v0.7.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* declare the BLE sub-device once in keyboard.yaml ([#23](https://github.com/HomeOps/esphome-blekeyboard/issues/23)) ([399eb81](https://github.com/HomeOps/esphome-blekeyboard/commit/399eb8118930cddc297495c46622abb023accd99))
+
 ## [0.7.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.6.0...v0.7.0) (2026-06-19)
 
 
