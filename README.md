@@ -55,6 +55,13 @@ remote — **nothing to copy, nothing to hand-wire**:
   side* ([esphome-ir-codegen](https://github.com/HomeOps/esphome-ir-codegen)) — so
   [Concerto](https://github.com/HomeOps/concerto) drives one canonical control over
   IR or BLE alike.
+- **`packages/gamepad.yaml`** — same idea for the **`pad_*`** canonical gamepad
+  controls (face / shoulders / triggers / stick-clicks / system buttons). Each maps
+  to its **standard HID Button-page index** (`BTN_A`=1 … `BTN_SELECT`=11,
+  `BTN_START`=12 …) — host-agnostic: any compliant host decodes the standard
+  gamepad identically, so no per-host tailoring. Import it with its own
+  `ble_device_id` for a dedicated controller device. (D-pad is omitted — no hat in
+  the descriptor; use the navigation buttons in `media_keys.yaml`.)
 
 ```yaml
 esphome:
