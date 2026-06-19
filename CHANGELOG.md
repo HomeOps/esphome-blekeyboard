@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.5.0...v0.6.0) (2026-06-19)
+
+
+### Features
+
+* add forget_all action to clear all paired hosts ([#18](https://github.com/HomeOps/esphome-blekeyboard/issues/18)) ([767595e](https://github.com/HomeOps/esphome-blekeyboard/commit/767595e9e89f44f04dfcef92689289e0fb415487))
+* add packages/gamepad.yaml (canonical pad_* gamepad controls) ([#19](https://github.com/HomeOps/esphome-blekeyboard/issues/19)) ([038c718](https://github.com/HomeOps/esphome-blekeyboard/commit/038c718c92076a61ee06ede5fd33e528fc52897c))
+
 ## [0.5.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.4.0...v0.5.0) (2026-06-18)
 
 
