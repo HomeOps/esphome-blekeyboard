@@ -1078,6 +1078,38 @@ void BleKeyboard::forget_host(uint8_t slot) {
     }
 }
 
+void BleKeyboard::forget_all_hosts() {
+    ESP_LOGI(TAG, "Forgetting all host slots and clearing all BLE bonds");
+
+    // Clear every tracked host slot (removes its bond + slot metadata).
+    for (uint8_t slot = 0; slot < host_slots_; slot++) {
+        if (hosts_[slot].occupied)
+            forget_host(slot);
+    }
+
+    // Remove any residual bonds not tracked in a slot (stale / orphaned).
+    int dev_num = esp_ble_get_bond_device_num();
+    if (dev_num > 0) {
+        std::vector<esp_ble_bond_dev_t> bonded(static_cast<size_t>(dev_num));
+        int query_num = dev_num;
+        if (esp_ble_get_bond_device_list(&query_num, bonded.data()) == ESP_OK) {
+            for (int i = 0; i < query_num; i++)
+                esp_ble_remove_bond_device(bonded[static_cast<size_t>(i)].bd_addr);
+        } else {
+            ESP_LOGW(TAG, "forget_all: failed to read bonded device list");
+        }
+    }
+
+    save_host_slots_();
+
+    // Active slot is now empty — advertise undirected so a new host can pair.
+    if (!is_connected_) {
+        esp_ble_gap_stop_advertising();
+        do_start_advertising();
+    }
+    // If still connected, the per-slot disconnect above triggers re-advertising.
+}
+
 bool BleKeyboard::get_active_slot_passkey(bool &has_passkey, uint32_t &passkey, bool &secure_connections) const {
     const auto &cfg = host_slot_configs_[active_slot_];
     if (cfg.has_passkey) {
@@ -1698,6 +1730,10 @@ void BleKeyboard::execute_action(const std::string &action) {
         int slot = 0;
         if (sscanf(action.c_str(), "forget_host:%i", &slot) == 1)
             forget_host((uint8_t) slot);
+        return;
+    }
+    if (action == "forget_all") {
+        forget_all_hosts();
         return;
     }
 

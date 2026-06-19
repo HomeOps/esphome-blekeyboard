@@ -184,6 +184,7 @@ class BleKeyboard : public Component {
   // Multi-host switching
   void switch_host(uint8_t slot);
   void forget_host(uint8_t slot);
+  void forget_all_hosts();
   uint8_t active_host_slot() const { return active_slot_; }
   uint8_t host_slots() const { return host_slots_; }
 
