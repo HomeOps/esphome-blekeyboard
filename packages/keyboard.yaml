@@ -4,10 +4,19 @@
 # `external_components:` (where you pin the release); this package supplies the
 # ESP-IDF Bluetooth sdkconfig (the part that's easy to get wrong), the keyboard
 # component (id `kb`), a BLE-link sensor and a `send_keys` HA service. Pair it
-# with media_keys.yaml. No substitutions of its own — the host sees the
-# component's default BLE name (override with your own `ble_keyboard: device_name:`
-# if you like). The `send_keys` service needs the native API, so a network
-# component is required.
+# with media_keys.yaml.
+#
+# It also declares the single HA device (`ble_device_id` / `ble_device_name`) that
+# ALL BLE buttons and sensors attach to. Import it once per node; media_keys.yaml
+# and gamepad.yaml only ADD buttons to this device (they do not declare it), so the
+# device is defined in exactly one place and the packages compose without an
+# "id redefined" clash. Requires `ble_device_id` + `ble_device_name` substitutions.
+# The `send_keys` service needs the native API, so a network component is required.
+
+esphome:
+  devices:
+    - id: ${ble_device_id}
+      name: "${ble_device_name}"
 
 esp32:
   framework:
@@ -35,6 +44,7 @@ ble_keyboard:
 binary_sensor:
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     type: paired
     name: "BLE Paired"
     device_class: connectivity
@@ -75,46 +85,55 @@ api:
 button:
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_forget_all
     name: "Forget All Hosts"
     action: "forget_all"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_switch_host_1
     name: "Switch to Host 1"
     action: "switch_host:0"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_switch_host_2
     name: "Switch to Host 2"
     action: "switch_host:1"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_switch_host_3
     name: "Switch to Host 3"
     action: "switch_host:2"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_switch_host_4
     name: "Switch to Host 4"
     action: "switch_host:3"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_forget_host_1
     name: "Forget Host 1"
     action: "forget_host:0"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_forget_host_2
     name: "Forget Host 2"
     action: "forget_host:1"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_forget_host_3
     name: "Forget Host 3"
     action: "forget_host:2"
   - platform: ble_keyboard
     keyboard_id: kb
+    device_id: ${ble_device_id}
     id: kb_forget_host_4
     name: "Forget Host 4"
     action: "forget_host:3"

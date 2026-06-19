@@ -1,8 +1,13 @@
-# CI compile target — imports packages/keyboard.yaml (BLE enablement + send_keys
-# service) once, packages/media_keys.yaml twice (two remotes), and
-# packages/gamepad.yaml once (a dedicated controller device), proving the packages
-# compile, that multiple media_keys includes merge into distinct sub-devices, and
-# that keyboard.yaml's `api: services:` merges with a user's own `api:` block.
+# CI compile target — imports keyboard.yaml + media_keys.yaml + gamepad.yaml onto
+# the SAME device (via top-level substitutions), exactly as a generated config does:
+#   packages:
+#     ble:     packages/keyboard.yaml
+#     remote:  packages/media_keys.yaml
+#     gamepad: packages/gamepad.yaml
+# keyboard.yaml declares the device ONCE; media_keys/gamepad only add buttons to it.
+# This proves the three packages compose on one device without an "id redefined"
+# clash (the case that regressed), and that keyboard.yaml's `api: services:` merges
+# with a user's own `api:` block.
 esphome:
   name: blekb-pkg
 
@@ -18,6 +23,10 @@ wifi:
 # A user's own api: block — keyboard.yaml's `api: services:` merges into it.
 api:
 
+substitutions:
+  ble_device_id: master_bedroom_tv_remote
+  ble_device_name: "Master Room TV Remote"
+
 external_components:
   - source:
       type: local
@@ -25,19 +34,6 @@ external_components:
     components: [ble_keyboard]
 
 packages:
-  keyboard: !include ../packages/keyboard.yaml
-  living_tv: !include
-    file: ../packages/media_keys.yaml
-    vars:
-      ble_device_id: living_tv
-      ble_device_name: "Living TV Remote"
-  bedroom_tv: !include
-    file: ../packages/media_keys.yaml
-    vars:
-      ble_device_id: bedroom_tv
-      ble_device_name: "Bedroom TV Remote"
-  game_pad: !include
-    file: ../packages/gamepad.yaml
-    vars:
-      ble_device_id: game_pad
-      ble_device_name: "Game Controller"
+  ble:     !include ../packages/keyboard.yaml
+  remote:  !include ../packages/media_keys.yaml
+  gamepad: !include ../packages/gamepad.yaml
