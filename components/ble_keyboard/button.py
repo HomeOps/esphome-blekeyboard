@@ -51,7 +51,9 @@ def validate_action(value):
         elif action_type == "forget_host":
             slot = int(value.get("slot", 0))
             return f"forget_host:{slot}"
-        raise cv.Invalid(f"Unknown action type '{action_type}'. Use 'combo', 'consumer', 'mouse_click', 'mouse_move', 'mouse_scroll', 'switch_host', or 'forget_host'.")
+        elif action_type == "forget_all":
+            return "forget_all"
+        raise cv.Invalid(f"Unknown action type '{action_type}'. Use 'combo', 'consumer', 'mouse_click', 'mouse_move', 'mouse_scroll', 'switch_host', 'forget_host', or 'forget_all'.")
     raise cv.Invalid("Action must be a string or a mapping with 'type' key.")
 
 
