@@ -178,3 +178,78 @@ button:
     id: ${ble_device_id}_home
     name: "Home"
     action: { type: consumer, code: 0x223 }
+
+  # --- video apps (canonical app_* controls) ---
+  # App-launch has no HID usage of its own, so each app sends a distinct gamepad
+  # button, continuing the standard HID Button-page numbering past the 16 named
+  # gamepad buttons (gamepad.yaml uses 1-15). Host-agnostic, same model as
+  # gamepad.yaml: we emit a standard button and the host's key layout decides which
+  # app it opens (e.g. Android maps these to KEYCODE_VIDEO_APP_n). Buttons carry the
+  # canonical ${ble_device_id}_app_* ids so Concerto targets one control across
+  # transports.
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_youtube
+    name: "YouTube"
+    action: "button:17"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_netflix
+    name: "Netflix"
+    action: "button:18"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_prime_video
+    name: "Prime Video"
+    action: "button:19"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_disney_plus
+    name: "Disney+"
+    action: "button:20"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_hbo_max
+    name: "Max"
+    action: "button:21"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_hulu
+    name: "Hulu"
+    action: "button:22"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_apple_tv
+    name: "Apple TV"
+    action: "button:23"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_spotify
+    name: "Spotify"
+    action: "button:24"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_plex
+    name: "Plex"
+    action: "button:25"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_paramount_plus
+    name: "Paramount+"
+    action: "button:26"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_peacock
+    name: "Peacock"
+    action: "button:27"

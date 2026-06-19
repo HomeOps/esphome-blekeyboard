@@ -46,15 +46,21 @@ Two importable packages turn any ESP32 into a Home-Assistant-controlled BLE medi
 remote — **nothing to copy, nothing to hand-wire**:
 
 - **`packages/keyboard.yaml`** — enables BLE (the ESP-IDF Bluetooth `sdkconfig`
-  that's easy to get wrong), instantiates the `ble_keyboard` (id `kb`) and a
-  BLE-link sensor.
+  that's easy to get wrong), instantiates the `ble_keyboard` (id `kb`), a BLE-link
+  sensor, the `send_keys` HA service, and the **host-management buttons** (Forget
+  All Hosts, Switch to Host 1–4, Forget Host 1–4) — these act on the keyboard
+  itself, so they live here (imported once), not per-remote.
 - **`packages/media_keys.yaml`** — one button per **canonical control** (the
   [homeops-ir-canonical](https://github.com/HomeOps/ir-canonical) vocabulary that
   has a BLE HID equivalent), grouped under a Home Assistant **sub-device**. Button
   ids are `<ble_device_id>_<canonical>` — the *same id a control gets on the IR
   side* ([esphome-ir-codegen](https://github.com/HomeOps/esphome-ir-codegen)) — so
   [Concerto](https://github.com/HomeOps/concerto) drives one canonical control over
-  IR or BLE alike.
+  IR or BLE alike. Covers media/navigation plus the **`app_*`** video-app controls
+  (YouTube, Netflix, …); app-launch has no HID usage of its own, so each app emits a
+  distinct standard gamepad button (continuing past gamepad.yaml's 1–15) and the
+  host's key layout decides which app it opens — host-agnostic, same model as
+  gamepad.
 - **`packages/gamepad.yaml`** — same idea for the **`pad_*`** canonical gamepad
   controls (face / shoulders / triggers / stick-clicks / system buttons). Each maps
   to its **standard HID Button-page index** (`BTN_A`=1 … `BTN_SELECT`=11,

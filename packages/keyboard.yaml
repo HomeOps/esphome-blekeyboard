@@ -64,3 +64,57 @@ api:
         # codegen to the long-standing std::string type, which every api object
         # file provides. Harmless at runtime. (A clean build also fixes it.)
         - delay: 0ms
+
+# Host-management buttons for the keyboard itself (not per-remote, so they live
+# here in keyboard.yaml, which is imported once). They act on `kb`:
+#   - "Forget All Hosts"  wipes every bond and re-advertises so a new host pairs.
+#   - "Switch to Host N"  selects bond slot N-1; an EMPTY slot advertises
+#                         undirected = pairing mode (point the TV at it to pair).
+#   - "Forget Host N"     drops just slot N-1's bond.
+# host_slots defaults to 4 above; these cover slots 0-3.
+button:
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_forget_all
+    name: "Forget All Hosts"
+    action: "forget_all"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_switch_host_1
+    name: "Switch to Host 1"
+    action: "switch_host:0"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_switch_host_2
+    name: "Switch to Host 2"
+    action: "switch_host:1"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_switch_host_3
+    name: "Switch to Host 3"
+    action: "switch_host:2"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_switch_host_4
+    name: "Switch to Host 4"
+    action: "switch_host:3"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_forget_host_1
+    name: "Forget Host 1"
+    action: "forget_host:0"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_forget_host_2
+    name: "Forget Host 2"
+    action: "forget_host:1"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_forget_host_3
+    name: "Forget Host 3"
+    action: "forget_host:2"
+  - platform: ble_keyboard
+    keyboard_id: kb
+    id: kb_forget_host_4
+    name: "Forget Host 4"
+    action: "forget_host:3"
