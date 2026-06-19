@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.6.0...v0.7.0) (2026-06-19)
+
+
+### Features
+
+* auto-generate host-management buttons + app controls in packages ([#21](https://github.com/HomeOps/esphome-blekeyboard/issues/21)) ([acd728e](https://github.com/HomeOps/esphome-blekeyboard/commit/acd728ec29997202884ae72907a9839765fb54bd))
+
 ## [0.6.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.5.0...v0.6.0) (2026-06-19)
 
 
