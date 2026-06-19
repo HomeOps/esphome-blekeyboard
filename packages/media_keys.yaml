@@ -19,11 +19,8 @@
 # (0x07). "Validity != correctness": a green compile proves the YAML; verify the
 # keys against the real BLE host.
 
-esphome:
-  devices:
-    - id: ${ble_device_id}
-      name: "${ble_device_name}"
-
+# The sub-device (${ble_device_id}) is declared once by keyboard.yaml; this package
+# only adds buttons to it. Import keyboard.yaml alongside this one.
 button:
   # --- power ---
   - platform: ble_keyboard

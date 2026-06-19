@@ -22,11 +22,8 @@
 # no hat, so directional input isn't a gamepad button. Use the navigation buttons
 # in media_keys.yaml (HID Consumer 0x42-0x45) for up/down/left/right instead.
 
-esphome:
-  devices:
-    - id: ${ble_device_id}
-      name: "${ble_device_name}"
-
+# The sub-device (${ble_device_id}) is declared once by keyboard.yaml; this package
+# only adds buttons to it. Import keyboard.yaml alongside this one.
 button:
   # --- face buttons ---
   - platform: ble_keyboard
