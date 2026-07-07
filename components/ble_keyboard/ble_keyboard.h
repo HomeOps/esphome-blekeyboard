@@ -95,6 +95,15 @@ class BleKeyboard : public Component {
   void set_device_name(const std::string &name) { device_name_ = name; }
   const std::string &device_name() const { return device_name_; }
 
+  // Name put in the advertising scan-response (the Complete Local Name a host's
+  // pairing scan shows). Defaults to device_name(). Set it distinct to make the
+  // ESP discoverable under a UNIQUE name while it still presents device_name() as
+  // the GATT (0x2A00) / HID name — which is what a host keys its key layout off.
+  // This lets a Sony Bravia apply SONY_TV_VRC_001.kl (from device_name) without the
+  // advertised name colliding with an already-paired remote that owns that name.
+  void set_advertised_name(const std::string &name) { advertised_name_ = name; }
+  const std::string &advertised_name() const { return advertised_name_.empty() ? device_name_ : advertised_name_; }
+
   void set_key_delay_ms(uint32_t ms) { key_delay_ms_ = ms; }
   uint32_t key_delay_ms() const { return key_delay_ms_; }
 
@@ -261,6 +270,7 @@ class BleKeyboard : public Component {
   bool has_passkey_{false};
   bool passkey_secure_connections_{false};
   std::string device_name_{"ESP32 BLE KB"};
+  std::string advertised_name_{};  // empty => advertise device_name_
   uint32_t key_delay_ms_{80};
 
   bool web_control_enabled_{false};

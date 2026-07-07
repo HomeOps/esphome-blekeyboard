@@ -326,7 +326,7 @@ static void do_start_advertising() {
         s_adv_data_set = false;
         s_scan_rsp_data_set = false;
         esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
-        std::string dev_name = (s_instance != nullptr) ? s_instance->device_name() : "ESP32 BLE KB";
+        std::string dev_name = (s_instance != nullptr) ? s_instance->advertised_name() : "ESP32 BLE KB";
         std::vector<uint8_t> scan_rsp;
         scan_rsp.push_back(static_cast<uint8_t>(dev_name.length() + 1));
         scan_rsp.push_back(0x09);
@@ -347,7 +347,7 @@ static void do_start_advertising() {
     s_adv_data_set = false;
     s_scan_rsp_data_set = false;
     esp_err_t adv_ret = esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
-    std::string dev_name = (s_instance != nullptr) ? s_instance->device_name() : "ESP32 BLE KB";
+    std::string dev_name = (s_instance != nullptr) ? s_instance->advertised_name() : "ESP32 BLE KB";
     std::vector<uint8_t> scan_rsp;
     scan_rsp.push_back(static_cast<uint8_t>(dev_name.length() + 1));
     scan_rsp.push_back(0x09);  // Complete Local Name AD type

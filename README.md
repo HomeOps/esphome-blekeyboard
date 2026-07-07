@@ -188,12 +188,24 @@ it by hand:
 ```yaml
 ble_keyboard:
   id: kb
-  device_name: "SONY TV VRC 001"   # Android matches the layout by device name
-  vendor_id_source: 2              # USB-IF
-  vendor_id: 0x054C                # Sony Corporation
+  device_name: "SONY TV VRC 001"       # GATT/HID name → TV keys the layout off this
+  advertised_name: "Master BR Remote"  # unique name the pairing scan shows
+  vendor_id_source: 2                  # USB-IF
+  vendor_id: 0x054C                    # Sony Corporation
   product_id: 0x0F22
   product_version: 0x0011
 ```
+
+**Why the two names.** `device_name` is the GATT (`0x2A00`) / HID name Android reads
+after connecting, and it keys `SONY_TV_VRC_001.kl` off that — so it *must* be
+exactly `SONY TV VRC 001`. But a Bravia's pairing scan won't surface a second
+device whose name matches your already-paired physical remote. `advertised_name`
+(new) is broadcast in the advertising scan-response — the name the pairing scan
+shows — so the ESP appears under a **unique** name you can pick, then presents
+`SONY TV VRC 001` over GATT once connected. You get the Sony layout *and* clean
+pairing alongside the real remote. If `advertised_name` is omitted it falls back
+to `device_name`. `packages/sony_bravia.yaml` sets `advertised_name` to the HA
+display name (`${ble_device_name}`) automatically.
 
 These usages were captured from a physical Bravia remote (`SONY TV VRC 001`, on a
 BRAVIA 4K AE2) with `adb shell getevent -lt` — the `MSC_SCAN` line is the raw HID

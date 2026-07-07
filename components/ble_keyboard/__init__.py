@@ -8,6 +8,7 @@ AUTO_LOAD = ["sensor", "binary_sensor", "button", "text"]
 
 # Define configuration keys
 CONF_DEVICE_NAME = "device_name"
+CONF_ADVERTISED_NAME = "advertised_name"
 CONF_KEY_DELAY_MS = "key_delay_ms"
 CONF_PASSKEY = "passkey"
 CONF_PASSKEY_MODE = "passkey_mode"
@@ -71,6 +72,11 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema({
         cv.GenerateID(): cv.declare_id(BleKeyboard),
         cv.Optional(CONF_DEVICE_NAME, default="ESP32 BLE KB"): cv.All(cv.string, cv.Length(max=29)),
+        # Name broadcast in the advertising scan-response (what a host's pairing scan
+        # shows). Defaults to device_name. Set distinct to stay discoverable under a
+        # unique name while device_name (the GATT/HID name a host keys its key layout
+        # off) can duplicate an existing remote's name — e.g. a Sony Bravia.
+        cv.Optional(CONF_ADVERTISED_NAME): cv.All(cv.string, cv.Length(max=29)),
         cv.Optional(CONF_KEY_DELAY_MS, default=80): cv.int_range(min=2, max=10000),
         cv.Optional(CONF_PASSKEY): cv.int_range(min=0, max=999999),
         cv.Optional(CONF_PASSKEY_MODE, default=PASSKEY_MODE_LEGACY): cv.one_of(
@@ -114,6 +120,8 @@ async def to_code(config):
     await cg.register_component(var, config)
 
     cg.add(var.set_device_name(config[CONF_DEVICE_NAME]))
+    if CONF_ADVERTISED_NAME in config:
+        cg.add(var.set_advertised_name(config[CONF_ADVERTISED_NAME]))
     cg.add(var.set_key_delay_ms(config[CONF_KEY_DELAY_MS]))
 
     if CONF_PASSKEY in config:

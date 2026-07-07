@@ -25,9 +25,18 @@
 # Present as the Sony remote (vendor 0x054C / product 0x0F22, device name
 # "SONY TV VRC 001") so the Bravia applies SONY_TV_VRC_001.kl. Merges with the
 # ble_keyboard block keyboard.yaml declares (same id `kb`).
+#
+# device_name is the GATT (0x2A00) / HID name the TV keys its key layout off, so
+# it MUST be exactly "SONY TV VRC 001". But a Bravia's pairing scan won't surface
+# a second device whose name matches your already-paired physical remote — so we
+# advertise a DISTINCT name (advertised_name) that the pairing scan shows, while
+# still reporting "SONY TV VRC 001" over GATT. Result: discoverable under a unique
+# name, but still gets the Sony key layout. advertised_name defaults to the HA
+# display name; override if you want something else (<=29 chars).
 ble_keyboard:
   id: kb
   device_name: "SONY TV VRC 001"
+  advertised_name: "${ble_device_name}"
   vendor_id_source: 2      # USB-IF
   vendor_id: 0x054C        # Sony Corporation
   product_id: 0x0F22
