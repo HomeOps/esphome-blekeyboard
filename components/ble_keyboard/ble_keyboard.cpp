@@ -50,9 +50,13 @@ static const uint8_t hid_report_map[] = {
     0xA1, 0x01,        // Collection (Application)
     0x85, 0x02,        //   Report ID (2)
     0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
+    0x26, 0xFF, 0x7F,  //   Logical Maximum (32767) — see Usage Maximum below
     0x19, 0x00,        //   Usage Minimum (0)
-    0x2A, 0xFF, 0x03,  //   Usage Maximum (1023)
+    0x2A, 0xFF, 0x7F,  //   Usage Maximum (32767) — widened from 0x3FF so vendor
+                       //   consumer usages above the standard AC range are
+                       //   transmittable (e.g. a Sony Bravia remote's Menu 0x51F
+                       //   and app-launch keys 0x4E5-0x547, captured via getevent).
+                       //   Stays inside signed 16-bit, so no 4-byte item needed.
     0x75, 0x10,        //   Report Size (16)
     0x95, 0x01,        //   Report Count (1)
     0x81, 0x00,        //   Input (Data, Array)

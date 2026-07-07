@@ -171,6 +171,43 @@ published HID usage** — each TV vendor wires those in a private layout, so the
 can't be reproduced without capturing your own remote's raw usages
 (`adb shell getevent -lt`, read the `MSC_SCANCODE` line).
 
+### Sony Bravia (Android TV) — captured remote map
+
+Google's identity covers the standard keys plus YouTube/Netflix, but a Sony
+Bravia's **Menu** and most app-launch buttons are vendor-private — they only
+resolve under the TV's own `SONY_TV_VRC_001.kl` layout. To reach them, advertise
+the Sony remote's PnP identity so the Bravia applies that layout:
+
+```yaml
+ble_keyboard:
+  id: kb
+  vendor_id_source: 2      # USB-IF
+  vendor_id: 0x054C        # Sony Corporation
+  product_id: 0x0F22
+  product_version: 0x0011
+```
+
+These usages were captured from a physical Bravia remote (`SONY TV VRC 001`, on a
+BRAVIA 4K AE2) with `adb shell getevent -lt` — the `MSC_SCAN` line is the raw HID
+Consumer-page usage. They all sit on the Consumer page, so each is an
+`action: { type: consumer, code: … }`:
+
+| Control | `code:` | Control | `code:` |
+|---------|---------|---------|---------|
+| Up / Down / Left / Right | `0x42`–`0x45` | Sony Pictures | `0x4F0` |
+| Select / OK | `0x41` | Netflix | `0x547` |
+| Home | `0x223` | Disney+ | `0x4EB` |
+| Back | `0x224` | Prime Video | `0x4EA` |
+| Menu | `0x51F` | Crunchyroll | `0x4FB` |
+| | | YouTube | `0x4E5` |
+
+The Menu and app usages sit above the old `0x3FF` consumer ceiling; the report
+descriptor now advertises usages up to `0x7FFF`, so they transmit. The raw usages
+above are **verified captures** from the physical remote. That the Bravia applies
+`SONY_TV_VRC_001.kl` to the ESP once it advertises this identity is expected
+(Android resolves the layout by vendor/product, and by device name for the
+built-in `SONY_TV_VRC_001.kl`) but is **still to be confirmed on-device**.
+
 
 ## Usage Example
 
