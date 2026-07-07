@@ -181,32 +181,56 @@ the Sony remote's PnP identity so the Bravia applies that layout:
 ```yaml
 ble_keyboard:
   id: kb
-  vendor_id_source: 2      # USB-IF
-  vendor_id: 0x054C        # Sony Corporation
+  device_name: "SONY TV VRC 001"   # Android matches the layout by device name
+  vendor_id_source: 2              # USB-IF
+  vendor_id: 0x054C                # Sony Corporation
   product_id: 0x0F22
   product_version: 0x0011
 ```
 
 These usages were captured from a physical Bravia remote (`SONY TV VRC 001`, on a
 BRAVIA 4K AE2) with `adb shell getevent -lt` — the `MSC_SCAN` line is the raw HID
-Consumer-page usage. They all sit on the Consumer page, so each is an
-`action: { type: consumer, code: … }`:
+Consumer-page usage. Every one sits on the Consumer page, so each is an
+`action: { type: consumer, code: … }`.
+
+Navigation & function:
 
 | Control | `code:` | Control | `code:` |
 |---------|---------|---------|---------|
-| Up / Down / Left / Right | `0x42`–`0x45` | Sony Pictures | `0x4F0` |
-| Select / OK | `0x41` | Netflix | `0x547` |
-| Home | `0x223` | Disney+ | `0x4EB` |
-| Back | `0x224` | Prime Video | `0x4EA` |
-| Menu | `0x51F` | Crunchyroll | `0x4FB` |
-| | | YouTube | `0x4E5` |
+| Up / Down / Left / Right | `0x42`–`0x45` | Menu | `0x51F` |
+| Select / OK | `0x41` | Settings (gear) | `0x586` |
+| Back | `0x224` | Guide / List | `0x08D` |
+| Home | `0x223` | TV | `0x089` |
+| Input / Source | `0x533` | Tools (wrench) | `0x3C3` |
 
-The Menu and app usages sit above the old `0x3FF` consumer ceiling; the report
-descriptor now advertises usages up to `0x7FFF`, so they transmit. The raw usages
-above are **verified captures** from the physical remote. That the Bravia applies
-`SONY_TV_VRC_001.kl` to the ESP once it advertises this identity is expected
-(Android resolves the layout by vendor/product, and by device name for the
-built-in `SONY_TV_VRC_001.kl`) but is **still to be confirmed on-device**.
+The **voice/mic** button has no entry — it triggers Assistant over a separate
+voice channel, not a HID key, so it can't be reproduced as a `consumer:` code.
+
+Media & volume — these are **standard** HID usages that work on any host, no Sony
+layout needed (the component already sends them via its named actions):
+
+| Control | `code:` | Control | `code:` |
+|---------|---------|---------|---------|
+| Play / Pause | `0x0CD` | Mute | `0x0E2` |
+| Volume + / − | `0x0E9` / `0x0EA` | Channel + / − | `0x09C` / `0x09D` |
+
+App-launch buttons:
+
+| App | `code:` | App | `code:` |
+|-----|---------|-----|---------|
+| Sony Pictures | `0x4F0` | Prime Video | `0x4EA` |
+| Netflix | `0x547` | Crunchyroll | `0x4FB` |
+| Disney+ | `0x4EB` | YouTube | `0x4E5` |
+
+The Menu, Settings, Input, and app usages sit above the old `0x3FF` consumer
+ceiling; the report descriptor now advertises usages up to `0x7FFF`, so they
+transmit. All usages above are **verified captures** from the physical remote
+(each isolated and confirmed individually).
+That the Bravia applies `SONY_TV_VRC_001.kl` to the ESP once it presents this
+identity is expected — Android resolves the layout by vendor/product first, then
+by **device name** (the built-in file is literally `SONY_TV_VRC_001.kl`, i.e. the
+device name with spaces turned to underscores) — but is **still to be confirmed
+on-device**.
 
 
 ## Usage Example
