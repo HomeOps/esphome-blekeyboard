@@ -176,7 +176,14 @@ can't be reproduced without capturing your own remote's raw usages
 Google's identity covers the standard keys plus YouTube/Netflix, but a Sony
 Bravia's **Menu** and most app-launch buttons are vendor-private — they only
 resolve under the TV's own `SONY_TV_VRC_001.kl` layout. To reach them, advertise
-the Sony remote's PnP identity so the Bravia applies that layout:
+the Sony remote's PnP identity so the Bravia applies that layout.
+
+**Ready-to-use package:** `packages/sony_bravia.yaml` implements this whole map —
+the Sony identity plus every button below. Import it **instead of**
+`media_keys.yaml` (same `ble_device_id` / `ble_device_name` substitutions);
+switching a node to it changes the PnP identity, so it needs a one-time re-pair.
+The rest of this section documents what that package sets, if you'd rather wire
+it by hand:
 
 ```yaml
 ble_keyboard:
