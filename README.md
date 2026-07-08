@@ -178,12 +178,13 @@ Bravia's **Menu** and most app-launch buttons are vendor-private — they only
 resolve under the TV's own `SONY_TV_VRC_001.kl` layout. To reach them, advertise
 the Sony remote's PnP identity so the Bravia applies that layout.
 
-**Ready-to-use package:** `packages/sony_bravia.yaml` implements this whole map —
-the Sony identity plus every button below. Import it **instead of**
-`media_keys.yaml` (same `ble_device_id` / `ble_device_name` substitutions);
-switching a node to it changes the PnP identity, so it needs a one-time re-pair.
-The rest of this section documents what that package sets, if you'd rather wire
-it by hand:
+**Ready-to-use package:** `packages/sony_bravia.yaml` **composes `media_keys.yaml`**
+(all the shared controls, defined once) and only overrides the Sony-specific keys
+(Menu + the app codes) and adds the Sony function buttons + identity. Import it
+**instead of** `media_keys.yaml` — it pulls `media_keys.yaml` in itself — with the
+same `ble_device_id` / `ble_device_name` substitutions. Switching a node to it
+changes the PnP identity, so it needs a one-time re-pair. The rest of this section
+documents what that package sets, if you'd rather wire it by hand:
 
 ```yaml
 ble_keyboard:
