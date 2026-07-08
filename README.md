@@ -244,13 +244,30 @@ App-launch buttons:
 
 The Menu, Settings, Input, and app usages sit above the old `0x3FF` consumer
 ceiling; the report descriptor now advertises usages up to `0x7FFF`, so they
-transmit. All usages above are **verified captures** from the physical remote
-(each isolated and confirmed individually).
-That the Bravia applies `SONY_TV_VRC_001.kl` to the ESP once it presents this
-identity is expected — Android resolves the layout by vendor/product first, then
-by **device name** (the built-in file is literally `SONY_TV_VRC_001.kl`, i.e. the
-device name with spaces turned to underscores) — but is **still to be confirmed
-on-device**.
+transmit. All usages above are **verified captures** from the physical remote, and
+the whole set was **confirmed on-device**: with the dual-name trick the Bravia
+applied `SONY_TV_VRC_001.kl` to the ESP (matched by the GATT device name), and
+Menu / YouTube / Netflix fire correctly alongside the untouched physical remote.
+
+### Power is IR on a Bravia, not BLE
+
+The Bravia remote's **Power** button is sent over **IR** — it arrives on the TV's
+IR receiver, not the BLE link — and BLE can't wake a TV whose Bluetooth is off in
+standby. So `sony_bravia.yaml` **removes** the BLE power button; drive Power from
+the same ESP's **IR blaster** instead. Capture the code once by pointing the remote
+at the ESP's `remote_receiver:` (`dump: all`) and reading the decoded `sony:` code
+from the logs, then add an IR button on the node (which owns the transmitter):
+
+```yaml
+button:
+  - platform: template
+    name: "Power"
+    id: ${ble_device_id}_power_toggle   # same canonical id, now on the IR side
+    on_press:
+      - remote_transmitter.transmit_sony:
+          data: 0xA90    # <- your captured Sony power code (verify with dump)
+          nbits: 12
+```
 
 
 ## Usage Example

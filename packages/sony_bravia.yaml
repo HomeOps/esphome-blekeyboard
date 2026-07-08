@@ -56,6 +56,13 @@ button:
   - id: !extend ${ble_device_id}_app_prime_video
     action: { type: consumer, code: 0x4EA }
 
+  # ── Power is IR on a Sony Bravia, not BLE ───────────────────────────────────
+  # The remote's Power comes through the TV's IR receiver (verified: KEY_POWER
+  # arrives on the "SONY PMU IR" input, not the BLE remote), and BLE can't wake a
+  # TV whose Bluetooth is off in standby. So the BLE power button is a no-op here —
+  # remove it and drive Power via the node's remote_transmitter (see README).
+  - id: !remove ${ble_device_id}_power_toggle
+
   # ── Drop generic app buttons the Sony remote has no dedicated key for ───────
   - id: !remove ${ble_device_id}_app_hbo_max
   - id: !remove ${ble_device_id}_app_hulu
