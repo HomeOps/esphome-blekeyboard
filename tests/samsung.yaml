@@ -1,0 +1,31 @@
+# CI compile target — Samsung (Tizen) TV variant: keyboard.yaml + samsung_tv.yaml
+# on the same device. samsung_tv.yaml is imported INSTEAD of media_keys.yaml and
+# contributes the Samsung PnP identity + Keyboard-page nav keys. Proves the draft
+# package compiles; on-device behavior is NOT covered (needs a real Samsung TV).
+esphome:
+  name: blekb-samsung
+
+esp32:
+  board: m5stack-atom
+
+logger:
+
+wifi:
+  ssid: "test-ssid"
+  password: "test-password"
+
+api:
+
+substitutions:
+  ble_device_id: samsung_tv_remote
+  ble_device_name: "Samsung TV Remote"
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [ble_keyboard]
+
+packages:
+  ble:    !include ../packages/keyboard.yaml
+  remote: !include ../packages/samsung_tv.yaml

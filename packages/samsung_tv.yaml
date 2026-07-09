@@ -1,0 +1,89 @@
+# Importable package: Samsung (Tizen) TV remote -> BLE keyboard HID.
+#
+# *** DRAFT / NOT YET VERIFIED ON A SAMSUNG TV. ***  Work in progress.
+#
+# Captured from a physical Samsung "Smart Control 2016" remote (vendor 0x000F /
+# product 0x3412) with `adb shell getevent -lt`, using a spare Android TV as a
+# HID reader. Unlike Sony (Consumer page), a Samsung remote sends HID KEYBOARD-
+# page usages, and those only resolve to navigation under Samsung's own key
+# layout — so this advertises the Samsung remote's PnP identity so a Samsung TV
+# applies that layout, the same trick sony_bravia.yaml uses for the Bravia.
+#
+# CAVEATS:
+#   * Tizen has no `getevent`, so this can only be verified black-box on a real
+#     Samsung TV by watching the screen. The usages below are what the remote
+#     SENDS; that a Samsung TV maps them for our ESP is expected but unconfirmed.
+#   * Power is IR on Samsung (no HID event), like Sony — drive it via the node's
+#     remote_transmitter.
+#   * Volume / channel / app / colored buttons still need capturing.
+#   * App-hotkeys and the mic are likely a separate proprietary channel that
+#     never appears over HID — those may not be reproducible at all.
+#
+# Import this INSTEAD of media_keys.yaml; import keyboard.yaml alongside it and
+# set the ble_device_id + ble_device_name substitutions. Needs the component's
+# `advertised_name` support.
+
+# --- device identity ---------------------------------------------------------
+# device_name is the GATT/HID name the TV keys its key layout off, so it must be
+# exactly "Smart Control 2016". advertised_name (a distinct name) keeps pairing
+# clean if your real Samsung remote already owns that name. vendor_id_source is a
+# guess (0x000F is a Bluetooth-SIG assignment); adjust if the layout doesn't apply.
+ble_keyboard:
+  id: kb
+  device_name: "Smart Control 2016"
+  advertised_name: "${ble_device_name}"
+  vendor_id_source: 1      # Bluetooth SIG (0x000F); verify on-device
+  vendor_id: 0x000F
+  product_id: 0x3412
+  product_version: 0x0111
+
+button:
+  # --- navigation (Samsung HID Keyboard-page usages) ---
+  # Each is a raw keyboard usage the Samsung remote emits; combo:0x00:<usage>.
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_up
+    name: "Up"
+    action: { type: combo, modifier: 0x00, key: 0x60 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_down
+    name: "Down"
+    action: { type: combo, modifier: 0x00, key: 0x61 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_left
+    name: "Left"
+    action: { type: combo, modifier: 0x00, key: 0x65 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_right
+    name: "Right"
+    action: { type: combo, modifier: 0x00, key: 0x62 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_select
+    name: "Select"
+    action: { type: combo, modifier: 0x00, key: 0x68 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_back
+    name: "Back"
+    action: { type: combo, modifier: 0x00, key: 0x58 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_home
+    name: "Home"
+    action: { type: combo, modifier: 0x00, key: 0x79 }
+
+  # TODO — captured but ambiguous / pending more presses:
+  #   0xEF  (decoded KEY_MUTE on the reader; pressed as "Menu" — confirm Menu vs Mute)
+  # TODO — still to capture: Volume +/-, Channel +/-, Play/Pause, Source, Guide,
+  #        colored (A/B/C/D), app buttons.
