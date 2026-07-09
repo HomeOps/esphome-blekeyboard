@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.7.1...v0.8.0) (2026-07-09)
+
+
+### Features
+
+* Sony Bravia remote support (wider consumer usages, dual-name pairing, remote map, AC Back fix) ([#25](https://github.com/HomeOps/esphome-blekeyboard/issues/25)) ([c28c051](https://github.com/HomeOps/esphome-blekeyboard/commit/c28c051dc8c9f48c0ac8d8ff34b6453b6bda80b6))
+
 ## [0.7.1](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.7.0...v0.7.1) (2026-06-19)
 
 
