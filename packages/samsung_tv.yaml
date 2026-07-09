@@ -1,27 +1,29 @@
 # Importable package: Samsung (Tizen) TV remote -> BLE keyboard HID.
 #
-# *** DRAFT / NOT YET VERIFIED ON A SAMSUNG TV. ***  Work in progress.
+# *** DRAFT / NOT YET VERIFIED ON A SAMSUNG TV. ***
 #
-# Captured from a physical Samsung "Smart Control 2016" remote (vendor 0x000F /
-# product 0x3412) with `adb shell getevent -lt`, using a spare Android TV as a
-# HID reader. Unlike Sony (Consumer page), a Samsung remote sends HID KEYBOARD-
-# page usages, and those only resolve to navigation under Samsung's own key
-# layout — so this advertises the Samsung remote's PnP identity so a Samsung TV
-# applies that layout, the same trick sony_bravia.yaml uses for the Bravia.
+# Captured from a physical Samsung TV remote (BT identity "Smart Control 2016",
+# vendor 0x000F / product 0x3412) with `adb shell getevent -lt`, using a spare
+# Android TV as a HID reader. Unlike Sony (Consumer page), a Samsung remote sends
+# HID KEYBOARD-page usages for EVERYTHING (nav, volume, channel, apps), and those
+# only resolve to their functions under Samsung's own key layout — so this
+# advertises the Samsung remote's PnP identity so a Samsung TV applies that
+# layout, the same trick sony_bravia.yaml uses for the Bravia.
 #
 # CAVEATS:
 #   * Tizen has no `getevent`, so this can only be verified black-box on a real
 #     Samsung TV by watching the screen. The usages below are what the remote
-#     SENDS; that a Samsung TV maps them for our ESP is expected but unconfirmed.
+#     SENDS; that a Samsung TV maps them for our ESP is expected but UNCONFIRMED.
 #   * Power is IR on Samsung (no HID event), like Sony — drive it via the node's
 #     remote_transmitter.
-#   * Volume / channel / app / colored buttons still need capturing.
-#   * App-hotkeys and the mic are likely a separate proprietary channel that
-#     never appears over HID — those may not be reproducible at all.
+#   * Mic/Voice sends a HID usage (0xA0) but the voice *audio* is a separate
+#     proprietary channel that HID can't carry — the button press alone won't do
+#     voice search.
+#   * Standalone (does NOT compose media_keys.yaml): Samsung uses Keyboard-page
+#     usages for volume/channel too, so none of media_keys' Consumer usages apply.
 #
-# Import this INSTEAD of media_keys.yaml; import keyboard.yaml alongside it and
-# set the ble_device_id + ble_device_name substitutions. Needs the component's
-# `advertised_name` support.
+# Import this INSTEAD of media_keys.yaml; import keyboard.yaml alongside it and set
+# the ble_device_id + ble_device_name substitutions. Needs `advertised_name` support.
 
 # --- device identity ---------------------------------------------------------
 # device_name is the GATT/HID name the TV keys its key layout off, so it must be
@@ -37,9 +39,10 @@ ble_keyboard:
   product_id: 0x3412
   product_version: 0x0111
 
+# Every action is combo:0x00:<usage> — the raw HID Keyboard-page usage the Samsung
+# remote emits. They mean "up/volume/Netflix/…" ONLY under Samsung's key layout.
 button:
-  # --- navigation (Samsung HID Keyboard-page usages) ---
-  # Each is a raw keyboard usage the Samsung remote emits; combo:0x00:<usage>.
+  # --- navigation ---
   - platform: ble_keyboard
     keyboard_id: kb
     device_id: ${ble_device_id}
@@ -83,7 +86,96 @@ button:
     name: "Home"
     action: { type: combo, modifier: 0x00, key: 0x79 }
 
-  # TODO — captured but ambiguous / pending more presses:
-  #   0xEF  (decoded KEY_MUTE on the reader; pressed as "Menu" — confirm Menu vs Mute)
-  # TODO — still to capture: Volume +/-, Channel +/-, Play/Pause, Source, Guide,
-  #        colored (A/B/C/D), app buttons.
+  # --- transport ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_play_pause
+    name: "Play Pause"
+    action: { type: combo, modifier: 0x00, key: 0xB9 }
+
+  # --- volume / channel (Samsung uses Keyboard-page usages here too) ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_volume_up
+    name: "Volume Up"
+    action: { type: combo, modifier: 0x00, key: 0x07 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_volume_down
+    name: "Volume Down"
+    action: { type: combo, modifier: 0x00, key: 0x0B }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_channel_up
+    name: "Channel Up"
+    action: { type: combo, modifier: 0x00, key: 0x12 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_channel_down
+    name: "Channel Down"
+    action: { type: combo, modifier: 0x00, key: 0x10 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_channel_select
+    name: "Ch Select"          # unlabeled button next to CC/AD
+    action: { type: combo, modifier: 0x00, key: 0x4F }
+
+  # --- function ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_cc_ad
+    name: "CC/AD"
+    action: { type: combo, modifier: 0x00, key: 0x0F }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_settings
+    name: "Settings / 123"
+    action: { type: combo, modifier: 0x00, key: 0xD2 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_multiview
+    name: "Multi View"
+    action: { type: combo, modifier: 0x00, key: 0xEF }
+  # Mic/Voice: the button press is HID (0xA0) but voice audio is a separate
+  # proprietary channel HID can't carry, so this won't actually do voice search.
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_voice
+    name: "Voice"
+    action: { type: combo, modifier: 0x00, key: 0xA0 }
+
+  # --- app-launch keys (Samsung's app buttons ARE HID Keyboard-page usages) ---
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_netflix
+    name: "Netflix"
+    action: { type: combo, modifier: 0x00, key: 0xF3 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_hulu
+    name: "Hulu"
+    action: { type: combo, modifier: 0x00, key: 0xBB }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_disney_plus
+    name: "Disney+"
+    action: { type: combo, modifier: 0x00, key: 0xDF }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_prime_video
+    name: "Prime Video"
+    action: { type: combo, modifier: 0x00, key: 0xF4 }
