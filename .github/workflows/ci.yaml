@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: [tests/atom.yaml, tests/esp32.yaml, tests/package.yaml]
+        config: [tests/atom.yaml, tests/esp32.yaml, tests/package.yaml, tests/sony.yaml]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

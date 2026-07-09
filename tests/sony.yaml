@@ -1,0 +1,32 @@
+# CI compile target — Sony Bravia variant: keyboard.yaml + sony_bravia.yaml on
+# the SAME device. sony_bravia.yaml is imported INSTEAD of media_keys.yaml (it
+# is the Sony-native remote), and it also contributes the Sony PnP identity to
+# the ble_keyboard block keyboard.yaml declares. This proves the identity merge
+# and the Sony button set compile cleanly.
+esphome:
+  name: blekb-sony
+
+esp32:
+  board: m5stack-atom
+
+logger:
+
+wifi:
+  ssid: "test-ssid"
+  password: "test-password"
+
+api:
+
+substitutions:
+  ble_device_id: sony_bravia_tv_remote
+  ble_device_name: "Sony Bravia TV Remote"
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [ble_keyboard]
+
+packages:
+  ble:    !include ../packages/keyboard.yaml
+  remote: !include ../packages/sony_bravia.yaml

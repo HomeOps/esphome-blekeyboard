@@ -50,9 +50,13 @@ static const uint8_t hid_report_map[] = {
     0xA1, 0x01,        // Collection (Application)
     0x85, 0x02,        //   Report ID (2)
     0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x03,  //   Logical Maximum (1023)
+    0x26, 0xFF, 0x7F,  //   Logical Maximum (32767) — see Usage Maximum below
     0x19, 0x00,        //   Usage Minimum (0)
-    0x2A, 0xFF, 0x03,  //   Usage Maximum (1023)
+    0x2A, 0xFF, 0x7F,  //   Usage Maximum (32767) — widened from 0x3FF so vendor
+                       //   consumer usages above the standard AC range are
+                       //   transmittable (e.g. a Sony Bravia remote's Menu 0x51F
+                       //   and app-launch keys 0x4E5-0x547, captured via getevent).
+                       //   Stays inside signed 16-bit, so no 4-byte item needed.
     0x75, 0x10,        //   Report Size (16)
     0x95, 0x01,        //   Report Count (1)
     0x81, 0x00,        //   Input (Data, Array)
@@ -322,7 +326,7 @@ static void do_start_advertising() {
         s_adv_data_set = false;
         s_scan_rsp_data_set = false;
         esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
-        std::string dev_name = (s_instance != nullptr) ? s_instance->device_name() : "ESP32 BLE KB";
+        std::string dev_name = (s_instance != nullptr) ? s_instance->advertised_name() : "ESP32 BLE KB";
         std::vector<uint8_t> scan_rsp;
         scan_rsp.push_back(static_cast<uint8_t>(dev_name.length() + 1));
         scan_rsp.push_back(0x09);
@@ -343,7 +347,7 @@ static void do_start_advertising() {
     s_adv_data_set = false;
     s_scan_rsp_data_set = false;
     esp_err_t adv_ret = esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
-    std::string dev_name = (s_instance != nullptr) ? s_instance->device_name() : "ESP32 BLE KB";
+    std::string dev_name = (s_instance != nullptr) ? s_instance->advertised_name() : "ESP32 BLE KB";
     std::vector<uint8_t> scan_rsp;
     scan_rsp.push_back(static_cast<uint8_t>(dev_name.length() + 1));
     scan_rsp.push_back(0x09);  // Complete Local Name AD type

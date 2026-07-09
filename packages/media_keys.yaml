@@ -126,7 +126,7 @@ button:
     name: "Eject"
     action: { type: consumer, code: 0xB8 }
 
-  # --- navigation (HID Consumer: Menu usages 0x40-0x46, AC Home 0x223) ---
+  # --- navigation (HID Consumer: Menu usages 0x40-0x45, AC Back 0x224, AC Home 0x223) ---
   - platform: ble_keyboard
     keyboard_id: kb
     device_id: ${ble_device_id}
@@ -168,7 +168,11 @@ button:
     device_id: ${ble_device_id}
     id: ${ble_device_id}_back
     name: "Back"
-    action: { type: consumer, code: 0x46 }
+    # AC Back (0x224) -> KEYCODE_BACK. Menu Escape (0x46) only maps to
+    # KEYCODE_ESCAPE, which Android TV does not treat as Back (verified on a
+    # Sony Bravia: the remote sends 0x224, and 0x46 produced KEY_ESC with no
+    # back action).
+    action: { type: consumer, code: 0x224 }
   - platform: ble_keyboard
     keyboard_id: kb
     device_id: ${ble_device_id}

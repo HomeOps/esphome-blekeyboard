@@ -171,6 +171,104 @@ published HID usage** — each TV vendor wires those in a private layout, so the
 can't be reproduced without capturing your own remote's raw usages
 (`adb shell getevent -lt`, read the `MSC_SCANCODE` line).
 
+### Sony Bravia (Android TV) — captured remote map
+
+Google's identity covers the standard keys plus YouTube/Netflix, but a Sony
+Bravia's **Menu** and most app-launch buttons are vendor-private — they only
+resolve under the TV's own `SONY_TV_VRC_001.kl` layout. To reach them, advertise
+the Sony remote's PnP identity so the Bravia applies that layout.
+
+**Ready-to-use package:** `packages/sony_bravia.yaml` **composes `media_keys.yaml`**
+(all the shared controls, defined once) and only overrides the Sony-specific keys
+(Menu + the app codes) and adds the Sony function buttons + identity. Import it
+**instead of** `media_keys.yaml` — it pulls `media_keys.yaml` in itself — with the
+same `ble_device_id` / `ble_device_name` substitutions. Switching a node to it
+changes the PnP identity, so it needs a one-time re-pair. The rest of this section
+documents what that package sets, if you'd rather wire it by hand:
+
+```yaml
+ble_keyboard:
+  id: kb
+  device_name: "SONY TV VRC 001"       # GATT/HID name → TV keys the layout off this
+  advertised_name: "Master BR Remote"  # unique name the pairing scan shows
+  vendor_id_source: 2                  # USB-IF
+  vendor_id: 0x054C                    # Sony Corporation
+  product_id: 0x0F22
+  product_version: 0x0011
+```
+
+**Why the two names.** `device_name` is the GATT (`0x2A00`) / HID name Android reads
+after connecting, and it keys `SONY_TV_VRC_001.kl` off that — so it *must* be
+exactly `SONY TV VRC 001`. But a Bravia's pairing scan won't surface a second
+device whose name matches your already-paired physical remote. `advertised_name`
+(new) is broadcast in the advertising scan-response — the name the pairing scan
+shows — so the ESP appears under a **unique** name you can pick, then presents
+`SONY TV VRC 001` over GATT once connected. You get the Sony layout *and* clean
+pairing alongside the real remote. If `advertised_name` is omitted it falls back
+to `device_name`. `packages/sony_bravia.yaml` sets `advertised_name` to the HA
+display name (`${ble_device_name}`) automatically.
+
+These usages were captured from a physical Bravia remote (`SONY TV VRC 001`, on a
+BRAVIA 4K AE2) with `adb shell getevent -lt` — the `MSC_SCAN` line is the raw HID
+Consumer-page usage. Every one sits on the Consumer page, so each is an
+`action: { type: consumer, code: … }`.
+
+Navigation & function:
+
+| Control | `code:` | Control | `code:` |
+|---------|---------|---------|---------|
+| Up / Down / Left / Right | `0x42`–`0x45` | Menu | `0x51F` |
+| Select / OK | `0x41` | Settings (gear) | `0x586` |
+| Back | `0x224` | Guide / List | `0x08D` |
+| Home | `0x223` | TV | `0x089` |
+| Input / Source | `0x533` | Tools (wrench) | `0x3C3` |
+
+The **voice/mic** button has no entry — it triggers Assistant over a separate
+voice channel, not a HID key, so it can't be reproduced as a `consumer:` code.
+
+Media & volume — these are **standard** HID usages that work on any host, no Sony
+layout needed (the component already sends them via its named actions):
+
+| Control | `code:` | Control | `code:` |
+|---------|---------|---------|---------|
+| Play / Pause | `0x0CD` | Mute | `0x0E2` |
+| Volume + / − | `0x0E9` / `0x0EA` | Channel + / − | `0x09C` / `0x09D` |
+
+App-launch buttons:
+
+| App | `code:` | App | `code:` |
+|-----|---------|-----|---------|
+| Sony Pictures | `0x4F0` | Prime Video | `0x4EA` |
+| Netflix | `0x547` | Crunchyroll | `0x4FB` |
+| Disney+ | `0x4EB` | YouTube | `0x4E5` |
+
+The Menu, Settings, Input, and app usages sit above the old `0x3FF` consumer
+ceiling; the report descriptor now advertises usages up to `0x7FFF`, so they
+transmit. All usages above are **verified captures** from the physical remote, and
+the whole set was **confirmed on-device**: with the dual-name trick the Bravia
+applied `SONY_TV_VRC_001.kl` to the ESP (matched by the GATT device name), and
+Menu / YouTube / Netflix fire correctly alongside the untouched physical remote.
+
+### Power is IR on a Bravia, not BLE
+
+The Bravia remote's **Power** button is sent over **IR** — it arrives on the TV's
+IR receiver, not the BLE link — and BLE can't wake a TV whose Bluetooth is off in
+standby. So `sony_bravia.yaml` **removes** the BLE power button; drive Power from
+the same ESP's **IR blaster** instead. Capture the code once by pointing the remote
+at the ESP's `remote_receiver:` (`dump: all`) and reading the decoded `sony:` code
+from the logs, then add an IR button on the node (which owns the transmitter):
+
+```yaml
+button:
+  - platform: template
+    name: "Power"
+    id: ${ble_device_id}_power_toggle   # same canonical id, now on the IR side
+    on_press:
+      - remote_transmitter.transmit_sony:
+          data: 0xA90    # <- your captured Sony power code (verify with dump)
+          nbits: 12
+```
+
 
 ## Usage Example
 

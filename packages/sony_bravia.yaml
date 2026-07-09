@@ -1,0 +1,119 @@
+# Importable package: Sony Bravia (Android TV) remote -> BLE keyboard HID.
+#
+# Composes media_keys.yaml and only overrides/adds what a Sony Bravia needs, so
+# the shared controls (nav, OK, Back, Home, volume, mute, channel, transport,
+# power) are defined ONCE in media_keys.yaml — no duplication.
+#
+# It advertises the Sony remote's PnP identity so the Bravia applies its
+# SONY_TV_VRC_001.kl key layout, and every Sony-specific button sends the exact
+# HID Consumer-page usage captured from the physical "SONY TV VRC 001" remote
+# (`adb shell getevent -lt`, the MSC_SCAN line) on a BRAVIA 4K AE2.
+#
+# Import this INSTEAD of media_keys.yaml (it pulls media_keys in itself). Import
+# keyboard.yaml alongside it and set the `ble_device_id` + `ble_device_name`
+# substitutions (same knobs as media_keys.yaml). The Menu, Settings, Input and app
+# usages sit above the old 0x3FF consumer ceiling, so they need the widened report
+# descriptor (usages up to 0x7FFF).
+#
+# The PnP identity is read at bond time, so the FIRST flash that switches a node
+# to this package needs a one-time re-pair.
+
+# Pull in every shared control (media_keys declares the common buttons once).
+packages:
+  media_keys: !include media_keys.yaml
+
+# --- device identity ---------------------------------------------------------
+# device_name is the GATT (0x2A00) / HID name the TV keys its key layout off, so
+# it MUST be exactly "SONY TV VRC 001". A Bravia's pairing scan won't surface a
+# second device whose name matches your already-paired physical remote, so we
+# advertise a DISTINCT name (advertised_name, defaults to the HA display name)
+# that the scan shows, while still reporting "SONY TV VRC 001" over GATT.
+# Merges with the ble_keyboard block keyboard.yaml declares (same id `kb`).
+ble_keyboard:
+  id: kb
+  device_name: "SONY TV VRC 001"
+  advertised_name: "${ble_device_name}"
+  vendor_id_source: 2      # USB-IF
+  vendor_id: 0x054C        # Sony Corporation
+  product_id: 0x0F22
+  product_version: 0x0011
+
+button:
+  # ── Override the controls whose usage differs on Sony ───────────────────────
+  # (Back 0x224, Home 0x223, Select 0x41, arrows 0x42-0x45, volume/mute/channel
+  #  and play_pause already match Sony in media_keys.yaml, so they need no change.)
+  - id: !extend ${ble_device_id}_menu
+    action: { type: consumer, code: 0x51F }        # Sony Menu (media_keys uses 0x40)
+
+  # Apps: media_keys sends generic gamepad buttons; Sony maps its app keys to
+  # dedicated Consumer usages under SONY_TV_VRC_001.kl.
+  - id: !extend ${ble_device_id}_app_youtube
+    action: { type: consumer, code: 0x4E5 }
+  - id: !extend ${ble_device_id}_app_netflix
+    action: { type: consumer, code: 0x547 }
+  - id: !extend ${ble_device_id}_app_disney_plus
+    action: { type: consumer, code: 0x4EB }
+  - id: !extend ${ble_device_id}_app_prime_video
+    action: { type: consumer, code: 0x4EA }
+
+  # ── Power is IR on a Sony Bravia, not BLE ───────────────────────────────────
+  # The remote's Power comes through the TV's IR receiver (verified: KEY_POWER
+  # arrives on the "SONY PMU IR" input, not the BLE remote), and BLE can't wake a
+  # TV whose Bluetooth is off in standby. So the BLE power button is a no-op here —
+  # remove it and drive Power via the node's remote_transmitter (see README).
+  - id: !remove ${ble_device_id}_power_toggle
+
+  # ── Drop generic app buttons the Sony remote has no dedicated key for ───────
+  - id: !remove ${ble_device_id}_app_hbo_max
+  - id: !remove ${ble_device_id}_app_hulu
+  - id: !remove ${ble_device_id}_app_apple_tv
+  - id: !remove ${ble_device_id}_app_spotify
+  - id: !remove ${ble_device_id}_app_plex
+  - id: !remove ${ble_device_id}_app_paramount_plus
+  - id: !remove ${ble_device_id}_app_peacock
+
+  # ── Sony-only app keys ──────────────────────────────────────────────────────
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_crunchyroll
+    name: "Crunchyroll"
+    action: { type: consumer, code: 0x4FB }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_app_sony_pictures
+    name: "Sony Pictures Core"
+    action: { type: consumer, code: 0x4F0 }
+
+  # ── Sony-only function buttons (vendor Consumer usages, need the widened range) ─
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_settings
+    name: "Settings"
+    action: { type: consumer, code: 0x586 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_guide
+    name: "Guide"
+    action: { type: consumer, code: 0x08D }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_tv
+    name: "TV"
+    action: { type: consumer, code: 0x089 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_input
+    name: "Input"
+    action: { type: consumer, code: 0x533 }
+  - platform: ble_keyboard
+    keyboard_id: kb
+    device_id: ${ble_device_id}
+    id: ${ble_device_id}_tools
+    name: "Tools"
+    action: { type: consumer, code: 0x3C3 }
