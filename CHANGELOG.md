@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.8.0...v0.9.0) (2026-07-20)
+
+
+### Features
+
+* add packages/samsung_tv.yaml (Samsung Smart Control remote, draft) ([#28](https://github.com/HomeOps/esphome-blekeyboard/issues/28)) ([729087b](https://github.com/HomeOps/esphome-blekeyboard/commit/729087b2dc966c151cd2ccb568cd7a8f66c38f70))
+
 ## [0.8.0](https://github.com/HomeOps/esphome-blekeyboard/compare/v0.7.1...v0.8.0) (2026-07-09)
 
 
